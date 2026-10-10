@@ -28,7 +28,7 @@ public class StudioViewModelTests
     {
         StudioViewModel studio = Create();
 
-        Assert.Equal(11, studio.AllSurfaces.Count);
+        Assert.Equal(13, studio.AllSurfaces.Count);
         Assert.Equal(studio.AllSurfaces[0], studio.SelectedSurface);
         Assert.Equal(studio.AllSurfaces.Count, studio.VisibleSurfaces.Count);
     }
@@ -76,6 +76,21 @@ public class StudioViewModelTests
         Assert.Equal(large.Surface.Canvas.Width, studio.CanvasWidth, 3);
         Assert.Equal(large.Surface.Canvas.Height, studio.CanvasHeight, 3);
         Assert.Equal("889 x 888 px", studio.CanvasText);
+    }
+
+    [Fact]
+    public void Warns_when_a_canvas_needs_scrolling_out_in_the_game()
+    {
+        StudioViewModel studio = Create();
+        Assert.False(studio.HasScrollHint);
+
+        studio.SelectedSurface = studio.AllSurfaces.Single(option => option.Surface.Id == "canvas-xxl");
+
+        Assert.True(studio.HasScrollHint);
+        Assert.Equal("Needs 11 scroll-outs in the game first.", studio.ScrollHint);
+
+        studio.SelectedSurface = studio.AllSurfaces.Single(option => option.Surface.Id == "sign-small");
+        Assert.False(studio.HasScrollHint);
     }
 
     [Fact]

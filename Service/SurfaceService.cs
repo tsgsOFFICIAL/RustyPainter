@@ -90,15 +90,6 @@ public sealed class SurfaceService : ISurfaceService
         if (catalog.Layouts is not { Count: > 0 })
             throw new InvalidDataException("There must be at least one layout.");
 
-        string[] badColors = catalog.Palette.Where(color => !IsHexColor(color)).ToArray();
-        if (badColors.Length > 0)
-            throw new InvalidDataException($"These palette entries are not #RRGGBB: {string.Join(", ", badColors)}.");
-
-        string[] duplicates = catalog.Palette.GroupBy(color => color, StringComparer.OrdinalIgnoreCase)
-            .Where(group => group.Count() > 1).Select(group => group.Key).ToArray();
-        if (duplicates.Length > 0)
-            throw new InvalidDataException($"The palette repeats these colours, so one swatch can never be picked: {string.Join(", ", duplicates)}.");
-
         foreach ((string key, LayoutFamily family) in catalog.Layouts)
         {
             ValidateLayout(catalog, $"{key} (swatches)", family.Swatches);
@@ -107,8 +98,17 @@ public sealed class SurfaceService : ISurfaceService
             if (family.Swatches.ColorGrid is not { } grid)
                 throw new InvalidDataException($"The swatch layout of '{key}' has no colour grid.");
 
-            if (catalog.Palette.Length != grid.Count)
-                throw new InvalidDataException($"The palette has {catalog.Palette.Length} colours but the colour grid of '{key}' has {grid.Count} swatches.");
+            if (grid.Colors.Length != grid.Count)
+                throw new InvalidDataException($"The palette has {grid.Colors.Length} colours but the colour grid of '{key}' has {grid.Count} swatches.");
+
+            string[] badColors = grid.Colors.Where(color => !IsHexColor(color)).ToArray();
+            if (badColors.Length > 0)
+                throw new InvalidDataException($"These palette entries of '{key}' are not #RRGGBB: {string.Join(", ", badColors)}.");
+
+            string[] duplicates = grid.Colors.GroupBy(color => color, StringComparer.OrdinalIgnoreCase)
+                .Where(group => group.Count() > 1).Select(group => group.Key).ToArray();
+            if (duplicates.Length > 0)
+                throw new InvalidDataException($"The palette of '{key}' repeats these colours, so one swatch can never be picked: {string.Join(", ", duplicates)}.");
 
             if (family.Free.FreeColor is not { SavedColors.Length: > 0 })
                 throw new InvalidDataException($"The free layout of '{key}' has no free colour controls or no saved colour slots.");

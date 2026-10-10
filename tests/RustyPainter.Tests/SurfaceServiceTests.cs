@@ -28,24 +28,71 @@ public class SurfaceServiceTests
     {
         Assert.Equal(2560, Catalog.ReferenceWidth);
         Assert.Equal(1440, Catalog.ReferenceHeight);
-        Assert.Equal(11, Catalog.Surfaces.Length);
+        Assert.Equal(13, Catalog.Surfaces.Length);
         Assert.Contains("standard", Catalog.Layouts.Keys);
         Assert.Contains("neon", Catalog.Layouts.Keys);
     }
 
     [Fact]
-    public void Palette_has_64_distinct_colours()
+    public void Standard_surfaces_have_64_distinct_swatch_colours()
     {
-        Assert.Equal(64, Catalog.Palette.Length);
-        Assert.Equal(64, Catalog.Palette.Distinct(StringComparer.OrdinalIgnoreCase).Count());
+        string[] colors = Standard.Swatches.ColorGrid!.Colors;
+
+        Assert.Equal(64, colors.Length);
+        Assert.Equal(64, colors.Distinct(StringComparer.OrdinalIgnoreCase).Count());
     }
 
     [Fact]
     public void Swatch_9_is_the_value_confirmed_in_game()
     {
         // The old app had #5A6629 here, a duplicate of swatch 13. The game itself shows #665A29.
-        Assert.Equal("#665A29", Catalog.Palette[9]);
-        Assert.Equal("#5A6629", Catalog.Palette[13]);
+        string[] colors = Standard.Swatches.ColorGrid!.Colors;
+
+        Assert.Equal("#665A29", colors[9]);
+        Assert.Equal("#5A6629", colors[13]);
+    }
+
+    [Fact]
+    public void Neon_signs_have_eight_swatches_in_two_rows_of_four()
+    {
+        ColorGrid grid = Catalog.Layouts["neon"].Swatches.ColorGrid!;
+
+        Assert.Equal(4, grid.Columns);
+        Assert.Equal(2, grid.Rows);
+        Assert.Equal(8, grid.Colors.Length);
+        Assert.Equal(2081, grid.CellCenter(0).X, 0);
+        Assert.Equal(741, grid.CellCenter(0).Y, 0);
+        Assert.Equal(2469, grid.CellCenter(7).X, 0);
+        Assert.Equal(869, grid.CellCenter(7).Y, 0);
+    }
+
+    [Fact]
+    public void Neon_swatch_and_free_panels_are_almost_at_the_same_height()
+    {
+        // Unlike the standard family, the neon swatch panel is about as tall as the free picker panel.
+        LayoutFamily neon = Catalog.Layouts["neon"];
+
+        Assert.InRange(neon.Swatches.ToolBrush.Y1 - neon.Free.ToolBrush.Y1, -8, 8);
+        Assert.InRange(neon.Swatches.ColorModeToggle.Y1 - neon.Free.ColorModeToggle.Y1, -8, 8);
+    }
+
+    [Fact]
+    public void Canvases_that_open_cropped_need_scrolling_out_first()
+    {
+        Assert.Equal(6, Find("canvas-small").ScrollOut);
+        Assert.Equal(11, Find("canvas-xxl").ScrollOut);
+        Assert.All(Catalog.Surfaces.Where(s => s.Id is not ("canvas-small" or "canvas-xxl")), s => Assert.Equal(0, s.ScrollOut));
+    }
+
+    [Theory]
+    [InlineData("canvas-small", 550, 132, 1434, 1308)]
+    [InlineData("canvas-xxl", 137, 292, 1850, 1149)]
+    [InlineData("neon-large", 545, 237, 1434, 1125)]
+    [InlineData("neon-medium", 545, 364, 1439, 879)]
+    [InlineData("neon-small", 730, 361, 1252, 882)]
+    public void Measured_canvases_are_where_the_screenshots_put_them(string id, double x1, double y1, double x2, double y2)
+    {
+        AssertRect(Find(id).Canvas, x1, y1, x2, y2);
     }
 
     [Fact]
@@ -61,12 +108,10 @@ public class SurfaceServiceTests
         AssertRect(sw.ColorGrid!.Area, 2016, 625, 2527, 1203);
     }
 
-    [Theory]
-    [InlineData("standard")]
-    [InlineData("neon")]
-    public void Free_mode_panel_sits_133px_lower_than_swatch_mode(string family)
+    [Fact]
+    public void Free_mode_panel_sits_133px_lower_than_swatch_mode_on_standard_surfaces()
     {
-        LayoutFamily f = Catalog.Layouts[family];
+        LayoutFamily f = Standard;
         (ScreenRect swatch, ScreenRect free)[] pairs =
         [
             (f.Swatches.ToolBrush, f.Free.ToolBrush),
@@ -171,25 +216,29 @@ public class SurfaceServiceTests
 
     // ---- validation ----
 
+    private static SurfaceCatalog WithColors(string[] colors)
+        => WithLayouts(Standard with { Swatches = Standard.Swatches with { ColorGrid = Standard.Swatches.ColorGrid! with { Colors = colors } } });
+
     [Fact]
     public void Rejects_a_duplicate_palette_colour()
     {
-        string[] palette = (string[])Catalog.Palette.Clone();
-        palette[9] = palette[13];
-        Assert.Contains("repeats", Assert.Throws<InvalidDataException>(() => new SurfaceService(Catalog with { Palette = palette })).Message);
+        string[] colors = (string[])Standard.Swatches.ColorGrid!.Colors.Clone();
+        colors[9] = colors[13];
+        Assert.Contains("repeats", Assert.Throws<InvalidDataException>(() => new SurfaceService(WithColors(colors))).Message);
     }
 
     [Fact]
     public void Rejects_a_palette_that_does_not_match_the_grid()
     {
-        Assert.Contains("palette has 60", Assert.Throws<InvalidDataException>(() => new SurfaceService(Catalog with { Palette = Catalog.Palette[..60] })).Message);
+        string[] colors = Standard.Swatches.ColorGrid!.Colors[..60];
+        Assert.Contains("palette has 60", Assert.Throws<InvalidDataException>(() => new SurfaceService(WithColors(colors))).Message);
     }
 
     [Fact]
     public void Rejects_a_malformed_colour()
     {
-        string[] palette = [.. Catalog.Palette[..63], "#12345"];
-        Assert.Contains("not #RRGGBB", Assert.Throws<InvalidDataException>(() => new SurfaceService(Catalog with { Palette = palette })).Message);
+        string[] colors = [.. Standard.Swatches.ColorGrid!.Colors[..63], "#12345"];
+        Assert.Contains("not #RRGGBB", Assert.Throws<InvalidDataException>(() => new SurfaceService(WithColors(colors))).Message);
     }
 
     [Fact]

@@ -21,8 +21,9 @@ public readonly record struct ScreenRect(double X1, double Y1, double X2, double
 }
 
 /// <summary>
-/// The grid of colour swatches shown in swatch mode. Swatches are numbered left to right, then top to
-/// bottom, which is also the order of <see cref="SurfaceCatalog.Palette"/>.
+/// The grid of colour swatches shown in swatch mode, together with the colour of each swatch. Swatches are
+/// numbered left to right, then top to bottom, which is also the order of <see cref="Colors"/>. Different
+/// surfaces have different swatches (most have 64, neon signs have 8).
 /// </summary>
 /// <param name="Area">The whole grid.</param>
 /// <param name="Columns">Swatches per row.</param>
@@ -31,7 +32,8 @@ public readonly record struct ScreenRect(double X1, double Y1, double X2, double
 /// <param name="CellHeight">Height of one swatch.</param>
 /// <param name="GapX">Horizontal gap between swatches.</param>
 /// <param name="GapY">Vertical gap between swatches.</param>
-public sealed record ColorGrid(ScreenRect Area, int Columns, int Rows, double CellWidth, double CellHeight, double GapX, double GapY)
+/// <param name="Colors">The colour of each swatch as #RRGGBB.</param>
+public sealed record ColorGrid(ScreenRect Area, int Columns, int Rows, double CellWidth, double CellHeight, double GapX, double GapY, string[] Colors)
 {
     /// <summary>The number of swatches in the grid.</summary>
     public int Count => Columns * Rows;
@@ -49,7 +51,7 @@ public sealed record ColorGrid(ScreenRect Area, int Columns, int Rows, double Ce
 
     /// <summary>Scales every size and position in the grid, then moves it by the given offset.</summary>
     public ColorGrid Place(double sx, double sy, double dx, double dy)
-        => new(Area.Scale(sx, sy).Offset(dx, dy), Columns, Rows, CellWidth * sx, CellHeight * sy, GapX * sx, GapY * sy);
+        => new(Area.Scale(sx, sy).Offset(dx, dy), Columns, Rows, CellWidth * sx, CellHeight * sy, GapX * sx, GapY * sy, Colors);
 }
 
 /// <summary>The controls shown in free colour mode, where any colour can be typed or picked.</summary>
@@ -173,13 +175,11 @@ public sealed record Surface(string Id, string Name, string Layout, ScreenRect C
 /// </summary>
 /// <param name="ReferenceWidth">Width of the screen the coordinates were recorded on.</param>
 /// <param name="ReferenceHeight">Height of the screen the coordinates were recorded on.</param>
-/// <param name="Palette">The colours of the swatch grid as #RRGGBB, in swatch order.</param>
 /// <param name="Layouts">The paint screen arrangements, by key.</param>
 /// <param name="Surfaces">The paintable surfaces.</param>
 public sealed record SurfaceCatalog(
     int ReferenceWidth,
     int ReferenceHeight,
-    string[] Palette,
     Dictionary<string, LayoutFamily> Layouts,
     Surface[] Surfaces);
 
