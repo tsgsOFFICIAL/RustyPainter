@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup Condition="$([System.String]::Copy('$(MSBuildProjectDirectory)').Contains('IconPacks.Avalonia'))">
+    <TargetFrameworks>net10.0</TargetFrameworks>
+    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+  </PropertyGroup>
+</Project>

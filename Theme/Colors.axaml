@@ -1,0 +1,16 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <ResourceDictionary.MergedDictionaries>
+        <MergeResourceInclude Source="/Theme/Colors.Shared.axaml"/>
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- Dark only for now (matches the design mockup). Both variant keys point at the dark palette so
+         anything resolving against the Default variant never ends up with missing brushes; a light
+         palette can be added later by swapping the "Light" entry. -->
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceInclude Source="avares://RustyPainter/Theme/Colors.Dark.axaml" x:Key="Light"/>
+        <ResourceInclude Source="avares://RustyPainter/Theme/Colors.Dark.axaml" x:Key="Dark"/>
+    </ResourceDictionary.ThemeDictionaries>
+
+</ResourceDictionary>

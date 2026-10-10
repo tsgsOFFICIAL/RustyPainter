@@ -1,0 +1,12 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <SolidColorBrush x:Key="AccentColor"            Color="#F97316"/>
+    <SolidColorBrush x:Key="AccentColorHover"       Color="#FB923C"/>
+    <SolidColorBrush x:Key="DangerColor"            Color="#F87171"/>
+    <SolidColorBrush x:Key="DangerColorHover"       Color="#FCA5A5"/>
+    <SolidColorBrush x:Key="DangerColorTransparent" Color="#00F87171"/>
+    <SolidColorBrush x:Key="WhiteColor"             Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="SuccessColor"           Color="#22C55E"/>
+    <SolidColorBrush x:Key="NetworkColor"           Color="#3B82F6"/>
+    <SolidColorBrush x:Key="GraphicsColor"          Color="#A855F7"/>
+</ResourceDictionary>

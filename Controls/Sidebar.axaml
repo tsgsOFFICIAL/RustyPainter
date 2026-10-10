@@ -1,0 +1,73 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia"
+             xmlns:converters="using:RustyPainter.Converters"
+             mc:Ignorable="d" d:DesignWidth="240" d:DesignHeight="720"
+             x:Class="RustyPainter.Controls.Sidebar"
+             x:Name="Root"
+             Width="240">
+
+    <Border Background="{DynamicResource BgColor}"
+            BorderBrush="{DynamicResource BorderColor}"
+            BorderThickness="0,0,1,0">
+        <Grid RowDefinitions="Auto, *, Auto">
+
+            <StackPanel Grid.Row="0"
+                        Orientation="Horizontal"
+                        Spacing="10"
+                        Margin="20,20,20,16">
+                <Image Source="/Assets/App/logo.ico" Width="32" Height="32" />
+                <StackPanel Spacing="0" VerticalAlignment="Center">
+                    <TextBlock Text="RUSTY" FontSize="15" FontWeight="900" Foreground="{DynamicResource TextColor}" />
+                    <TextBlock Text="PAINTER" FontSize="15" FontWeight="900"
+                               Foreground="{DynamicResource AccentColor}" />
+                </StackPanel>
+            </StackPanel>
+
+            <StackPanel Grid.Row="1" Margin="12,0" Spacing="6">
+                <Button x:Name="NavHome" Tag="Home" Classes="navItem"
+                        Classes.active="{Binding #Root.ViewModel.ActivePage, Converter={x:Static converters:EnumEqualsConverter.Instance}, ConverterParameter=Home}"
+                        Command="{Binding #Root.ViewModel.NavigateCommand}" CommandParameter="{Binding $self.Tag}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <iconPacks:PackIconPhosphorIcons Kind="House" Width="18" Height="18" />
+                        <TextBlock Text="Home" />
+                    </StackPanel>
+                </Button>
+                <Button x:Name="NavStudio" Tag="Studio" Classes="navItem"
+                        Classes.active="{Binding #Root.ViewModel.ActivePage, Converter={x:Static converters:EnumEqualsConverter.Instance}, ConverterParameter=Studio}"
+                        Command="{Binding #Root.ViewModel.NavigateCommand}" CommandParameter="{Binding $self.Tag}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <iconPacks:PackIconPhosphorIcons Kind="PaintBrushBroad" Width="18" Height="18" />
+                        <TextBlock Text="Studio" />
+                    </StackPanel>
+                </Button>
+                <Button x:Name="NavLibrary" Tag="Library" Classes="navItem"
+                        Classes.active="{Binding #Root.ViewModel.ActivePage, Converter={x:Static converters:EnumEqualsConverter.Instance}, ConverterParameter=Library}"
+                        Command="{Binding #Root.ViewModel.NavigateCommand}" CommandParameter="{Binding $self.Tag}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <iconPacks:PackIconPhosphorIcons Kind="Books" Width="18" Height="18" />
+                        <TextBlock Text="Library" />
+                    </StackPanel>
+                </Button>
+
+                <Border Height="1" Margin="4,8" Background="{DynamicResource BorderColor}" />
+
+                <Button x:Name="NavSettings" Tag="Settings" Classes="navItem"
+                        Classes.active="{Binding #Root.ViewModel.ActivePage, Converter={x:Static converters:EnumEqualsConverter.Instance}, ConverterParameter=Settings}"
+                        Command="{Binding #Root.ViewModel.NavigateCommand}" CommandParameter="{Binding $self.Tag}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <iconPacks:PackIconPhosphorIcons Kind="Gear" Width="18" Height="18" />
+                        <TextBlock Text="Settings" />
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+
+            <!-- Pinned to the bottom: the Rust running/detected indicator from the design mockup goes here once game detection exists. -->
+            <StackPanel Grid.Row="2" Margin="16,0,16,16" Spacing="10" />
+
+        </Grid>
+    </Border>
+
+</UserControl>

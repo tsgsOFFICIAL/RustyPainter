@@ -1,0 +1,59 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <RollForward>LatestMinor</RollForward>
+        <Nullable>enable</Nullable>
+        <ApplicationManifest>app.manifest</ApplicationManifest>
+        <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+        <ApplicationIcon>Assets\App\logo.ico</ApplicationIcon>
+        <DefaultItemExcludes>$(DefaultItemExcludes);externals/**</DefaultItemExcludes>
+        <FileVersion>0.1.0</FileVersion>
+        <InformationalVersion>$(FileVersion)</InformationalVersion>
+        <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+        <IsPackable>false</IsPackable>
+        <Company>tsgsOFFICIAL</Company>
+        <Copyright>tsgsOFFICIAL</Copyright>
+        <Authors>tsgsOFFICIAL</Authors>
+        <!-- Windows-only app (see app.manifest): registry access and Win32 input are used directly. -->
+        <NoWarn>$(NoWarn);CA1416</NoWarn>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+        <DebugType>none</DebugType>
+    </PropertyGroup>
+
+    <Target Name="CleanupPublish" AfterTargets="Publish" Condition="'$(Configuration)' == 'Release'">
+        <ItemGroup>
+            <PdbFiles Include="$(PublishDir)**\*.pdb" />
+        </ItemGroup>
+
+        <Delete Files="@(PdbFiles)" />
+    </Target>
+
+    <ItemGroup>
+        <ProjectReference Include="externals\IconPacks.Avalonia\src\IconPacks.Avalonia.PhosphorIcons\IconPacks.Avalonia.PhosphorIcons.csproj" />
+        <ProjectReference Include="externals\IconPacks.Avalonia\src\IconPacks.Avalonia.SimpleIcons\IconPacks.Avalonia.SimpleIcons.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Avalonia" Version="12.0.5" />
+        <PackageReference Include="Avalonia.Desktop" Version="12.0.5" />
+        <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.5" />
+        <PackageReference Include="Avalonia.Fonts.Inter" Version="12.0.5" />
+        <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3">
+            <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
+            <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.9" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- Embedded so the update prompt can fall back to the shipped notes, and so the About page can show them offline. -->
+        <None Remove="CHANGELOG.md" />
+        <EmbeddedResource Include="CHANGELOG.md" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <AvaloniaResource Include="Assets\**" />
+    </ItemGroup>
+</Project>

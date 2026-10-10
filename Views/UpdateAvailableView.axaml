@@ -1,0 +1,35 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:RustyPainter.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="480" d:DesignHeight="420"
+             x:Class="RustyPainter.Views.UpdateAvailableView"
+             x:DataType="vm:UpdateAvailableViewModel">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <StackPanel Grid.Row="0" Margin="24,20,24,8" Spacing="14">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <TextBlock Text="A new version is available:"
+                           FontSize="20"
+                           FontWeight="Bold"
+                           TextWrapping="Wrap"/>
+                <TextBlock Text="{Binding Version}"
+                           FontSize="20"
+                           FontWeight="Bold"
+                           Foreground="{DynamicResource AccentColor}"/>
+            </StackPanel>
+            <TextBlock Text="What's new"
+                       IsVisible="{Binding HasChangelog}"
+                       FontSize="15"
+                       FontWeight="SemiBold"/>
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1" Margin="24,0,24,16" IsVisible="{Binding HasChangelog}">
+            <ContentControl x:Name="ChangelogHost"/>
+        </ScrollViewer>
+
+    </Grid>
+
+</UserControl>

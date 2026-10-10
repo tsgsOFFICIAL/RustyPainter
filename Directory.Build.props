@@ -1,0 +1,6 @@
+<Project>
+  <!-- IconPacks submodule: avoid ref-assembly race when built as project references -->
+  <PropertyGroup Condition="$([System.String]::Copy('$(MSBuildProjectDirectory)').Contains('IconPacks.Avalonia'))">
+    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+  </PropertyGroup>
+</Project>

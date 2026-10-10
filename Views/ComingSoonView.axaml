@@ -1,0 +1,19 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia"
+             xmlns:vm="using:RustyPainter.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="640"
+             x:Class="RustyPainter.Views.ComingSoonView"
+             x:DataType="vm:ComingSoonViewModel">
+
+    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
+        <iconPacks:PackIconPhosphorIcons Kind="Barricade" Width="40" Height="40" HorizontalAlignment="Center"
+                                         Foreground="{DynamicResource TextMutedColor}"/>
+        <TextBlock Text="{Binding Title}" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center"
+                   Foreground="{DynamicResource TextColor}"/>
+        <TextBlock Text="Coming soon" Classes="muted" HorizontalAlignment="Center"/>
+    </StackPanel>
+
+</UserControl>

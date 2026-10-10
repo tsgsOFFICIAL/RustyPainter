@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/externals/" />
+  <Folder Name="/externals/IconPacks.Avalonia/" />
+  <Folder Name="/externals/IconPacks.Avalonia/src/">
+    <Project Path="externals/IconPacks.Avalonia/src/IconPacks.Avalonia.Core/IconPacks.Avalonia.Core.csproj" />
+    <Project Path="externals/IconPacks.Avalonia/src/IconPacks.Avalonia.PhosphorIcons/IconPacks.Avalonia.PhosphorIcons.csproj" />
+    <Project Path="externals/IconPacks.Avalonia/src/IconPacks.Avalonia.SimpleIcons/IconPacks.Avalonia.SimpleIcons.csproj" />
+  </Folder>
+  <Project Path="RustyPainter.csproj" />
+</Solution>

@@ -1,0 +1,66 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:RustyPainter.ViewModels"
+        xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia"
+        xmlns:controls="using:RustyPainter.Controls"
+        mc:Ignorable="d" d:DesignWidth="1280" d:DesignHeight="800"
+        x:Class="RustyPainter.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="RustyPainter"
+        Icon="/Assets/App/logo.ico"
+        Width="1280" Height="800"
+        MinWidth="1000" MinHeight="640"
+        Background="{DynamicResource BgColor}"
+        WindowStartupLocation="CenterScreen">
+
+    <Grid RowDefinitions="Auto, *, Auto">
+        <controls:TitleBar Grid.Row="0" ShowBranding="False" />
+
+        <Grid Grid.Row="1" ColumnDefinitions="Auto, *">
+            <controls:Sidebar Grid.Column="0" ViewModel="{Binding Sidebar}" />
+            <ContentControl Grid.Column="1" Content="{Binding CurrentPage}" />
+        </Grid>
+
+        <Border Grid.Row="2"
+                Padding="16,10"
+                BorderBrush="{DynamicResource BorderColor}"
+                BorderThickness="0,1,0,0">
+            <Grid ColumnDefinitions="*, Auto, *">
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                    <TextBlock Text="RustyPainter" Classes="muted" FontSize="12" />
+                    <TextBlock Text="{Binding VersionText}" Classes="muted" FontSize="12" />
+                    <TextBlock Text="·" Classes="muted" FontSize="12" />
+                    <TextBlock Text="by" Classes="muted" FontSize="12" />
+                    <TextBlock Text="tsgsOFFICIAL" Classes="muted" FontSize="12" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="Join the community" Classes="muted" FontSize="12" VerticalAlignment="Center" />
+
+                    <Button Classes="linkIcon" Command="{Binding OpenGitHubCommand}" ToolTip.Tip="GitHub">
+                        <iconPacks:PackIconSimpleIcons Kind="GitHub" Width="16" Height="16" />
+                    </Button>
+
+                    <Button Classes="linkIcon" Command="{Binding OpenDiscordCommand}" ToolTip.Tip="Discord">
+                        <iconPacks:PackIconSimpleIcons Kind="Discord" Width="16" Height="16" Foreground="#5865F2" />
+                    </Button>
+
+                    <Button Classes="linkIcon" Command="{Binding OpenKofiCommand}" ToolTip.Tip="Ko-fi">
+                        <iconPacks:PackIconPhosphorIcons Kind="CoffeeFill" Width="16" Height="16" Foreground="#FF6433" />
+                    </Button>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right"
+                            VerticalAlignment="Center">
+                    <iconPacks:PackIconPhosphorIcons Kind="Heart" Width="14" Height="14"
+                                                     Foreground="{StaticResource SuccessColor}" />
+                    <TextBlock Text="Free &amp; open source" Classes="muted" FontSize="12" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+
+</Window>

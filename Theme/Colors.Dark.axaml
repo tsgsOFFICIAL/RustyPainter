@@ -1,0 +1,19 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <SolidColorBrush x:Key="TextColor"              Color="#F0F2F7"/>
+    <SolidColorBrush x:Key="TextMutedColor"         Color="#8B92A5"/>
+    <SolidColorBrush x:Key="BgColor"                Color="#111318"/>
+    <SolidColorBrush x:Key="BorderColor"            Color="#2E3340"/>
+    <SolidColorBrush x:Key="BorderColorTransparent" Color="#002E3340"/>
+    <SolidColorBrush x:Key="BorderColorMuted"       Color="#4D2E3340"/>
+    <!-- AccentColor (#F97316) at 15% alpha (#26), pre-blended opaque over this theme's BgColor
+         (#111318): result = alpha*fg + (1-alpha)*bg per channel, alpha = 0x26/255 = 0.14902.
+         R: 0.14902*249 + 0.85098*17  = 51.57 -> 0x34
+         G: 0.14902*115 + 0.85098*19  = 33.31 -> 0x21
+         B: 0.14902*22  + 0.85098*24  = 23.70 -> 0x18
+         Kept opaque (alpha=255) so BrushTransition, which interpolates ARGB channels
+         independently, never has to ramp alpha and hue at once - see AppStyles.axaml's
+         Button.navItem.active for why that combination flashes. Recompute this if
+         AccentColor or this theme's BgColor ever change. -->
+    <SolidColorBrush x:Key="AccentSurfaceColor"     Color="#342118"/>
+</ResourceDictionary>
