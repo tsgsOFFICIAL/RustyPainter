@@ -4,22 +4,22 @@ using System.Collections.Generic;
 
 namespace RustyPainter.Imaging;
 
-/// <summary>Which colours the game offers while painting.</summary>
+/// <summary>Which colors the game offers while painting.</summary>
 public enum ColorMode
 {
-    /// <summary>The fixed swatches the game shows. Quick to pick, every colour is exact.</summary>
+    /// <summary>The fixed swatches the game shows. Quick to pick, every color is exact.</summary>
     Swatches,
 
-    /// <summary>Any colour, typed in as hex. Better pictures, one colour change per colour used.</summary>
+    /// <summary>Any color, typed in as hex. Better pictures, one color change per color used.</summary>
     Free
 }
 
 /// <summary>Everything the user can change about how a picture becomes paint.</summary>
 /// <param name="Placement">Where the picture sits on the canvas.</param>
 /// <param name="Adjustments">Filter, brightness, contrast and saturation.</param>
-/// <param name="Mode">Swatch colours or free colours.</param>
-/// <param name="MaxColors">In free mode, how many colours the picture is reduced to.</param>
-/// <param name="Dithering">How colour differences are spread around.</param>
+/// <param name="Mode">Swatch colors or free colors.</param>
+/// <param name="MaxColors">In free mode, how many colors the picture is reduced to.</param>
+/// <param name="Dithering">How color differences are spread around.</param>
 public sealed record StudioSettings(
     PlacementSettings Placement,
     AdjustmentSettings Adjustments,
@@ -63,14 +63,14 @@ public static class StudioGeometry
 public static class StudioPipeline
 {
     /// <summary>
-    /// Turns an already oriented picture into a plan: place it on the grid, adjust it, choose the colours
-    /// (the game's swatches or an adaptive palette), and match every cell to a colour.
+    /// Turns an already oriented picture into a plan: place it on the grid, adjust it, choose the colors
+    /// (the game's swatches or an adaptive palette), and match every cell to a color.
     /// </summary>
     /// <param name="oriented">The picture after rotating and flipping.</param>
     /// <param name="settings">The user's choices.</param>
     /// <param name="gridWidth">Cells across.</param>
     /// <param name="gridHeight">Cells down.</param>
-    /// <param name="swatches">The colours the game offers in swatch mode for this surface.</param>
+    /// <param name="swatches">The colors the game offers in swatch mode for this surface.</param>
     public static PaintPlan Run(PixelBuffer oriented, StudioSettings settings, int gridWidth, int gridHeight, IReadOnlyList<Rgb> swatches)
     {
         PixelBuffer cells = PlacementEngine.Resample(oriented, settings.Placement, gridWidth, gridHeight);

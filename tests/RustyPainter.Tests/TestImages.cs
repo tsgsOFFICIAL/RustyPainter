@@ -24,7 +24,7 @@ internal static class TestImages
         return p;
     }
 
-    /// <summary>A smooth ramp through many different colours.</summary>
+    /// <summary>A smooth ramp through many different colors.</summary>
     public static PixelBuffer Rainbow(int width = 64, int height = 8)
     {
         PixelBuffer p = new(width, height);

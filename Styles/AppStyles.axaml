@@ -360,6 +360,22 @@
          
          TODO: Replace 'Barricade' with 'CaretRight'
           -->
+    <Style Selector="Arc.spinner">
+        <Setter Property="RenderTransform">
+            <RotateTransform/>
+        </Setter>
+        <Style.Animations>
+            <Animation Duration="0:0:0.9" IterationCount="Infinite">
+                <KeyFrame Cue="0%">
+                    <Setter Property="RotateTransform.Angle" Value="0"/>
+                </KeyFrame>
+                <KeyFrame Cue="100%">
+                    <Setter Property="RotateTransform.Angle" Value="360"/>
+                </KeyFrame>
+            </Animation>
+        </Style.Animations>
+    </Style>
+
     <Style Selector="Button.outOfOrder, Border.outOfOrder">
         <Setter Property="Opacity" Value="0.55" />
         <Setter Property="Cursor" Value="No" />

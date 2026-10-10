@@ -71,7 +71,7 @@ public class StudioProcessingTests : IDisposable
     }
 
     [AvaloniaFact]
-    public void Swatch_mode_uses_the_surfaces_own_colours()
+    public void Swatch_mode_uses_the_surfaces_own_colors()
     {
         StudioViewModel studio = Loaded(TestImages.Rainbow());
         Assert.Equal(64, studio.ProcessNow()!.Palette.Count);
@@ -81,7 +81,7 @@ public class StudioProcessingTests : IDisposable
     }
 
     [AvaloniaFact]
-    public void Free_mode_reduces_to_the_chosen_number_of_colours()
+    public void Free_mode_reduces_to_the_chosen_number_of_colors()
     {
         StudioViewModel studio = Loaded(TestImages.Rainbow());
         studio.ColorModeChoices.Select(ColorMode.Free);
@@ -95,12 +95,12 @@ public class StudioProcessingTests : IDisposable
     }
 
     [AvaloniaFact]
-    public void The_colour_limit_is_kept_between_2_and_64()
+    public void The_color_limit_is_kept_between_2_and_256()
     {
         StudioViewModel studio = Loaded(TestImages.Rainbow());
 
         studio.MaxColors = 500;
-        Assert.Equal(64, studio.MaxColors);
+        Assert.Equal(256, studio.MaxColors);
 
         studio.MaxColors = 0;
         Assert.Equal(2, studio.MaxColors);
@@ -228,14 +228,14 @@ public class StudioProcessingTests : IDisposable
     }
 
     [AvaloniaFact]
-    public void Lists_the_colours_the_picture_uses()
+    public void Lists_the_colors_the_picture_uses()
     {
         StudioViewModel studio = Loaded(TestImages.RedAndGreen());
         studio.ColorModeChoices.Select(ColorMode.Free);
         PaintPlan plan = studio.ProcessNow()!;
 
         Assert.Equal(plan.ColorsUsed, studio.UsedColors.Count);
-        Assert.Equal($"{plan.ColorsUsed} colours", studio.ColorsText);
+        Assert.Equal($"{plan.ColorsUsed} colors", studio.ColorsText);
         Assert.Equal($"{plan.StrokeCount:N0} strokes", studio.StrokesText);
         Assert.True(plan.StrokeCount >= plan.Height);
     }
@@ -269,6 +269,45 @@ public class StudioProcessingTests : IDisposable
         Assert.NotNull(studio.Plan);
         Assert.NotNull(studio.Preview);
         Assert.False(studio.IsBusy);
+    }
+
+    [AvaloniaFact]
+    public async Task The_page_shows_it_is_busy_for_every_update()
+    {
+        StudioViewModel studio = Loaded(TestImages.Rainbow());
+        Assert.True(studio.IsBusy);
+
+        for (int i = 0; i < 100 && studio.IsBusy; i++)
+        {
+            Dispatcher.UIThread.RunJobs();
+            await Task.Delay(30);
+        }
+
+        Assert.False(studio.IsBusy);
+
+        studio.Zoom = 2;
+        Assert.True(studio.IsBusy);
+
+        for (int i = 0; i < 100 && studio.IsBusy; i++)
+        {
+            Dispatcher.UIThread.RunJobs();
+            await Task.Delay(30);
+        }
+
+        Assert.False(studio.IsBusy);
+    }
+
+    [AvaloniaFact]
+    public void Free_mode_can_use_up_to_256_colors()
+    {
+        StudioViewModel studio = Loaded(TestImages.Rainbow(256, 64));
+        studio.ColorModeChoices.Select(ColorMode.Free);
+        studio.QualityChoices.Select(1);
+        studio.MaxColors = 256;
+
+        PaintPlan plan = studio.ProcessNow()!;
+
+        Assert.InRange(plan.Palette.Count, 100, 256);
     }
 
     [AvaloniaFact]

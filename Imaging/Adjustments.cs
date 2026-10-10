@@ -2,7 +2,7 @@ using System;
 
 namespace RustyPainter.Imaging;
 
-/// <summary>A one-click look applied before the colours are matched.</summary>
+/// <summary>A one-click look applied before the colors are matched.</summary>
 public enum ImageFilter
 {
     None,
@@ -13,10 +13,10 @@ public enum ImageFilter
     Posterize
 }
 
-/// <summary>Tweaks applied to the picture before the colours are matched.</summary>
+/// <summary>Tweaks applied to the picture before the colors are matched.</summary>
 /// <param name="Brightness">-1 (much darker) to 1 (much lighter).</param>
 /// <param name="Contrast">-1 (flat grey) to 1 (very punchy).</param>
-/// <param name="Saturation">-1 (no colour) to 1 (very vivid).</param>
+/// <param name="Saturation">-1 (no color) to 1 (very vivid).</param>
 /// <param name="Filter">A one-click look, applied first.</param>
 public sealed record AdjustmentSettings(double Brightness = 0, double Contrast = 0, double Saturation = 0, ImageFilter Filter = ImageFilter.None)
 {

@@ -2,10 +2,10 @@ using System;
 
 namespace RustyPainter.Imaging;
 
-/// <summary>A colour with 8 bits per channel.</summary>
+/// <summary>A color with 8 bits per channel.</summary>
 public readonly record struct Rgb(byte R, byte G, byte B)
 {
-    /// <summary>The colour as "#RRGGBB".</summary>
+    /// <summary>The color as "#RRGGBB".</summary>
     public string Hex => $"#{R:X2}{G:X2}{B:X2}";
 
     /// <summary>Reads "#RRGGBB" (the leading # is optional).</summary>
@@ -13,7 +13,7 @@ public readonly record struct Rgb(byte R, byte G, byte B)
     {
         ReadOnlySpan<char> digits = hex.AsSpan().TrimStart('#');
         if (digits.Length != 6)
-            throw new FormatException($"'{hex}' is not a #RRGGBB colour.");
+            throw new FormatException($"'{hex}' is not a #RRGGBB color.");
 
         return new Rgb(
             byte.Parse(digits[..2], System.Globalization.NumberStyles.HexNumber),
@@ -60,7 +60,7 @@ public sealed class PixelBuffer
     /// <summary>The index in <see cref="Data"/> of the first byte of the pixel at (<paramref name="x"/>, <paramref name="y"/>).</summary>
     public int OffsetOf(int x, int y) => (y * Width + x) * 4;
 
-    /// <summary>A picture filled with one colour.</summary>
+    /// <summary>A picture filled with one color.</summary>
     public static PixelBuffer Solid(int width, int height, byte r, byte g, byte b, byte a = 255)
     {
         PixelBuffer buffer = new(width, height);

@@ -82,7 +82,7 @@ public class StudioRenderTests : IDisposable
         StudioViewModel studio = new(new SurfaceService());
         Assert.True(studio.TryLoad(path));
 
-        // Any colour, so the picture keeps its own red instead of the nearest game swatch.
+        // Any color, so the picture keeps its own red instead of the nearest game swatch.
         studio.ColorModeChoices.Select(ColorMode.Free);
         studio.ProcessNow();
 
@@ -94,6 +94,39 @@ public class StudioRenderTests : IDisposable
             (byte r, byte g, byte b) = PixelAt(frame, x, y);
             Assert.True(IsRed(r, g, b), $"Expected red at {x},{y} but got {r},{g},{b}");
         }
+    }
+
+    [AvaloniaFact]
+    public void A_spinner_shows_while_the_picture_is_being_prepared()
+    {
+        string path = Path.Combine(_folder, "red.png");
+        TestImages.SavePng(PixelBuffer.Solid(1, 1, 200, 30, 30), path);
+
+        // Hold the update back so the page is still busy when it is drawn.
+        StudioViewModel studio = new(new SurfaceService()) { ReprocessDelay = TimeSpan.FromSeconds(30) };
+        Assert.True(studio.TryLoad(path));
+        Assert.True(studio.IsBusy);
+
+        WriteableBitmap busy = Draw(studio, "studio-busy");
+        Assert.True(HasAccent(busy), "Expected the orange spinner in the top right of the preview.");
+
+        studio.ProcessNow();
+        WriteableBitmap done = Draw(studio, "studio-not-busy");
+        Assert.False(HasAccent(done), "The spinner should be gone once the picture is ready.");
+    }
+
+    /// <summary>Looks for the orange accent in the top right corner of the preview stage, where the spinner sits.</summary>
+    private static bool HasAccent(WriteableBitmap frame)
+    {
+        for (int y = 70; y < 120; y++)
+            for (int x = 840; x < 1010; x++)
+            {
+                (byte r, byte g, byte b) = PixelAt(frame, x, y);
+                if (r > 200 && g is > 70 and < 160 && b < 70)
+                    return true;
+            }
+
+        return false;
     }
 
     [AvaloniaFact]

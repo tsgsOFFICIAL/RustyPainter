@@ -4,7 +4,7 @@ using System.Linq;
 namespace RustyPainter.Imaging;
 
 /// <summary>
-/// The result of preparing a picture for a canvas: a grid of cells, each one a colour from the palette or
+/// The result of preparing a picture for a canvas: a grid of cells, each one a color from the palette or
 /// left unpainted, plus the numbers that say how much work painting it will be.
 /// </summary>
 public sealed class PaintPlan
@@ -32,7 +32,7 @@ public sealed class PaintPlan
                     painted++;
                     counts[index]++;
 
-                    // A run of the same colour along a row is painted with one drag.
+                    // A run of the same color along a row is painted with one drag.
                     if (index != previous)
                         strokes++;
                 }
@@ -56,7 +56,7 @@ public sealed class PaintPlan
     /// <summary>Cells down.</summary>
     public int Height { get; }
 
-    /// <summary>The colours the cells refer to.</summary>
+    /// <summary>The colors the cells refer to.</summary>
     public IReadOnlyList<Rgb> Palette { get; }
 
     /// <summary>One palette index per cell, row by row, or <see cref="Quantizer.Unpainted"/>.</summary>
@@ -68,10 +68,10 @@ public sealed class PaintPlan
     /// <summary>How many separate drags painting row by row needs.</summary>
     public int StrokeCount { get; }
 
-    /// <summary>The colours that are really used, most used first.</summary>
+    /// <summary>The colors that are really used, most used first.</summary>
     public IReadOnlyList<Rgb> UsedColors { get; }
 
-    /// <summary>How many different colours are used, which is how many times the colour has to be changed.</summary>
+    /// <summary>How many different colors are used, which is how many times the color has to be changed.</summary>
     public int ColorsUsed => UsedColors.Count;
 
     /// <summary>The plan as a picture, one pixel per cell, with unpainted cells transparent.</summary>

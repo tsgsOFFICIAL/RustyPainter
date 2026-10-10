@@ -17,15 +17,15 @@ public static class MedianCut
     }
 
     /// <summary>
-    /// Chooses up to <paramref name="maxColors"/> colours that represent the painted pixels of the picture well:
-    /// the colours are grouped into boxes, and the box holding the most pixels is split in two until there are enough.
-    /// Flat areas keep their exact colour. Fewer colours means fewer colour changes while painting.
+    /// Chooses up to <paramref name="maxColors"/> colors that represent the painted pixels of the picture well:
+    /// the colors are grouped into boxes, and the box holding the most pixels is split in two until there are enough.
+    /// Flat areas keep their exact color. Fewer colors means fewer color changes while painting.
     /// </summary>
     public static List<Rgb> BuildPalette(PixelBuffer image, int maxColors)
     {
         maxColors = Math.Max(1, maxColors);
 
-        // Group pixels by their colour at 5 bits per channel, remembering the true average of each group.
+        // Group pixels by their color at 5 bits per channel, remembering the true average of each group.
         Dictionary<int, Bin> bins = [];
         for (int i = 0; i < image.Data.Length; i += 4)
         {
@@ -51,7 +51,7 @@ public static class MedianCut
 
         while (boxes.Count < maxColors)
         {
-            // Split the box with the most pixels that still has more than one colour in it.
+            // Split the box with the most pixels that still has more than one color in it.
             List<Bin>? target = boxes.Where(box => box.Count > 1).OrderByDescending(box => box.Sum(bin => bin.Count)).FirstOrDefault();
             if (target is null)
                 break;

@@ -249,7 +249,7 @@ public class ResampleTests
 
         PixelBuffer grid = PlacementEngine.Resample(p, new PlacementSettings(FitMode.Stretch), 3, 1);
 
-        // The middle cell is half over the red pixel; its colour must stay full red, only its alpha drops.
+        // The middle cell is half over the red pixel; its color must stay full red, only its alpha drops.
         (byte r, _, _, byte a) = Cell(grid, 1, 0);
         Assert.Equal(255, r);
         Assert.InRange(a, 1, 254);
@@ -377,7 +377,7 @@ public class QuantizerTests
     private static PixelBuffer Grey(int width, int height, byte value) => PixelBuffer.Solid(width, height, value, value, value);
 
     [Fact]
-    public void Without_dithering_every_cell_takes_its_nearest_colour()
+    public void Without_dithering_every_cell_takes_its_nearest_color()
     {
         int[] dark = Quantizer.Map(Grey(2, 2, 100), BlackAndWhite, Dithering.None);
         int[] light = Quantizer.Map(Grey(2, 2, 200), BlackAndWhite, Dithering.None);
@@ -406,14 +406,14 @@ public class QuantizerTests
     [InlineData(Dithering.None)]
     [InlineData(Dithering.Smooth)]
     [InlineData(Dithering.Ordered)]
-    public void A_palette_colour_always_maps_to_itself(Dithering dithering)
+    public void A_palette_color_always_maps_to_itself(Dithering dithering)
     {
         Rgb[] palette = [new Rgb(255, 0, 0), new Rgb(0, 255, 0), new Rgb(0, 0, 255), new Rgb(255, 255, 0)];
         PixelBuffer p = new(4, 1);
         for (int x = 0; x < 4; x++)
             p.Set(x, 0, palette[x].R, palette[x].G, palette[x].B);
 
-        // Ordered dithering shifts colours a little, but never far enough to change a pure palette colour here.
+        // Ordered dithering shifts colors a little, but never far enough to change a pure palette color here.
         Assert.Equal([0, 1, 2, 3], Quantizer.Map(p, palette, dithering));
     }
 
@@ -427,7 +427,7 @@ public class QuantizerTests
     }
 
     [Fact]
-    public void Pattern_dithering_also_uses_both_colours()
+    public void Pattern_dithering_also_uses_both_colors()
     {
         int[] result = Quantizer.Map(Grey(16, 16, 128), BlackAndWhite, Dithering.Ordered);
 
@@ -469,7 +469,7 @@ public class QuantizerTests
     }
 
     [Fact]
-    public void Picks_the_perceptually_nearest_colour()
+    public void Picks_the_perceptually_nearest_color()
     {
         // A strong green is nearer to a dark green than to red or blue by eye.
         Rgb[] palette = [new Rgb(255, 0, 0), new Rgb(0, 100, 0), new Rgb(0, 0, 255)];
@@ -492,7 +492,7 @@ public class MedianCutTests
     }
 
     [Fact]
-    public void Flat_colours_are_kept_exactly()
+    public void Flat_colors_are_kept_exactly()
     {
         Rgb[] colors = [new Rgb(200, 30, 30), new Rgb(30, 200, 30), new Rgb(30, 30, 200)];
 
@@ -502,7 +502,7 @@ public class MedianCutTests
     }
 
     [Fact]
-    public void Never_returns_more_colours_than_asked_for()
+    public void Never_returns_more_colors_than_asked_for()
     {
         Rgb[] colors = [new Rgb(200, 30, 30), new Rgb(30, 200, 30), new Rgb(30, 30, 200)];
 
@@ -510,7 +510,7 @@ public class MedianCutTests
     }
 
     [Fact]
-    public void Returns_fewer_when_the_picture_has_fewer_colours()
+    public void Returns_fewer_when_the_picture_has_fewer_colors()
     {
         Rgb[] colors = [new Rgb(200, 30, 30), new Rgb(30, 200, 30)];
 
@@ -539,7 +539,7 @@ public class MedianCutTests
     }
 
     [Fact]
-    public void One_colour_asked_for_gives_the_average()
+    public void One_color_asked_for_gives_the_average()
     {
         List<Rgb> palette = MedianCut.BuildPalette(Stripes(new Rgb(0, 0, 0), new Rgb(200, 200, 200)), 1);
 
@@ -553,7 +553,7 @@ public class PaintPlanTests
     private static readonly Rgb[] TwoColors = [new Rgb(255, 0, 0), new Rgb(0, 0, 255)];
 
     [Fact]
-    public void Counts_cells_colours_and_strokes()
+    public void Counts_cells_colors_and_strokes()
     {
         // 0 0 1 .
         // 1 1 . 0
@@ -581,7 +581,7 @@ public class PaintPlanTests
     }
 
     [Fact]
-    public void Lists_only_the_colours_that_are_used_most_used_first()
+    public void Lists_only_the_colors_that_are_used_most_used_first()
     {
         Rgb[] palette = [new Rgb(1, 1, 1), new Rgb(2, 2, 2), new Rgb(3, 3, 3)];
         PaintPlan plan = new(4, 1, palette, [2, 2, 2, 0]);
@@ -659,7 +659,7 @@ public class StudioPipelineTests
         => new(new PlacementSettings(fit), new AdjustmentSettings(Filter: filter), mode, maxColors, dithering);
 
     [Fact]
-    public void A_swatch_coloured_picture_maps_to_that_swatch()
+    public void A_swatch_colored_picture_maps_to_that_swatch()
     {
         Rgb red = new(255, 51, 51);
         PixelBuffer source = PixelBuffer.Solid(1, 1, red.R, red.G, red.B);
@@ -674,7 +674,7 @@ public class StudioPipelineTests
     }
 
     [Fact]
-    public void Free_mode_keeps_the_exact_colour_of_a_flat_picture()
+    public void Free_mode_keeps_the_exact_color_of_a_flat_picture()
     {
         PixelBuffer source = PixelBuffer.Solid(2, 2, 200, 30, 30);
 
@@ -684,7 +684,7 @@ public class StudioPipelineTests
     }
 
     [Fact]
-    public void Free_mode_respects_the_colour_limit()
+    public void Free_mode_respects_the_color_limit()
     {
         PixelBuffer ramp = new(64, 1);
         for (int x = 0; x < 64; x++)
@@ -709,7 +709,7 @@ public class StudioPipelineTests
     }
 
     [Fact]
-    public void Filters_run_before_the_colours_are_matched()
+    public void Filters_run_before_the_colors_are_matched()
     {
         // White inverted is black, and black is the first swatch.
         PixelBuffer source = PixelBuffer.Solid(1, 1, 255, 255, 255);

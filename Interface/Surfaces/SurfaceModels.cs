@@ -21,7 +21,7 @@ public readonly record struct ScreenRect(double X1, double Y1, double X2, double
 }
 
 /// <summary>
-/// The grid of colour swatches shown in swatch mode, together with the colour of each swatch. Swatches are
+/// The grid of color swatches shown in swatch mode, together with the color of each swatch. Swatches are
 /// numbered left to right, then top to bottom, which is also the order of <see cref="Colors"/>. Different
 /// surfaces have different swatches (most have 64, neon signs have 8).
 /// </summary>
@@ -32,7 +32,7 @@ public readonly record struct ScreenRect(double X1, double Y1, double X2, double
 /// <param name="CellHeight">Height of one swatch.</param>
 /// <param name="GapX">Horizontal gap between swatches.</param>
 /// <param name="GapY">Vertical gap between swatches.</param>
-/// <param name="Colors">The colour of each swatch as #RRGGBB.</param>
+/// <param name="Colors">The color of each swatch as #RRGGBB.</param>
 public sealed record ColorGrid(ScreenRect Area, int Columns, int Rows, double CellWidth, double CellHeight, double GapX, double GapY, string[] Colors)
 {
     /// <summary>The number of swatches in the grid.</summary>
@@ -54,12 +54,12 @@ public sealed record ColorGrid(ScreenRect Area, int Columns, int Rows, double Ce
         => new(Area.Scale(sx, sy).Offset(dx, dy), Columns, Rows, CellWidth * sx, CellHeight * sy, GapX * sx, GapY * sy, Colors);
 }
 
-/// <summary>The controls shown in free colour mode, where any colour can be typed or picked.</summary>
-/// <param name="ColorHex">The hex colour field.</param>
+/// <summary>The controls shown in free color mode, where any color can be typed or picked.</summary>
+/// <param name="ColorHex">The hex color field.</param>
 /// <param name="ColorArea">The saturation and brightness square.</param>
 /// <param name="HueBar">The hue bar.</param>
-/// <param name="SavedColors">The saved colour slots, top to bottom.</param>
-/// <param name="AddColor">The button that saves the current colour into a slot.</param>
+/// <param name="SavedColors">The saved color slots, top to bottom.</param>
+/// <param name="AddColor">The button that saves the current color into a slot.</param>
 public sealed record FreeColorControls(ScreenRect ColorHex, ScreenRect ColorArea, ScreenRect HueBar, ScreenRect[] SavedColors, ScreenRect AddColor)
 {
     /// <summary>Scales every rectangle, then moves it by the given offset.</summary>
@@ -71,8 +71,8 @@ public sealed record FreeColorControls(ScreenRect ColorHex, ScreenRect ColorArea
 }
 
 /// <summary>
-/// Where the clickable parts of Rust's paint screen are, for one colour mode of one family of surfaces.
-/// Switching colour mode changes the height of the right hand panel, so every item in it moves.
+/// Where the clickable parts of Rust's paint screen are, for one color mode of one family of surfaces.
+/// Switching color mode changes the height of the right hand panel, so every item in it moves.
 /// </summary>
 /// <param name="Clear">The button that clears the canvas.</param>
 /// <param name="ResetCamera">The button that resets the view of the canvas.</param>
@@ -80,16 +80,16 @@ public sealed record FreeColorControls(ScreenRect ColorHex, ScreenRect ColorArea
 /// <param name="Redo">The redo button.</param>
 /// <param name="ToolBrush">The paint brush tool.</param>
 /// <param name="ToolEraser">The eraser tool.</param>
-/// <param name="ToolPicker">The colour picker tool.</param>
+/// <param name="ToolPicker">The color picker tool.</param>
 /// <param name="BrushShapes">The brush shape buttons (or presets, on surfaces that only have a few), left to right.</param>
-/// <param name="ColorModeToggle">The button in the colour header that switches between swatch mode and free colour mode.</param>
+/// <param name="ColorModeToggle">The button in the color header that switches between swatch mode and free color mode.</param>
 /// <param name="SaveChanges">The button that saves the painting and leaves the paint screen.</param>
 /// <param name="Cancel">The button that leaves the paint screen without saving.</param>
 /// <param name="Size">The brush size value, which can be clicked to type a number. Absent on surfaces with fixed brush presets.</param>
 /// <param name="Spacing">The brush spacing value. Absent on surfaces with fixed brush presets.</param>
 /// <param name="Opacity">The brush opacity value. Absent on surfaces with fixed brush presets.</param>
 /// <param name="ColorGrid">The swatch grid, present in swatch mode only.</param>
-/// <param name="FreeColor">The free colour controls, present in free colour mode only.</param>
+/// <param name="FreeColor">The free color controls, present in free color mode only.</param>
 public sealed record PaintLayout(
     ScreenRect Clear,
     ScreenRect ResetCamera,
@@ -153,9 +153,9 @@ public sealed record PaintLayout(
     }
 }
 
-/// <summary>The two arrangements of one family of paint screens, one per colour mode.</summary>
+/// <summary>The two arrangements of one family of paint screens, one per color mode.</summary>
 /// <param name="Swatches">The layout while the game shows the fixed swatch grid.</param>
-/// <param name="Free">The layout while the game shows the free colour picker.</param>
+/// <param name="Free">The layout while the game shows the free color picker.</param>
 public sealed record LayoutFamily(PaintLayout Swatches, PaintLayout Free);
 
 /// <summary>The size of a surface's paint texture in the game's own units. One unit is what a brush of size 1 paints.</summary>
@@ -217,6 +217,6 @@ public sealed class ResolvedLayout
     /// <summary>The controls in screen pixels while the game is in swatch mode.</summary>
     public PaintLayout Swatches { get; }
 
-    /// <summary>The controls in screen pixels while the game is in free colour mode.</summary>
+    /// <summary>The controls in screen pixels while the game is in free color mode.</summary>
     public PaintLayout Free { get; }
 }

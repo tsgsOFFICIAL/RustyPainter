@@ -4,10 +4,10 @@ using System.Linq;
 
 namespace RustyPainter.Imaging;
 
-/// <summary>How the difference between a colour and its nearest palette colour is spread around.</summary>
+/// <summary>How the difference between a color and its nearest palette color is spread around.</summary>
 public enum Dithering
 {
-    /// <summary>Every cell takes its nearest colour. Flat and clean, but gradients turn into bands.</summary>
+    /// <summary>Every cell takes its nearest color. Flat and clean, but gradients turn into bands.</summary>
     None,
 
     /// <summary>Error diffusion: the leftover of each cell is pushed onto its neighbours, so gradients look smooth.</summary>
@@ -40,13 +40,13 @@ public static class Quantizer
     ];
 
     /// <summary>
-    /// Picks a palette colour for every pixel. Returns one index into <paramref name="palette"/> per pixel,
-    /// or <see cref="Unpainted"/> for transparent ones. Colours are compared the way the eye does (L*a*b*).
+    /// Picks a palette color for every pixel. Returns one index into <paramref name="palette"/> per pixel,
+    /// or <see cref="Unpainted"/> for transparent ones. Colors are compared the way the eye does (L*a*b*).
     /// </summary>
     public static int[] Map(PixelBuffer image, IReadOnlyList<Rgb> palette, Dithering dithering)
     {
         if (palette.Count == 0)
-            throw new ArgumentException("The palette needs at least one colour.", nameof(palette));
+            throw new ArgumentException("The palette needs at least one color.", nameof(palette));
 
         int w = image.Width, h = image.Height;
         int[] result = new int[w * h];

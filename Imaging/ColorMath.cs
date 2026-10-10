@@ -2,10 +2,10 @@ using System;
 
 namespace RustyPainter.Imaging;
 
-/// <summary>A colour in CIE L*a*b*, where distance roughly matches how different two colours look.</summary>
+/// <summary>A color in CIE L*a*b*, where distance roughly matches how different two colors look.</summary>
 public readonly record struct Lab(double L, double A, double B)
 {
-    /// <summary>The squared distance to another colour. Cheaper than the distance and just as good for finding the nearest.</summary>
+    /// <summary>The squared distance to another color. Cheaper than the distance and just as good for finding the nearest.</summary>
     public double DistanceSquaredTo(Lab other)
     {
         double dl = L - other.L, da = A - other.A, db = B - other.B;
@@ -17,7 +17,7 @@ public static class ColorMath
 {
     private const double WhiteX = 0.95047, WhiteY = 1.0, WhiteZ = 1.08883;
 
-    /// <summary>Converts an sRGB colour (channels 0 to 255, fractions allowed) to L*a*b*.</summary>
+    /// <summary>Converts an sRGB color (channels 0 to 255, fractions allowed) to L*a*b*.</summary>
     public static Lab ToLab(double r, double g, double b)
     {
         double lr = Linear(r), lg = Linear(g), lb = Linear(b);
@@ -32,7 +32,7 @@ public static class ColorMath
 
     public static Lab ToLab(Rgb color) => ToLab(color.R, color.G, color.B);
 
-    /// <summary>How bright a colour looks, from 0 to 255.</summary>
+    /// <summary>How bright a color looks, from 0 to 255.</summary>
     public static double Luma(double r, double g, double b) => 0.299 * r + 0.587 * g + 0.114 * b;
 
     private static double Linear(double channel)

@@ -34,7 +34,7 @@ public class SurfaceServiceTests
     }
 
     [Fact]
-    public void Standard_surfaces_have_64_distinct_swatch_colours()
+    public void Standard_surfaces_have_64_distinct_swatch_colors()
     {
         string[] colors = Standard.Swatches.ColorGrid!.Colors;
 
@@ -142,7 +142,7 @@ public class SurfaceServiceTests
     }
 
     [Fact]
-    public void Colour_mode_toggle_matches_where_the_game_screenshot_shows_it()
+    public void Color_mode_toggle_matches_where_the_game_screenshot_shows_it()
     {
         ScreenPoint center = Standard.Swatches.ColorModeToggle.Center;
         Assert.InRange(center.X, 2506, 2514);
@@ -160,7 +160,7 @@ public class SurfaceServiceTests
     }
 
     [Fact]
-    public void Colour_grid_cells_are_where_they_should_be()
+    public void Color_grid_cells_are_where_they_should_be()
     {
         ColorGrid grid = Standard.Swatches.ColorGrid!;
         Assert.Equal(64, grid.Count);
@@ -220,7 +220,7 @@ public class SurfaceServiceTests
         => WithLayouts(Standard with { Swatches = Standard.Swatches with { ColorGrid = Standard.Swatches.ColorGrid! with { Colors = colors } } });
 
     [Fact]
-    public void Rejects_a_duplicate_palette_colour()
+    public void Rejects_a_duplicate_palette_color()
     {
         string[] colors = (string[])Standard.Swatches.ColorGrid!.Colors.Clone();
         colors[9] = colors[13];
@@ -235,7 +235,7 @@ public class SurfaceServiceTests
     }
 
     [Fact]
-    public void Rejects_a_malformed_colour()
+    public void Rejects_a_malformed_color()
     {
         string[] colors = [.. Standard.Swatches.ColorGrid!.Colors[..63], "#12345"];
         Assert.Contains("not #RRGGBB", Assert.Throws<InvalidDataException>(() => new SurfaceService(WithColors(colors))).Message);
@@ -245,14 +245,14 @@ public class SurfaceServiceTests
     public void Rejects_a_swatch_layout_without_a_grid()
     {
         SurfaceCatalog bad = WithLayouts(Standard with { Swatches = Standard.Swatches with { ColorGrid = null } });
-        Assert.Contains("no colour grid", Assert.Throws<InvalidDataException>(() => new SurfaceService(bad)).Message);
+        Assert.Contains("no color grid", Assert.Throws<InvalidDataException>(() => new SurfaceService(bad)).Message);
     }
 
     [Fact]
     public void Rejects_a_free_layout_without_free_controls()
     {
         SurfaceCatalog bad = WithLayouts(Standard with { Free = Standard.Free with { FreeColor = null } });
-        Assert.Contains("free colour controls", Assert.Throws<InvalidDataException>(() => new SurfaceService(bad)).Message);
+        Assert.Contains("free color controls", Assert.Throws<InvalidDataException>(() => new SurfaceService(bad)).Message);
     }
 
     [Fact]

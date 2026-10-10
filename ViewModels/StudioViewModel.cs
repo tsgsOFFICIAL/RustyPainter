@@ -35,14 +35,14 @@ public sealed class CategoryChip(string name) : ViewModelBase
     public bool IsSelected { get => _isSelected; set => SetProperty(ref _isSelected, value); }
 }
 
-/// <summary>A small coloured square showing one colour the picture uses.</summary>
+/// <summary>A small colored square showing one color the picture uses.</summary>
 public sealed record ColorChip(string Hex)
 {
     public IBrush Brush { get; } = new SolidColorBrush(Color.Parse(Hex));
 }
 
 /// <summary>
-/// The Studio page: pick a surface, load a picture, place it on the canvas, choose how its colours are matched
+/// The Studio page: pick a surface, load a picture, place it on the canvas, choose how its colors are matched
 /// and see the result as it would be painted.
 /// </summary>
 public sealed class StudioViewModel : ViewModelBase
@@ -88,7 +88,7 @@ public sealed class StudioViewModel : ViewModelBase
             .ToList();
 
         PlacementChoices = new([("Fit", FitMode.Fit), ("Fill", FitMode.Fill), ("Stretch", FitMode.Stretch)], FitMode.Fill);
-        ColorModeChoices = new([("Game swatches", ColorMode.Swatches), ("Any colour", ColorMode.Free)], ColorMode.Swatches);
+        ColorModeChoices = new([("Game swatches", ColorMode.Swatches), ("Any color", ColorMode.Free)], ColorMode.Swatches);
         DitheringChoices = new([("Smooth", Dithering.Smooth), ("Pattern", Dithering.Ordered), ("None", Dithering.None)], Dithering.Smooth);
         FilterChoices = new(
         [
@@ -275,22 +275,22 @@ public sealed class StudioViewModel : ViewModelBase
     public RelayCommand FlipVerticalCommand { get; }
     public RelayCommand ResetPlacementCommand { get; }
 
-    // ---- colour ----
+    // ---- color ----
 
     public ChoiceGroup<ColorMode> ColorModeChoices { get; }
     public ChoiceGroup<Dithering> DitheringChoices { get; }
     public ChoiceGroup<ImageFilter> FilterChoices { get; }
 
-    /// <summary>Whether any colour can be used, so the number of colours is a choice.</summary>
+    /// <summary>Whether any color can be used, so the number of colors is a choice.</summary>
     public bool IsFreeMode => ColorModeChoices.Selected == ColorMode.Free;
 
-    /// <summary>How many colours the picture is reduced to in free mode, from 2 to 64.</summary>
+    /// <summary>How many colors the picture is reduced to in free mode, from 2 to 256.</summary>
     public double MaxColors
     {
         get => _maxColors;
         set
         {
-            if (SetProperty(ref _maxColors, Math.Round(Math.Clamp(value, 2, 64))))
+            if (SetProperty(ref _maxColors, Math.Round(Math.Clamp(value, 2, 256))))
             {
                 OnPropertyChanged(nameof(MaxColorsText));
                 Changed();
@@ -392,6 +392,9 @@ public sealed class StudioViewModel : ViewModelBase
         }
     }
 
+    /// <summary>How long to wait after a change before preparing the picture, so a dragged slider does not start a job per pixel.</summary>
+    public TimeSpan ReprocessDelay { get; set; } = TimeSpan.FromMilliseconds(80);
+
     /// <summary>Whether the preview is being updated.</summary>
     public bool IsBusy { get => _isBusy; private set => SetProperty(ref _isBusy, value); }
 
@@ -410,9 +413,9 @@ public sealed class StudioViewModel : ViewModelBase
 
     public string StrokesText => Plan is { } plan ? $"{plan.StrokeCount:N0} strokes" : "";
 
-    public string ColorsText => Plan is { } plan ? $"{plan.ColorsUsed} colours" : "";
+    public string ColorsText => Plan is { } plan ? $"{plan.ColorsUsed} colors" : "";
 
-    /// <summary>The colours the picture ends up using, most used first.</summary>
+    /// <summary>The colors the picture ends up using, most used first.</summary>
     public IReadOnlyList<ColorChip> UsedColors => Plan?.UsedColors.Select(color => new ColorChip(color.Hex)).ToList() ?? [];
 
     // ---- loading ----
@@ -508,13 +511,14 @@ public sealed class StudioViewModel : ViewModelBase
         IsBusy = true;
 
         Job job = CreateJob();
+        TimeSpan delay = ReprocessDelay;
 
         _ = Task.Run(async () =>
         {
             try
             {
                 // Wait a moment so dragging a slider does not start a new job for every pixel it moves.
-                await Task.Delay(80, cts.Token);
+                await Task.Delay(delay, cts.Token);
                 PaintPlan plan = job.Run();
 
                 Dispatcher.UIThread.Post(() =>

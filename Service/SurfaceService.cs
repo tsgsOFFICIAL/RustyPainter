@@ -96,10 +96,10 @@ public sealed class SurfaceService : ISurfaceService
             ValidateLayout(catalog, $"{key} (free)", family.Free);
 
             if (family.Swatches.ColorGrid is not { } grid)
-                throw new InvalidDataException($"The swatch layout of '{key}' has no colour grid.");
+                throw new InvalidDataException($"The swatch layout of '{key}' has no color grid.");
 
             if (grid.Colors.Length != grid.Count)
-                throw new InvalidDataException($"The palette has {grid.Colors.Length} colours but the colour grid of '{key}' has {grid.Count} swatches.");
+                throw new InvalidDataException($"The palette has {grid.Colors.Length} colors but the color grid of '{key}' has {grid.Count} swatches.");
 
             string[] badColors = grid.Colors.Where(color => !IsHexColor(color)).ToArray();
             if (badColors.Length > 0)
@@ -108,10 +108,10 @@ public sealed class SurfaceService : ISurfaceService
             string[] duplicates = grid.Colors.GroupBy(color => color, StringComparer.OrdinalIgnoreCase)
                 .Where(group => group.Count() > 1).Select(group => group.Key).ToArray();
             if (duplicates.Length > 0)
-                throw new InvalidDataException($"The palette of '{key}' repeats these colours, so one swatch can never be picked: {string.Join(", ", duplicates)}.");
+                throw new InvalidDataException($"The palette of '{key}' repeats these colors, so one swatch can never be picked: {string.Join(", ", duplicates)}.");
 
             if (family.Free.FreeColor is not { SavedColors.Length: > 0 })
-                throw new InvalidDataException($"The free layout of '{key}' has no free colour controls or no saved colour slots.");
+                throw new InvalidDataException($"The free layout of '{key}' has no free color controls or no saved color slots.");
         }
 
         foreach (Surface surface in catalog.Surfaces)
