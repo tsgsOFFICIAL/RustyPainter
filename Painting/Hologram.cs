@@ -39,3 +39,13 @@ public interface IStatusOverlayService
     /// <summary>Takes the box off the screen.</summary>
     void Hide();
 }
+
+/// <summary>Copies a rectangle of the screen, for measuring what a test painting did to the canvas.</summary>
+public interface IScreenCapture
+{
+    /// <summary>
+    /// A picture of the rectangle as it is on screen now, or <see langword="null"/> if it could not be copied. Only the
+    /// rectangle that is asked for is copied, never the rest of the screen.
+    /// </summary>
+    Imaging.PixelBuffer? Capture(ScreenRect region);
+}
