@@ -342,5 +342,6 @@
   "FramesStop": "Стоп",
   "FramesSlow": "Медленно",
   "FramesMedium": "Средне",
-  "FramesFast": "Быстро"
+  "FramesFast": "Быстро",
+  "EngineFrameFailed": "Кадр {0} вывески не открылся. Откройте его вручную и повторите."
 }

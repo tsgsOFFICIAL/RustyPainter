@@ -459,7 +459,7 @@ public sealed class PaintEngine
             AppLog.Debug("PaintEngine", $"Frame {step.Index + 1} did not show as open after click {attempt}.");
         }
 
-        AppLog.Warn("PaintEngine", $"Could not confirm that frame {step.Index + 1} is open.");
+        throw new PaintException(Loc.Format("EngineFrameFailed", step.Index + 1));
     }
 
     private async Task EnsureColorModeAsync(EnsureColorModeStep step, CancellationToken token)

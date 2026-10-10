@@ -342,5 +342,6 @@
   "FramesStop": "Stop",
   "FramesSlow": "Langsom",
   "FramesMedium": "Mellem",
-  "FramesFast": "Hurtig"
+  "FramesFast": "Hurtig",
+  "EngineFrameFailed": "Frame {0} på skiltet ville ikke åbne. Åbn det manuelt, og prøv igen."
 }

@@ -117,7 +117,7 @@ public static class PaintScriptBuilder
             new ScreenPoint(freeToggle.X1 + 0.12 * freeToggle.Width, freeToggle.Y1 + 0.5 * freeToggle.Height)));
         steps.Add(new ClickControlStep("Brush", controls.ToolBrush.Center));
 
-        // Whether clearing wipes one frame or all of them is not something to rely on, so every frame is cleared before any is painted.
+        // Clearing only clears the frame that is open. The frames after the last picture are cleared too, so nothing old is left in them.
         if (options.ClearFirst)
         {
             if (frames is null)
@@ -126,7 +126,7 @@ public static class PaintScriptBuilder
             }
             else
             {
-                for (int frame = 0; frame < plans.Count; frame++)
+                for (int frame = plans.Count; frame < surface.Frames; frame++)
                 {
                     steps.Add(SelectFrame(frames, frame));
                     steps.Add(new ClickControlStep("Clear", controls.Clear.Center));
@@ -142,6 +142,9 @@ public static class PaintScriptBuilder
             {
                 steps.Add(SelectFrame(frames, frame));
                 steps.Add(new ClickControlStep("Brush", controls.ToolBrush.Center));
+
+                if (options.ClearFirst)
+                    steps.Add(new ClickControlStep("Clear", controls.Clear.Center));
             }
 
             int shape = options.ShapeIndex ?? (controls.Size is null ? 0 : PaintOptions.SquareShape);

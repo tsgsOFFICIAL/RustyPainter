@@ -75,7 +75,7 @@ public class AnimatedSignTests
     }
 
     [Fact]
-    public void Each_frame_is_cleared_before_any_is_painted_and_then_opened_and_painted_in_turn()
+    public void Each_frame_is_opened_cleared_and_painted_in_turn_and_the_frames_left_over_are_cleared_first()
     {
         ResolvedLayout layout = Layout("animated-neon-large");
         PaintScript script = PaintScriptBuilder.Build([Plan(0, 1), Plan(2, 2), Plan(3)], layout, new PaintOptions(ColorMode.Swatches, 1));
@@ -83,26 +83,36 @@ public class AnimatedSignTests
         FrameControls frames = layout.Swatches.Frames!;
         List<PaintStep> steps = [.. script.Steps];
 
-        int firstStroke = steps.FindIndex(step => step is PaintStrokeStep);
-        List<PaintStep> beforeStrokes = steps.Take(firstStroke).ToList();
+        // Frames 4 and 5 hold nothing of this picture, so they are cleared before anything is painted.
+        List<PaintStep> beforeStrokes = steps.Take(steps.FindIndex(step => step is PaintStrokeStep)).ToList();
+        Assert.Equal([3, 4, 0], beforeStrokes.OfType<SelectFrameStep>().Select(step => step.Index));
+        Assert.Equal([3, 4, 0, 1, 2], steps.OfType<SelectFrameStep>().Select(step => step.Index));
 
-        // Three frames, three clears, in the order of the frames.
-        Assert.Equal([0, 1, 2], beforeStrokes.OfType<SelectFrameStep>().Take(3).Select(step => step.Index));
-        Assert.Equal(3, beforeStrokes.OfType<ClickControlStep>().Count(step => step.Control == "Clear"));
+        int firstOpened = beforeStrokes.FindIndex(step => step is SelectFrameStep);
+        Assert.Equal("Clear", Assert.IsType<ClickControlStep>(beforeStrokes[firstOpened + 1]).Control);
 
-        // Then each frame is opened once more and painted: its colors and strokes follow the click on its number.
-        List<SelectFrameStep> opened = steps.OfType<SelectFrameStep>().Skip(3).ToList();
-        Assert.Equal([0, 1, 2], opened.Select(step => step.Index));
+        // Each painted frame: its number, the brush, clear, the shape, then its colors and strokes.
+        List<SelectFrameStep> opened = steps.OfType<SelectFrameStep>().Skip(2).ToList();
         Assert.Equal(frames.Buttons[1].Center, opened[1].At);
 
         int second = steps.FindIndex(step => ReferenceEquals(step, opened[1]));
-        Assert.IsType<ClickControlStep>(steps[second + 1]);
-        Assert.IsType<ClickControlStep>(steps[second + 2]);
-        Assert.IsType<SelectSwatchStep>(steps[second + 3]);
+        Assert.Equal("Brush", Assert.IsType<ClickControlStep>(steps[second + 1]).Control);
+        Assert.Equal("Clear", Assert.IsType<ClickControlStep>(steps[second + 2]).Control);
+        Assert.Equal("Brush shape", Assert.IsType<ClickControlStep>(steps[second + 3]).Control);
+        Assert.IsType<SelectSwatchStep>(steps[second + 4]);
 
         // Every picture is painted, with its own colors.
-        Assert.Equal(script.Steps.OfType<PaintStrokeStep>().Count(), 2 + 1 + 1);
+        Assert.Equal(4, script.Steps.OfType<PaintStrokeStep>().Count());
         Assert.Equal([0, 1, 2, 3], script.Steps.OfType<SelectSwatchStep>().Select(step => step.Index));
+    }
+
+    [Fact]
+    public void A_full_set_of_frames_leaves_nothing_over_to_clear()
+    {
+        PaintScript script = PaintScriptBuilder.Build([Plan(0), Plan(1), Plan(2), Plan(3), Plan(4)], Layout("animated-neon-large"), new PaintOptions(ColorMode.Swatches, 1));
+
+        Assert.Equal([0, 1, 2, 3, 4], script.Steps.OfType<SelectFrameStep>().Select(step => step.Index));
+        Assert.Equal(5, script.Steps.OfType<ClickControlStep>().Count(step => step.Control == "Clear"));
     }
 
     [Fact]
