@@ -15,6 +15,19 @@ using System;
 
 namespace RustyPainter.ViewModels;
 
+/// <summary>What the canvas in the middle shows.</summary>
+public enum PreviewMode
+{
+    /// <summary>The picture as it would be painted.</summary>
+    Result,
+
+    /// <summary>The picture as loaded.</summary>
+    Original,
+
+    /// <summary>The placed picture on the left, the result on the right.</summary>
+    Split
+}
+
 /// <summary>Where the picture comes from.</summary>
 public enum SourceKind
 {
@@ -91,6 +104,7 @@ public sealed class StudioViewModel : ViewModelBase
     private CancellationTokenSource? _pending;
     private PaintPlan? _plan;
     private WriteableBitmap? _preview;
+    private WriteableBitmap? _reference;
     private bool _isBusy;
 
     public StudioViewModel(ISurfaceService surfaces, IPictureDownloader? downloader = null)
@@ -132,14 +146,14 @@ public sealed class StudioViewModel : ViewModelBase
             ("Invert", ImageFilter.Invert), ("Brighten", ImageFilter.Brighten), ("Posterize", ImageFilter.Posterize)
         ], ImageFilter.None);
         QualityChoices = new([("1", 1), ("2", 2), ("4", 4), ("8", 8), ("16", 16), ("32", 32)], 4);
-        PreviewChoices = new([("Result", false), ("Original", true)], false);
+        PreviewChoices = new([("Result", PreviewMode.Result), ("Original", PreviewMode.Original), ("Split", PreviewMode.Split)], PreviewMode.Result);
 
         PlacementChoices.Changed += Changed;
         ColorModeChoices.Changed += () => { OnPropertyChanged(nameof(IsFreeMode)); Changed(); };
         DitheringChoices.Changed += Changed;
         FilterChoices.Changed += Changed;
         QualityChoices.Changed += Changed;
-        PreviewChoices.Changed += () => { OnPropertyChanged(nameof(ShowOriginal)); OnPropertyChanged(nameof(ShowResult)); };
+        PreviewChoices.Changed += () => { OnPropertyChanged(nameof(ShowOriginal)); OnPropertyChanged(nameof(ShowResult)); OnPropertyChanged(nameof(ShowSplit)); };
 
         ClearImageCommand = new RelayCommand(ClearImage, () => HasImage);
         RotateCommand = new RelayCommand(() => { _quarterTurns = (_quarterTurns + 1) % 4; Changed(); });
@@ -189,6 +203,7 @@ public sealed class StudioViewModel : ViewModelBase
                 return;
 
             OnPropertyChanged(nameof(CanvasWidth));
+            OnPropertyChanged(nameof(HalfCanvasWidth));
             OnPropertyChanged(nameof(CanvasHeight));
             OnPropertyChanged(nameof(CanvasText));
             OnPropertyChanged(nameof(ScrollHint));
@@ -280,7 +295,7 @@ public sealed class StudioViewModel : ViewModelBase
         get => _offsetX;
         set
         {
-            if (SetProperty(ref _offsetX, Math.Round(Math.Clamp(value, -100, 100))))
+            if (SetProperty(ref _offsetX, Math.Round(Math.Clamp(value, -100, 100), 1)))
             {
                 OnPropertyChanged(nameof(OffsetXText));
                 Changed();
@@ -296,7 +311,7 @@ public sealed class StudioViewModel : ViewModelBase
         get => _offsetY;
         set
         {
-            if (SetProperty(ref _offsetY, Math.Round(Math.Clamp(value, -100, 100))))
+            if (SetProperty(ref _offsetY, Math.Round(Math.Clamp(value, -100, 100), 1)))
             {
                 OnPropertyChanged(nameof(OffsetYText));
                 Changed();
@@ -305,6 +320,24 @@ public sealed class StudioViewModel : ViewModelBase
     }
 
     public string OffsetYText => $"{OffsetY:+0;-0;0}";
+
+    /// <summary>Moves the picture by a share of the canvas, for dragging it with the mouse. 1 is the full canvas width or height.</summary>
+    public void MoveBy(double shareX, double shareY)
+    {
+        OffsetX += shareX * 100;
+        OffsetY += shareY * 100;
+    }
+
+    /// <summary>Puts the zoom and the shift back, keeping the rotation, flips and fit mode.</summary>
+    public void ResetView()
+    {
+        Zoom = 1;
+        OffsetX = 0;
+        OffsetY = 0;
+    }
+
+    /// <summary>Zooms by a factor, for the mouse wheel.</summary>
+    public void ZoomBy(double factor) => Zoom *= factor;
 
     public RelayCommand RotateCommand { get; }
     public RelayCommand FlipHorizontalCommand { get; }
@@ -393,10 +426,19 @@ public sealed class StudioViewModel : ViewModelBase
 
     // ---- result ----
 
-    public ChoiceGroup<bool> PreviewChoices { get; }
+    public ChoiceGroup<PreviewMode> PreviewChoices { get; }
 
-    public bool ShowOriginal => HasImage && PreviewChoices.Selected;
-    public bool ShowResult => HasImage && !PreviewChoices.Selected && Preview is not null;
+    /// <summary>The picture as loaded, without placement or colors.</summary>
+    public bool ShowOriginal => HasImage && PreviewChoices.Selected == PreviewMode.Original;
+
+    /// <summary>The result as it would be painted. In split view it fills the whole canvas, with the placed picture over its left half.</summary>
+    public bool ShowResult => HasImage && PreviewChoices.Selected != PreviewMode.Original && Preview is not null;
+
+    /// <summary>Whether the left half of the canvas shows the placed picture, before colors are matched.</summary>
+    public bool ShowSplit => HasImage && PreviewChoices.Selected == PreviewMode.Split && Reference is not null;
+
+    /// <summary>Half the canvas width, for the left half of the split view.</summary>
+    public double HalfCanvasWidth => CanvasWidth / 2;
 
     /// <summary>The plan for the current settings, or <see langword="null"/> while no picture is loaded.</summary>
     public PaintPlan? Plan
@@ -414,6 +456,17 @@ public sealed class StudioViewModel : ViewModelBase
     }
 
     public bool HasPlan => Plan is not null;
+
+    /// <summary>The placed and adjusted picture drawn one pixel per cell, before colors are matched. Shown beside the result in split view.</summary>
+    public WriteableBitmap? Reference
+    {
+        get => _reference;
+        private set
+        {
+            if (SetProperty(ref _reference, value))
+                OnPropertyChanged(nameof(ShowSplit));
+        }
+    }
 
     /// <summary>The plan drawn one pixel per cell, for showing on the canvas.</summary>
     public WriteableBitmap? Preview
@@ -836,15 +889,17 @@ public sealed class StudioViewModel : ViewModelBase
     private void Apply(PaintPlan plan)
     {
         Plan = plan;
-        SetPreview(BitmapPixels.ToBitmap(plan.Render()));
+        SetPreview(BitmapPixels.ToBitmap(plan.Render()), plan.Reference is { } reference ? BitmapPixels.ToBitmap(reference) : null);
         IsBusy = false;
     }
 
-    private void SetPreview(WriteableBitmap? bitmap)
+    private void SetPreview(WriteableBitmap? bitmap, WriteableBitmap? reference = null)
     {
-        WriteableBitmap? old = _preview;
+        WriteableBitmap? old = _preview, oldReference = _reference;
         Preview = bitmap;
+        Reference = reference;
         old?.Dispose();
+        oldReference?.Dispose();
     }
 
     private sealed record Job(PixelBuffer Oriented, StudioSettings Settings, int GridWidth, int GridHeight, IReadOnlyList<Rgb> Swatches)

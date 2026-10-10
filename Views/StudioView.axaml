@@ -345,16 +345,34 @@
             <Border Grid.Row="1" Background="#0C0E12">
                 <Grid>
                     <Viewbox Stretch="Uniform" Margin="40">
-                        <Border Width="{Binding CanvasWidth}" Height="{Binding CanvasHeight}" ClipToBounds="True"
-                                Background="{DynamicResource BorderColor}" CornerRadius="4">
+                        <Border x:Name="Stage" Width="{Binding CanvasWidth}" Height="{Binding CanvasHeight}" ClipToBounds="True"
+                                Background="{DynamicResource BorderColor}" CornerRadius="4"
+                                Cursor="SizeAll" IsHitTestVisible="{Binding HasImage}"
+                                PointerPressed="OnStagePressed" PointerMoved="OnStageMoved" PointerReleased="OnStageReleased"
+                                PointerCaptureLost="OnStageCaptureLost" PointerWheelChanged="OnStageWheel" DoubleTapped="OnStageDoubleTapped">
                             <Grid>
                                 <Image Source="{Binding Preview}" Stretch="Fill" IsVisible="{Binding ShowResult}"
                                        RenderOptions.BitmapInterpolationMode="None"/>
                                 <Image Source="{Binding Image}" Stretch="Uniform" IsVisible="{Binding ShowOriginal}"/>
+
+                                <!-- Split view: the placed picture over the left half, so both halves line up. -->
+                                <Border Width="{Binding HalfCanvasWidth}" HorizontalAlignment="Left" ClipToBounds="True"
+                                        IsVisible="{Binding ShowSplit}" IsHitTestVisible="False">
+                                    <Image Source="{Binding Reference}" Width="{Binding CanvasWidth}" HorizontalAlignment="Left"
+                                           Stretch="Fill"/>
+                                </Border>
+                                <Border Width="3" HorizontalAlignment="Center" Background="White" Opacity="0.85"
+                                        IsVisible="{Binding ShowSplit}" IsHitTestVisible="False"/>
                             </Grid>
                         </Border>
                     </Viewbox>
                     <!-- Outside the Viewbox so the text keeps its size however big the canvas is. -->
+                    <TextBlock Text="Drag to move, scroll to zoom, double click to reset" Classes="muted" FontSize="11"
+                               IsVisible="{Binding HasImage}" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                               Margin="0,0,0,10" IsHitTestVisible="False"/>
+                    <TextBlock Text="Picture on the left, result on the right" Classes="muted" FontSize="11"
+                               IsVisible="{Binding ShowSplit}" HorizontalAlignment="Center" VerticalAlignment="Top"
+                               Margin="0,10,0,0" IsHitTestVisible="False"/>
                     <TextBlock Text="Load a picture to see it on this canvas" IsVisible="{Binding NoImage}"
                                Classes="muted" FontSize="14" TextAlignment="Center"
                                HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"/>

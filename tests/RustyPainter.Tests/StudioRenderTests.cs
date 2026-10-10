@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.VisualTree;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -161,6 +162,57 @@ public class StudioRenderTests : IDisposable
         WriteableBitmap frame = window.CaptureRenderedFrame()!;
         if (Environment.GetEnvironmentVariable("RUSTYPAINTER_SHOTS") is { Length: > 0 } folder)
             frame.Save(Path.Combine(folder, "studio-color-picker.png"));
+    }
+
+    [AvaloniaFact]
+    public void Dragging_the_picture_on_the_canvas_moves_it()
+    {
+        string path = Path.Combine(_folder, "red.png");
+        TestImages.SavePng(TestImages.RedAndGreen(), path);
+
+        StudioViewModel studio = new(new SurfaceService());
+        Assert.True(studio.TryLoad(path));
+        studio.ProcessNow();
+
+        Window window = new() { Width = 1296, Height = 760, Content = new StudioView { DataContext = studio } };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        Border stage = window.GetVisualDescendants().OfType<Border>().First(border => border.Name == "Stage");
+        Point topLeft = stage.TranslatePoint(new Point(0, 0), window)!.Value;
+        Point bottomRight = stage.TranslatePoint(new Point(stage.Bounds.Width, stage.Bounds.Height), window)!.Value;
+        double shownWidth = bottomRight.X - topLeft.X;
+        Point middle = new(topLeft.X + shownWidth / 2, (topLeft.Y + bottomRight.Y) / 2);
+
+        window.MouseDown(middle, MouseButton.Left);
+        window.MouseMove(new Point(middle.X + 60, middle.Y));
+        window.MouseMove(new Point(middle.X + 60, middle.Y + 30));
+        window.MouseUp(new Point(middle.X + 60, middle.Y + 30), MouseButton.Left);
+
+        Assert.InRange(studio.OffsetX, 60 / shownWidth * 100 - 0.6, 60 / shownWidth * 100 + 0.6);
+        Assert.True(studio.OffsetY > 0);
+
+        // Moving the mouse afterwards without a button held must not drag.
+        double before = studio.OffsetX;
+        window.MouseMove(new Point(middle.X + 200, middle.Y));
+        Assert.Equal(before, studio.OffsetX);
+    }
+
+    [AvaloniaFact]
+    public void The_split_view_shows_a_divider_in_the_middle()
+    {
+        string path = Path.Combine(_folder, "red.png");
+        TestImages.SavePng(TestImages.Rainbow(), path);
+
+        StudioViewModel studio = new(new SurfaceService());
+        Assert.True(studio.TryLoad(path));
+        studio.ProcessNow();
+        studio.PreviewChoices.Select(PreviewMode.Split);
+
+        WriteableBitmap frame = Draw(studio, "studio-split");
+
+        (byte r, byte g, byte b) = PixelAt(frame, 666, 395);
+        Assert.True(r > 200 && g > 200 && b > 200, $"Expected the white divider in the middle, got {r},{g},{b}");
     }
 
     [AvaloniaFact]

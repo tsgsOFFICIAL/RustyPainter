@@ -221,10 +221,66 @@ public class StudioProcessingTests : IDisposable
         Assert.True(studio.ShowResult);
         Assert.False(studio.ShowOriginal);
 
-        studio.PreviewChoices.Select(true);
+        studio.PreviewChoices.Select(PreviewMode.Original);
 
         Assert.False(studio.ShowResult);
         Assert.True(studio.ShowOriginal);
+    }
+
+    [AvaloniaFact]
+    public void Moving_and_zooming_stay_within_their_limits()
+    {
+        StudioViewModel studio = Loaded(TestImages.RedAndGreen());
+
+        studio.MoveBy(0.25, -0.1);
+        Assert.Equal(25, studio.OffsetX);
+        Assert.Equal(-10, studio.OffsetY);
+
+        studio.MoveBy(5, -5);
+        Assert.Equal(100, studio.OffsetX);
+        Assert.Equal(-100, studio.OffsetY);
+
+        studio.ZoomBy(100);
+        Assert.Equal(4, studio.Zoom);
+
+        studio.ResetView();
+        Assert.Equal((1d, 0d, 0d), (studio.Zoom, studio.OffsetX, studio.OffsetY));
+    }
+
+    [AvaloniaFact]
+    public void Resetting_the_view_keeps_the_rotation()
+    {
+        StudioViewModel studio = Loaded(TestImages.RedAndGreen(4, 2));
+        studio.ColorModeChoices.Select(ColorMode.Free);
+        studio.RotateCommand.Execute(null);
+        PaintPlan rotated = studio.ProcessNow()!;
+
+        studio.MoveBy(0.3, 0);
+        studio.ResetView();
+
+        Assert.Equal(rotated.Cells, studio.ProcessNow()!.Cells);
+    }
+
+    [AvaloniaFact]
+    public void The_split_view_needs_the_placed_picture_and_the_result()
+    {
+        StudioViewModel studio = Loaded(TestImages.Rainbow());
+        PaintPlan plan = studio.ProcessNow()!;
+
+        Assert.NotNull(plan.Reference);
+        Assert.Equal((plan.Width, plan.Height), (plan.Reference!.Width, plan.Reference.Height));
+        Assert.False(studio.ShowSplit);
+
+        studio.PreviewChoices.Select(PreviewMode.Split);
+
+        Assert.True(studio.ShowSplit);
+        Assert.True(studio.ShowResult);
+        Assert.False(studio.ShowOriginal);
+        Assert.NotNull(studio.Reference);
+
+        studio.ClearImageCommand.Execute(null);
+        Assert.False(studio.ShowSplit);
+        Assert.Null(studio.Reference);
     }
 
     [AvaloniaFact]

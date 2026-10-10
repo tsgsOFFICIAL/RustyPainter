@@ -81,6 +81,6 @@ public static class StudioPipeline
             : MedianCut.BuildPalette(cells, settings.MaxColors);
 
         int[] indices = Quantizer.Map(cells, palette, settings.Dithering);
-        return new PaintPlan(gridWidth, gridHeight, palette, indices);
+        return new PaintPlan(gridWidth, gridHeight, palette, indices, cells);
     }
 }

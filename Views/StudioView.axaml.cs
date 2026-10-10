@@ -4,6 +4,7 @@ using Avalonia.Interactivity;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using Avalonia.Media;
+using Avalonia;
 using Avalonia.Input;
 using System.Linq;
 using System;
@@ -71,6 +72,56 @@ public partial class StudioView : UserControl
             viewModel.TryLoad(path);
         else
             viewModel.ReportNothingToLoad();
+    }
+
+    // ---- moving and zooming the picture on the canvas ----
+
+    private Point? _dragFrom;
+
+    private void OnStagePressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (sender is not Control stage || ViewModel is not { ShowResult: true } || !e.GetCurrentPoint(stage).Properties.IsLeftButtonPressed)
+            return;
+
+        _dragFrom = e.GetPosition(stage);
+        e.Pointer.Capture(stage);
+        e.Handled = true;
+    }
+
+    private void OnStageMoved(object? sender, PointerEventArgs e)
+    {
+        if (_dragFrom is not { } from || sender is not Control stage || ViewModel is not { } viewModel)
+            return;
+
+        // The stage is drawn inside a Viewbox, so positions are already in canvas units whatever size it is shown at.
+        Point now = e.GetPosition(stage);
+        if (stage.Bounds.Width > 0 && stage.Bounds.Height > 0)
+            viewModel.MoveBy((now.X - from.X) / stage.Bounds.Width, (now.Y - from.Y) / stage.Bounds.Height);
+
+        _dragFrom = now;
+    }
+
+    private void OnStageReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        _dragFrom = null;
+        e.Pointer.Capture(null);
+    }
+
+    private void OnStageCaptureLost(object? sender, PointerCaptureLostEventArgs e) => _dragFrom = null;
+
+    private void OnStageWheel(object? sender, PointerWheelEventArgs e)
+    {
+        if (ViewModel is not { ShowResult: true } viewModel)
+            return;
+
+        viewModel.ZoomBy(e.Delta.Y > 0 ? 1.1 : 1 / 1.1);
+        e.Handled = true;
+    }
+
+    private void OnStageDoubleTapped(object? sender, TappedEventArgs e)
+    {
+        if (ViewModel is { ShowResult: true } viewModel)
+            viewModel.ResetView();
     }
 
     private void OnLinkKeyDown(object? sender, KeyEventArgs e)

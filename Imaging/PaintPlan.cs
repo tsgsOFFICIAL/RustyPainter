@@ -9,12 +9,13 @@ namespace RustyPainter.Imaging;
 /// </summary>
 public sealed class PaintPlan
 {
-    public PaintPlan(int width, int height, IReadOnlyList<Rgb> palette, int[] cells)
+    public PaintPlan(int width, int height, IReadOnlyList<Rgb> palette, int[] cells, PixelBuffer? reference = null)
     {
         Width = width;
         Height = height;
         Palette = palette;
         Cells = cells;
+        Reference = reference;
 
         int painted = 0, strokes = 0;
         int[] counts = new int[palette.Count];
@@ -55,6 +56,9 @@ public sealed class PaintPlan
 
     /// <summary>Cells down.</summary>
     public int Height { get; }
+
+    /// <summary>The picture as placed and adjusted on the grid, before colors were matched. Null when not kept.</summary>
+    public PixelBuffer? Reference { get; }
 
     /// <summary>The colors the cells refer to.</summary>
     public IReadOnlyList<Rgb> Palette { get; }
