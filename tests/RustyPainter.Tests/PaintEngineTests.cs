@@ -102,7 +102,7 @@ public class PaintEngineTests
     {
         FakeMachine machine = new() { ToggleColor = new Rgb(110, 112, 115) };
 
-        await Engine(machine).RunAsync(Script(new EnsureColorModeStep(ColorMode.Swatches, new ScreenPoint(1, 1))));
+        await Engine(machine).RunAsync(Script(new EnsureColorModeStep(ColorMode.Swatches, new ScreenPoint(1, 1), new ScreenPoint(2, 2))));
 
         Assert.Empty(machine.Log);
     }
@@ -119,7 +119,7 @@ public class PaintEngineTests
         };
 
         PaintEngine engine = Engine(machine);
-        await engine.RunAsync(Script(new EnsureColorModeStep(ColorMode.Free, new ScreenPoint(1, 1))));
+        await engine.RunAsync(Script(new EnsureColorModeStep(ColorMode.Free, new ScreenPoint(1, 1), new ScreenPoint(2, 2))));
 
         Assert.Equal(["move 1,1", "down", "up"], machine.Log);
         Assert.Equal(PaintState.Finished, engine.State);
@@ -131,7 +131,7 @@ public class PaintEngineTests
         FakeMachine machine = new() { ToggleColor = new Rgb(110, 112, 115) };
         PaintEngine engine = Engine(machine);
 
-        await engine.RunAsync(Script(new EnsureColorModeStep(ColorMode.Free, new ScreenPoint(1, 1)), Dot(5, 5)));
+        await engine.RunAsync(Script(new EnsureColorModeStep(ColorMode.Free, new ScreenPoint(1, 1), new ScreenPoint(2, 2)), Dot(5, 5)));
 
         Assert.Equal(PaintState.Failed, engine.State);
         Assert.Contains("color mode", engine.FailureMessage);
@@ -144,7 +144,7 @@ public class PaintEngineTests
         FakeMachine machine = new() { ToggleColor = null };
         PaintEngine engine = Engine(machine);
 
-        await engine.RunAsync(Script(new EnsureColorModeStep(ColorMode.Free, new ScreenPoint(1, 1)), Dot(5, 5)));
+        await engine.RunAsync(Script(new EnsureColorModeStep(ColorMode.Free, new ScreenPoint(1, 1), new ScreenPoint(2, 2)), Dot(5, 5)));
 
         Assert.Equal(PaintState.Finished, engine.State);
         Assert.Contains("move 5,5", machine.Log);

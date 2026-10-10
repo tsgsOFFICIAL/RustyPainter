@@ -436,6 +436,11 @@ public sealed class PaintEngine
             await MoveAsync(step.To, token);
             await WaitAsync(_timing.Hold, token);
         }
+        else
+        {
+            // A click with no drag has to stay down long enough for the game to see it, or the cell is left empty.
+            await WaitAsync(Math.Max(_timing.Hold * 2, 30), token);
+        }
 
         await ReleaseAsync(token);
         await WaitAsync(_timing.AfterStroke, token);
@@ -443,7 +448,7 @@ public sealed class PaintEngine
 
     private async Task EnsureColorModeAsync(EnsureColorModeStep step, CancellationToken token)
     {
-        ColorMode? current = await ReadModeAsync(step.Toggle, token);
+        ColorMode? current = await ReadModeAsync(step, token);
 
         // Without a reading the painter carries on and trusts the user to have the right mode, which the log records.
         if (current is null)
@@ -455,33 +460,33 @@ public sealed class PaintEngine
         if (current == step.Mode)
             return;
 
-        await ClickAsync(step.Toggle, _timing.AfterClick + 150, token);
+        // The toggle sits in a different place in each mode, so it is pressed where the game shows it now.
+        await ClickAsync(current == ColorMode.Swatches ? step.SwatchToggle : step.FreeToggle, _timing.AfterClick + 150, token);
 
-        if (await ReadModeAsync(step.Toggle, token) != step.Mode)
+        if (await ReadModeAsync(step, token) != step.Mode)
             throw new PaintException(Loc.Get("EngineColorModeFailed"));
     }
 
-    private async Task<ColorMode?> ReadModeAsync(ScreenPoint toggle, CancellationToken token)
+    /// <summary>
+    /// Tells which mode the game is in. The toggle is grey in swatch mode and green in free color mode, and the two modes
+    /// do not put it in the same place, so each place is looked at in turn.
+    /// </summary>
+    private async Task<ColorMode?> ReadModeAsync(EnsureColorModeStep step, CancellationToken token)
     {
         await CheckpointAsync(token, inStep: true);
 
-        // The toggle is grey in swatch mode and green in free color mode.
-        if (_sensors.ReadColor(toggle) is not { } color)
-            return null;
-
-        // A black reading means the screen could not really be read, not that the toggle is black.
-        if (Math.Max(color.R, Math.Max(color.G, color.B)) < 25)
-            return null;
-
-        int strongest = Math.Max(color.R, color.B);
-        if (color.G - strongest >= 25)
+        if (_sensors.ReadColor(step.FreeToggle) is { } free && IsReadable(free) && free.G - Math.Max(free.R, free.B) >= 25)
             return ColorMode.Free;
 
-        if (Math.Abs(color.R - color.G) <= 30 && Math.Abs(color.G - color.B) <= 30)
+        if (_sensors.ReadColor(step.SwatchToggle) is { } swatch && IsReadable(swatch)
+            && Math.Abs(swatch.R - swatch.G) <= 30 && Math.Abs(swatch.G - swatch.B) <= 30)
             return ColorMode.Swatches;
 
         return null;
     }
+
+    // A black reading means the screen could not really be read, not that the toggle is black.
+    private static bool IsReadable(Rgb color) => Math.Max(color.R, Math.Max(color.G, color.B)) >= 25;
 
     // ---- bookkeeping ----
 

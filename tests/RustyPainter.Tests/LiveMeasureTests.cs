@@ -98,7 +98,7 @@ public class LiveMeasureTests
 
         setup.AddRange(
         [
-            new EnsureColorModeStep(ColorMode.Swatches, controls.ColorModeToggle.Center),
+            new EnsureColorModeStep(ColorMode.Swatches, layout.Swatches.ColorModeToggle.Center, layout.Free.ColorModeToggle.Center),
             new ClickControlStep("Brush", controls.ToolBrush.Center),
             new ClickControlStep("Clear", controls.Clear.Center),
             new ClickControlStep("Brush shape", controls.BrushShapes[PaintOptions.SquareShape].Center),

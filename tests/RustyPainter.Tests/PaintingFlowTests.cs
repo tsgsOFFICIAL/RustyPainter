@@ -285,7 +285,7 @@ public class GetReadyTests
         Assert.Equal("Small Wooden Sign", page.SurfaceName);
         Assert.Equal("F8", page.StartKeyText);
         Assert.Equal("F9", page.AbortKeyText);
-        Assert.Contains("2 swatches", page.ColorsText);
+        Assert.Contains("2 palette colors", page.ColorsText);
         Assert.Contains("strokes", page.StrokesText);
         Assert.NotEqual("", page.TimeText);
     }

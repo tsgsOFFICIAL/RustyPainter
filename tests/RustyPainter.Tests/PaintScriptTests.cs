@@ -198,7 +198,7 @@ public class PaintScriptTests
 
     private static IEnumerable<ScreenPoint> PointsOf(PaintStep step) => step switch
     {
-        EnsureColorModeStep s => [s.Toggle],
+        EnsureColorModeStep s => [s.SwatchToggle, s.FreeToggle],
         ClickControlStep s => [s.At],
         SetBrushValueStep s => [s.At],
         SelectSwatchStep s => [s.At],
