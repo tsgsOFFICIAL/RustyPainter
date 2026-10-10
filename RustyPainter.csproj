@@ -54,6 +54,12 @@
     </ItemGroup>
 
     <ItemGroup>
+        <!-- The surface and palette data. Edit Data\surfaces.json to add or correct surfaces. -->
+        <None Remove="Data\surfaces.json" />
+        <EmbeddedResource Include="Data\surfaces.json" LogicalName="surfaces.json" />
+    </ItemGroup>
+
+    <ItemGroup>
         <AvaloniaResource Include="Assets\**" />
     </ItemGroup>
 </Project>

@@ -28,6 +28,7 @@ namespace RustyPainter
                     .AddSingleton<IAppSettingsService, AppSettingsService>()
                     .AddSingleton<IUpdateService, UpdateService>()
                     .AddSingleton<IDialogService, DialogService>()
+                    .AddSingleton<ISurfaceService, SurfaceService>()
                     .BuildServiceProvider();
 
                 BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
