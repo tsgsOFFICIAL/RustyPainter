@@ -35,6 +35,17 @@ public sealed class SurfaceService : ISurfaceService
     public SurfaceCatalog Catalog { get; }
 
     public ResolvedLayout Resolve(Surface surface, int screenWidth, int screenHeight)
+        => Resolve(surface, screenWidth, screenHeight, 0, 0);
+
+    public ResolvedLayout Resolve(Surface surface, GameWindow window)
+    {
+        if (window.IsMinimized || window.Width <= 0 || window.Height <= 0)
+            throw new ArgumentException("The game window is minimized or has no size, so there is nothing on screen to resolve.");
+
+        return Resolve(surface, window.Width, window.Height, window.Client.X1, window.Client.Y1);
+    }
+
+    private ResolvedLayout Resolve(Surface surface, int screenWidth, int screenHeight, double originX, double originY)
     {
         if (screenWidth <= 0 || screenHeight <= 0)
             throw new ArgumentException($"The game resolution must be positive, got {screenWidth}x{screenHeight}.");
@@ -44,20 +55,22 @@ public sealed class SurfaceService : ISurfaceService
         double sx = (double)screenWidth / Catalog.ReferenceWidth;
         double sy = (double)screenHeight / Catalog.ReferenceHeight;
 
+        ScreenRect Place(ScreenRect rect) => rect.Scale(sx, sy).Offset(originX, originY);
+
         GameControls c = Catalog.Controls;
         ColorGrid g = c.ColorGrid;
 
-        ColorGrid grid = new(g.Area.Scale(sx, sy), g.Columns, g.Rows, g.CellWidth * sx, g.CellHeight * sy, g.GapX * sx, g.GapY * sy);
+        ColorGrid grid = new(Place(g.Area), g.Columns, g.Rows, g.CellWidth * sx, g.CellHeight * sy, g.GapX * sx, g.GapY * sy);
         GameControls controls = new(
-            c.ResetCamera.Scale(sx, sy),
-            c.BrushSize.Scale(sx, sy),
-            c.Spacing.Scale(sx, sy),
-            c.Opacity.Scale(sx, sy),
-            c.BrushMode.Scale(sx, sy),
-            c.PaintTool.Scale(sx, sy),
+            Place(c.ResetCamera),
+            Place(c.BrushSize),
+            Place(c.Spacing),
+            Place(c.Opacity),
+            Place(c.BrushMode),
+            Place(c.PaintTool),
             grid);
 
-        return new ResolvedLayout(surface, screenWidth, screenHeight, surface.Canvas.Scale(sx, sy), controls, grid);
+        return new ResolvedLayout(surface, screenWidth, screenHeight, Place(surface.Canvas), controls, grid);
     }
 
     private static SurfaceCatalog LoadEmbedded()

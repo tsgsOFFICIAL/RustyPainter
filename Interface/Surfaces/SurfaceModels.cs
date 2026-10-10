@@ -12,6 +12,9 @@ public readonly record struct ScreenRect(double X1, double Y1, double X2, double
 
     /// <summary>Returns this rectangle with x values multiplied by <paramref name="sx"/> and y values by <paramref name="sy"/>.</summary>
     public ScreenRect Scale(double sx, double sy) => new(X1 * sx, Y1 * sy, X2 * sx, Y2 * sy);
+
+    /// <summary>Returns this rectangle moved by <paramref name="dx"/> and <paramref name="dy"/>.</summary>
+    public ScreenRect Offset(double dx, double dy) => new(X1 + dx, Y1 + dy, X2 + dx, Y2 + dy);
 }
 
 /// <summary>

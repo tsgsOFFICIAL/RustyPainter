@@ -14,4 +14,11 @@ public interface ISurfaceService
     /// </summary>
     /// <exception cref="System.ArgumentException">The resolution is not positive.</exception>
     ResolvedLayout Resolve(Surface surface, int screenWidth, int screenHeight);
+
+    /// <summary>
+    /// Same as above for a real game window: scales to its resolution and moves everything to where the
+    /// window sits on the desktop, so a windowed game gets correct mouse positions too.
+    /// </summary>
+    /// <exception cref="System.ArgumentException">The window is minimized or has no size.</exception>
+    ResolvedLayout Resolve(Surface surface, GameWindow window);
 }
