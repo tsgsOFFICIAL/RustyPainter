@@ -468,14 +468,14 @@ public sealed class PaintEngine
     }
 
     /// <summary>
-    /// Tells which mode the game is in. The toggle is grey in swatch mode and green in free color mode, and the two modes
+    /// Tells which mode the game is in. The toggle button is grey in swatch mode and green in free color mode, and the two modes
     /// do not put it in the same place, so each place is looked at in turn.
     /// </summary>
     private async Task<ColorMode?> ReadModeAsync(EnsureColorModeStep step, CancellationToken token)
     {
         await CheckpointAsync(token, inStep: true);
 
-        if (_sensors.ReadColor(step.FreeToggle) is { } free && IsReadable(free) && free.G - Math.Max(free.R, free.B) >= 25)
+        if (_sensors.ReadColor(step.FreeFill ?? step.FreeToggle) is { } free && IsReadable(free) && free.G - Math.Max(free.R, free.B) >= 15)
             return ColorMode.Free;
 
         if (_sensors.ReadColor(step.SwatchToggle) is { } swatch && IsReadable(swatch)

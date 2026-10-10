@@ -147,6 +147,118 @@ public class LiveGameTests
         Write($"finished with {engine.State}, step {engine.CurrentStep} of {steps.Count}. {engine.FailureMessage}");
     }
 
+    /// <summary>
+    /// Runs the real setup steps for any-color mode on the portrait frame and logs, every 100 ms, which step is running and
+    /// which brush shape is lit, so it shows when a click is lost. Start with the game in swatch mode to include the switch.
+    /// </summary>
+    [Fact]
+    public async Task Trace_the_setup_in_any_color_mode()
+    {
+        Assert.SkipUnless(Mode == "trace", "Set RUSTYPAINTER_LIVE=trace to run this. It sends real input to the game.");
+
+        GameWindowService game = new();
+        Win32PaintSensors sensors = new(game);
+
+        for (int i = 0; i < 90 && !sensors.IsGameInFront(); i++)
+            await Task.Delay(500, TestContext.Current.CancellationToken);
+
+        Assert.True(sensors.IsGameInFront(), "Rust did not come to the front in time.");
+        Write("rust in front, starting in 3 seconds");
+        await Task.Delay(3000, TestContext.Current.CancellationToken);
+
+        GameWindow window = game.Find()!;
+        SurfaceService surfaces = new();
+        ResolvedLayout layout = surfaces.Resolve(surfaces.Catalog.Surfaces.Single(surface => surface.Id == "frame-portrait"), window);
+        PaintPlan plan = new(1, 1, [Rgb.Parse("#FF0000")], [0]);
+        PaintScript script = PaintScriptBuilder.Build(plan, layout, new PaintOptions(ColorMode.Free, 8, ClearFirst: false));
+        List<PaintStep> setup = script.Steps.TakeWhile(step => step is not PaintStrokeStep).ToList();
+        Write($"{setup.Count} setup steps: {string.Join(", ", setup.Select(step => step.GetType().Name))}");
+
+        PaintEngine engine = new(new Win32PaintInput(), sensors);
+        engine.StateChanged += state =>
+        {
+            Write($"state: {state} {engine.PauseReason}");
+            if (state == PaintState.Paused)
+                engine.Abort();
+        };
+
+        string Lit(PaintLayout controls)
+        {
+            List<int> lit = [];
+            for (int i = 0; i < controls.BrushShapes.Length; i++)
+            {
+                ScreenPoint c = controls.BrushShapes[i].Center;
+                if (sensors.ReadColor(new ScreenPoint(c.X, c.Y - 18)) is { } px && px.G - Math.Max(px.R, px.B) >= 25)
+                    lit.Add(i);
+            }
+
+            return lit.Count == 0 ? "none" : string.Join("+", lit);
+        }
+
+        System.Diagnostics.Stopwatch clock = System.Diagnostics.Stopwatch.StartNew();
+        using CancellationTokenSource stop = new();
+        Task poller = Task.Run(async () =>
+        {
+            while (!stop.IsCancellationRequested)
+            {
+                Write($"{clock.ElapsedMilliseconds,6} ms step {engine.CurrentStep} lit(free row) {Lit(layout.Free)} lit(swatch row) {Lit(layout.Swatches)} toggle(free) {sensors.ReadColor(layout.Free.ColorModeToggle.Center)?.Hex} toggle(swatch) {sensors.ReadColor(layout.Swatches.ColorModeToggle.Center)?.Hex}");
+                await Task.Delay(100);
+            }
+        });
+
+        await engine.RunAsync(new PaintScript(setup), cancellation: TestContext.Current.CancellationToken);
+        await Task.Delay(1500, TestContext.Current.CancellationToken);
+        Write($"after 1.5 s: lit(free row) {Lit(layout.Free)}");
+        stop.Cancel();
+        await poller;
+        Write($"finished with {engine.State}. {engine.FailureMessage}");
+    }
+
+    /// <summary>Reads pixels across both places the color mode toggle can be, to find where its fill shows. Reads only.</summary>
+    [Fact]
+    public void Read_the_color_mode_toggle()
+    {
+        Assert.SkipUnless(Mode is "look" or "paint", "Set RUSTYPAINTER_LIVE=look to run this.");
+
+        GameWindowService game = new();
+        GameWindow window = game.Find()!;
+        Win32PaintSensors sensors = new(game);
+        ResolvedLayout layout = new SurfaceService().Resolve(new SurfaceService().Catalog.Surfaces.Single(surface => surface.Id == "frame-portrait"), window);
+
+        foreach ((string name, ScreenRect box) in new[] { ("swatch position", layout.Swatches.ColorModeToggle), ("free position", layout.Free.ColorModeToggle) })
+        {
+            Write($"{name}: {box.X1:0},{box.Y1:0} to {box.X2:0},{box.Y2:0}");
+            foreach (double fy in new[] { 0.12, 0.3, 0.5, 0.7, 0.88 })
+            {
+                string row = string.Join(" ", new[] { 0.12, 0.3, 0.5, 0.7, 0.88 }.Select(fx => sensors.ReadColor(new ScreenPoint(box.X1 + fx * box.Width, box.Y1 + fy * box.Height))?.Hex ?? "unreadable"));
+                Write($"  y {fy:0.00}: {row}");
+            }
+        }
+    }
+
+    /// <summary>Reads the row of brush shapes and prints a few pixels of each, to tell the selected one from the others. Reads only.</summary>
+    [Fact]
+    public void Read_the_brush_shape_row()
+    {
+        Assert.SkipUnless(Mode is "look" or "paint", "Set RUSTYPAINTER_LIVE=look to run this.");
+
+        GameWindowService game = new();
+        GameWindow window = game.Find()!;
+        Win32PaintSensors sensors = new(game);
+        ResolvedLayout layout = new SurfaceService().Resolve(new SurfaceService().Catalog.Surfaces.Single(surface => surface.Id == "frame-portrait"), window);
+
+        foreach ((string name, PaintLayout controls) in new[] { ("swatch layout", layout.Swatches), ("free layout", layout.Free) })
+        {
+            Write(name);
+            for (int i = 0; i < controls.BrushShapes.Length; i++)
+            {
+                ScreenPoint c = controls.BrushShapes[i].Center;
+                string Px(double dx, double dy) => sensors.ReadColor(new ScreenPoint(c.X + dx, c.Y + dy))?.Hex ?? "unreadable";
+                Write($"  shape {i} at {c.X:0},{c.Y:0}: left {Px(-18, 0)} left2 {Px(-14, 0)} top {Px(0, -18)} edge {Px(-11, -11)} center {Px(0, 0)}");
+            }
+        }
+    }
+
     [Fact]
     public void Look_at_the_game_without_touching_it()
     {

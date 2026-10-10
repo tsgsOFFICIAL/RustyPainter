@@ -15,7 +15,8 @@ public sealed record ResetCameraStep(ScreenPoint At) : PaintStep;
 public sealed record ScrollOutStep(int Count) : PaintStep;
 
 /// <summary>Makes sure the game is in the wanted color mode, switching it with the toggle if it is not.</summary>
-public sealed record EnsureColorModeStep(ColorMode Mode, ScreenPoint SwatchToggle, ScreenPoint FreeToggle) : PaintStep;
+/// <param name="FreeFill">A point on the toggle where its fill shows in free color mode, since the middle of it is the icon. Defaults to the middle.</param>
+public sealed record EnsureColorModeStep(ColorMode Mode, ScreenPoint SwatchToggle, ScreenPoint FreeToggle, ScreenPoint? FreeFill = null) : PaintStep;
 
 /// <summary>Clicks a button, such as a tool or the clear button.</summary>
 public sealed record ClickControlStep(string Control, ScreenPoint At) : PaintStep;
@@ -87,7 +88,9 @@ public static class PaintScriptBuilder
         if (layout.Surface.ScrollOut > 0)
             steps.Add(new ScrollOutStep(layout.Surface.ScrollOut));
 
-        steps.Add(new EnsureColorModeStep(options.Mode, layout.Swatches.ColorModeToggle.Center, layout.Free.ColorModeToggle.Center));
+        ScreenRect freeToggle = layout.Free.ColorModeToggle;
+        steps.Add(new EnsureColorModeStep(options.Mode, layout.Swatches.ColorModeToggle.Center, freeToggle.Center,
+            new ScreenPoint(freeToggle.X1 + 0.12 * freeToggle.Width, freeToggle.Y1 + 0.5 * freeToggle.Height)));
         steps.Add(new ClickControlStep("Brush", controls.ToolBrush.Center));
 
         if (options.ClearFirst)
