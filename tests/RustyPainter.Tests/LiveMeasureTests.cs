@@ -62,9 +62,9 @@ public class LiveMeasureTests
             Math.Max(window.Client.X1, canvas.X1 - margin), Math.Max(window.Client.Y1, canvas.Y1 - margin),
             Math.Min(window.Client.X2, canvas.X2 + margin), Math.Min(window.Client.Y2, canvas.Y2 + margin));
 
-        PaintEngine Engine()
+        PaintEngine Engine(PaintTiming? timing = null)
         {
-            PaintEngine engine = new(new Win32PaintInput(), sensors);
+            PaintEngine engine = new(new Win32PaintInput(), sensors, timing);
             engine.StateChanged += state =>
             {
                 if (state == PaintState.Paused)
@@ -74,9 +74,9 @@ public class LiveMeasureTests
             return engine;
         }
 
-        async Task Run(List<PaintStep> steps)
+        async Task Run(List<PaintStep> steps, PaintTiming? timing = null)
         {
-            PaintEngine engine = Engine();
+            PaintEngine engine = Engine(timing);
             await engine.RunAsync(new PaintScript(steps), cancellation: stop);
             Assert.True(engine.State == PaintState.Finished, $"Painting stopped: {engine.State} {engine.PauseReason} {engine.FailureMessage}");
         }
@@ -199,6 +199,45 @@ public class LiveMeasureTests
         Write($"recorded canvas {canvas.X1:0},{canvas.Y1:0} to {canvas.X2:0},{canvas.Y2:0} ({canvas.Width:0} x {canvas.Height:0})");
         Write($"measured canvas {left:0},{top:0} to {right:0},{bottom:0} ({right - left:0} x {bottom - top:0}), {N(coverage * 100)} percent filled");
         Write($"texture size {N((right - left) / ppuX)} x {N((bottom - top) / ppuY)} units");
+
+        // Where are the pixels the fill did not change? Dark ones are seams between planks, light ones are wood that white hardly shows on.
+        void Explain(string label, PixelBuffer after)
+        {
+            bool[] mask = CanvasMeasure.Changed(empty, after);
+            PixelBox box = area.Value;
+            int missed = 0, dark = 0, light = 0, bandRows = 10;
+            int[] rowMissed = new int[bandRows], colMissed = new int[bandRows];
+
+            for (int y = box.Y1; y <= box.Y2; y++)
+            {
+                for (int x = box.X1; x <= box.X2; x++)
+                {
+                    int i = y * empty.Width + x;
+                    if (mask[i])
+                        continue;
+
+                    missed++;
+                    double lum = 0.2126 * empty.Data[i * 4] + 0.7152 * empty.Data[i * 4 + 1] + 0.0722 * empty.Data[i * 4 + 2];
+                    if (lum < 50) dark++;
+                    else if (lum > 170) light++;
+
+                    rowMissed[Math.Min(bandRows - 1, (y - box.Y1) * bandRows / box.Height)]++;
+                    colMissed[Math.Min(bandRows - 1, (x - box.X1) * bandRows / box.Width)]++;
+                }
+            }
+
+            int total = box.Width * box.Height;
+            Write($"{label}: {N(100.0 * (total - missed) / total)} percent changed; of the {missed} unchanged pixels {N(100.0 * dark / Math.Max(1, missed))} percent were dark (seams), {N(100.0 * light / Math.Max(1, missed))} percent light wood");
+            Write($"  unchanged share per tenth, top to bottom: {string.Join(" ", rowMissed.Select(m => N(100.0 * m / (total / bandRows))))}");
+            Write($"  unchanged share per tenth, left to right: {string.Join(" ", colMissed.Select(m => N(100.0 * m / (total / bandRows))))}");
+        }
+
+        Explain("default pace", filled);
+
+        // The same fill again, much slower. If the first pace was too fast, more of the canvas changes now.
+        await Run(fill, PaintTiming.FromSpeed(10));
+        PixelBuffer slow = await Look();
+        Explain("after a second, slow fill", slow);
         Write("done");
     }
 }

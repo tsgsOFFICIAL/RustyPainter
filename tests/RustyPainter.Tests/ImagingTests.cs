@@ -635,10 +635,11 @@ public class StudioGeometryTests
     [Fact]
     public void Other_surfaces_are_estimated_from_their_canvas_on_screen()
     {
-        Surface large = Find("sign-large");
+        // A surface made up for the test, so this keeps working as more real surfaces are measured.
+        Surface unmeasured = new("test", "Test", "standard", new ScreenRect(0, 0, 944, 471));
 
-        Assert.False(StudioGeometry.IsTextureKnown(large));
-        Assert.Equal((559, 279), StudioGeometry.Texture(large));
+        Assert.False(StudioGeometry.IsTextureKnown(unmeasured));
+        Assert.Equal((559, 279), StudioGeometry.Texture(unmeasured));
     }
 
     [Fact]

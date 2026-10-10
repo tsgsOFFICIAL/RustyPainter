@@ -63,7 +63,7 @@ public class StudioProcessingTests : IDisposable
     public void Says_when_the_texture_size_is_only_an_estimate()
     {
         StudioViewModel studio = Loaded(TestImages.Rainbow());
-        studio.SelectedSurface = studio.AllSurfaces.Single(option => option.Surface.Id == "sign-large");
+        studio.SelectedSurface = studio.AllSurfaces.Single(option => option.Surface.Id == "neon-large");
 
         Assert.True(studio.IsTextureEstimated);
 
