@@ -81,6 +81,64 @@
           "addColor": { "x1": 1856, "y1": 860, "x2": 1952, "y2": 906 }
         }
       }
+    },
+    "neon": {
+      "swatches": {
+        "clear": { "x1": 32, "y1": 32, "x2": 128, "y2": 128 },
+        "resetCamera": { "x1": 672, "y1": 32, "x2": 767, "y2": 127 },
+        "undo": { "x1": 416, "y1": 32, "x2": 512, "y2": 128 },
+        "redo": { "x1": 544, "y1": 32, "x2": 640, "y2": 128 },
+        "toolBrush": { "x1": 2180, "y1": 185, "x2": 2235, "y2": 240 },
+        "toolEraser": { "x1": 2244, "y1": 185, "x2": 2299, "y2": 240 },
+        "toolPicker": { "x1": 2308, "y1": 185, "x2": 2363, "y2": 240 },
+        "brushShapes": [
+          { "x1": 2148, "y1": 365, "x2": 2204, "y2": 421 },
+          { "x1": 2212, "y1": 365, "x2": 2268, "y2": 421 },
+          { "x1": 2276, "y1": 365, "x2": 2332, "y2": 421 },
+          { "x1": 2340, "y1": 365, "x2": 2396, "y2": 421 }
+        ],
+        "colorModeToggle": { "x1": 2495, "y1": 473, "x2": 2529, "y2": 507 },
+        "saveChanges": { "x1": 2116, "y1": 1253, "x2": 2528, "y2": 1322 },
+        "cancel": { "x1": 2116, "y1": 1338, "x2": 2528, "y2": 1408 },
+        "colorGrid": {
+          "area": { "x1": 2016, "y1": 539, "x2": 2527, "y2": 1117 },
+          "columns": 4,
+          "rows": 16,
+          "cellWidth": 126,
+          "cellHeight": 35,
+          "gapX": 2,
+          "gapY": 1
+        }
+      },
+      "free": {
+        "clear": { "x1": 32, "y1": 32, "x2": 128, "y2": 128 },
+        "resetCamera": { "x1": 672, "y1": 32, "x2": 767, "y2": 127 },
+        "undo": { "x1": 416, "y1": 32, "x2": 512, "y2": 128 },
+        "redo": { "x1": 544, "y1": 32, "x2": 640, "y2": 128 },
+        "toolBrush": { "x1": 2180, "y1": 318, "x2": 2235, "y2": 373 },
+        "toolEraser": { "x1": 2244, "y1": 318, "x2": 2299, "y2": 373 },
+        "toolPicker": { "x1": 2308, "y1": 318, "x2": 2363, "y2": 373 },
+        "brushShapes": [
+          { "x1": 2148, "y1": 498, "x2": 2204, "y2": 554 },
+          { "x1": 2212, "y1": 498, "x2": 2268, "y2": 554 },
+          { "x1": 2276, "y1": 498, "x2": 2332, "y2": 554 },
+          { "x1": 2340, "y1": 498, "x2": 2396, "y2": 554 }
+        ],
+        "colorModeToggle": { "x1": 2495, "y1": 606, "x2": 2529, "y2": 640 },
+        "saveChanges": { "x1": 2116, "y1": 1253, "x2": 2528, "y2": 1322 },
+        "cancel": { "x1": 2116, "y1": 1338, "x2": 2528, "y2": 1408 },
+        "freeColor": {
+          "colorHex": { "x1": 2419, "y1": 936, "x2": 2511, "y2": 974 },
+          "colorArea": { "x1": 2049, "y1": 678, "x2": 2362, "y2": 989 },
+          "hueBar": { "x1": 2364, "y1": 678, "x2": 2417, "y2": 989 },
+          "savedColors": [
+            { "x1": 1862, "y1": 579, "x2": 1946, "y2": 662 },
+            { "x1": 1862, "y1": 675, "x2": 1946, "y2": 758 },
+            { "x1": 1862, "y1": 771, "x2": 1946, "y2": 854 }
+          ],
+          "addColor": { "x1": 1856, "y1": 860, "x2": 1952, "y2": 906 }
+        }
+      }
     }
   },
   "surfaces": [
@@ -91,6 +149,9 @@
     { "id": "canvas-large", "name": "Artist Canvas Large", "layout": "standard", "canvas": { "x1": 344, "y1": 180, "x2": 1640, "y2": 1260 } },
     { "id": "canvas-xl", "name": "Artist Canvas XL", "layout": "standard", "canvas": { "x1": 407, "y1": 142, "x2": 1564, "y2": 1311 } },
     { "id": "canvas-standing", "name": "Artist Canvas Standing", "layout": "standard", "canvas": { "x1": 810, "y1": 268, "x2": 1174, "y2": 1172 } },
-    { "id": "frame-portrait", "name": "Portrait Picture Frame", "layout": "standard", "canvas": { "x1": 781, "y1": 485, "x2": 1198, "y2": 1006 } }
+    { "id": "frame-portrait", "name": "Portrait Picture Frame", "layout": "standard", "canvas": { "x1": 781, "y1": 485, "x2": 1198, "y2": 1006 } },
+    { "id": "neon-large", "name": "Large Neon Sign", "layout": "neon", "canvas": { "x1": 545, "y1": 237, "x2": 1434, "y2": 1125 } },
+    { "id": "neon-medium", "name": "Medium Neon Sign", "layout": "neon", "canvas": { "x1": 545, "y1": 364, "x2": 1439, "y2": 879 } },
+    { "id": "neon-small", "name": "Small Neon Sign", "layout": "neon", "canvas": { "x1": 730, "y1": 361, "x2": 1252, "y2": 882 } }
   ]
 }

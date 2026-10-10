@@ -79,13 +79,13 @@ public sealed record FreeColorControls(ScreenRect ColorHex, ScreenRect ColorArea
 /// <param name="ToolBrush">The paint brush tool.</param>
 /// <param name="ToolEraser">The eraser tool.</param>
 /// <param name="ToolPicker">The colour picker tool.</param>
-/// <param name="BrushShapes">The brush shape buttons, left to right.</param>
-/// <param name="Size">The brush size value, which can be clicked to type a number.</param>
-/// <param name="Spacing">The brush spacing value.</param>
-/// <param name="Opacity">The brush opacity value.</param>
+/// <param name="BrushShapes">The brush shape buttons (or presets, on surfaces that only have a few), left to right.</param>
 /// <param name="ColorModeToggle">The button in the colour header that switches between swatch mode and free colour mode.</param>
 /// <param name="SaveChanges">The button that saves the painting and leaves the paint screen.</param>
 /// <param name="Cancel">The button that leaves the paint screen without saving.</param>
+/// <param name="Size">The brush size value, which can be clicked to type a number. Absent on surfaces with fixed brush presets.</param>
+/// <param name="Spacing">The brush spacing value. Absent on surfaces with fixed brush presets.</param>
+/// <param name="Opacity">The brush opacity value. Absent on surfaces with fixed brush presets.</param>
 /// <param name="ColorGrid">The swatch grid, present in swatch mode only.</param>
 /// <param name="FreeColor">The free colour controls, present in free colour mode only.</param>
 public sealed record PaintLayout(
@@ -97,12 +97,12 @@ public sealed record PaintLayout(
     ScreenRect ToolEraser,
     ScreenRect ToolPicker,
     ScreenRect[] BrushShapes,
-    ScreenRect Size,
-    ScreenRect Spacing,
-    ScreenRect Opacity,
     ScreenRect ColorModeToggle,
     ScreenRect SaveChanges,
     ScreenRect Cancel,
+    ScreenRect? Size = null,
+    ScreenRect? Spacing = null,
+    ScreenRect? Opacity = null,
     ColorGrid? ColorGrid = null,
     FreeColorControls? FreeColor = null)
 {
@@ -112,8 +112,17 @@ public sealed record PaintLayout(
         List<ScreenRect> all =
         [
             Clear, ResetCamera, Undo, Redo, ToolBrush, ToolEraser, ToolPicker,
-            .. BrushShapes, Size, Spacing, Opacity, ColorModeToggle, SaveChanges, Cancel
+            .. BrushShapes, ColorModeToggle, SaveChanges, Cancel
         ];
+
+        if (Size is { } size)
+            all.Add(size);
+
+        if (Spacing is { } spacing)
+            all.Add(spacing);
+
+        if (Opacity is { } opacity)
+            all.Add(opacity);
 
         if (ColorGrid is not null)
             all.Add(ColorGrid.Area);
@@ -133,8 +142,10 @@ public sealed record PaintLayout(
             Move(Clear), Move(ResetCamera), Move(Undo), Move(Redo),
             Move(ToolBrush), Move(ToolEraser), Move(ToolPicker),
             BrushShapes.Select(Move).ToArray(),
-            Move(Size), Move(Spacing), Move(Opacity),
             Move(ColorModeToggle), Move(SaveChanges), Move(Cancel),
+            Size is { } size ? Move(size) : null,
+            Spacing is { } spacing ? Move(spacing) : null,
+            Opacity is { } opacity ? Move(opacity) : null,
             ColorGrid?.Place(sx, sy, dx, dy),
             FreeColor?.Place(sx, sy, dx, dy));
     }
@@ -149,8 +160,12 @@ public sealed record LayoutFamily(PaintLayout Swatches, PaintLayout Free);
 /// <param name="Id">A stable identifier, used in saved projects.</param>
 /// <param name="Name">The name shown in the UI.</param>
 /// <param name="Layout">The key of the <see cref="LayoutFamily"/> this surface's paint screen uses.</param>
-/// <param name="Canvas">The canvas rectangle at the catalog's reference resolution.</param>
-public sealed record Surface(string Id, string Name, string Layout, ScreenRect Canvas);
+/// <param name="Canvas">The canvas rectangle at the catalog's reference resolution, measured after <paramref name="ScrollOut"/> scrolls.</param>
+/// <param name="ScrollOut">
+/// How many times the mouse wheel has to be scrolled out after opening the paint screen before the whole
+/// canvas is visible. Some canvases open zoomed in and cropped, which is a game quirk.
+/// </param>
+public sealed record Surface(string Id, string Name, string Layout, ScreenRect Canvas, int ScrollOut = 0);
 
 /// <summary>
 /// Everything known about Rust's paint screen, recorded once at a reference resolution and loaded from

@@ -122,6 +122,9 @@ public sealed class SurfaceService : ISurfaceService
             if (!catalog.Layouts.ContainsKey(surface.Layout))
                 throw new InvalidDataException($"The surface '{surface.Id}' uses the unknown layout '{surface.Layout}'.");
 
+            if (surface.ScrollOut is < 0 or > 40)
+                throw new InvalidDataException($"The scroll count of '{surface.Id}' must be between 0 and 40, got {surface.ScrollOut}.");
+
             if (surface.Canvas.Width <= 0 || surface.Canvas.Height <= 0)
                 throw new InvalidDataException($"The canvas of '{surface.Id}' has no area (the second corner must be below and right of the first).");
 

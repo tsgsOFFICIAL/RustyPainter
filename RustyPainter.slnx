@@ -6,5 +6,8 @@
     <Project Path="externals/IconPacks.Avalonia/src/IconPacks.Avalonia.PhosphorIcons/IconPacks.Avalonia.PhosphorIcons.csproj" />
     <Project Path="externals/IconPacks.Avalonia/src/IconPacks.Avalonia.SimpleIcons/IconPacks.Avalonia.SimpleIcons.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/RustyPainter.Tests/RustyPainter.Tests.csproj" />
+  </Folder>
   <Project Path="RustyPainter.csproj" />
 </Solution>

@@ -36,4 +36,4 @@ cd RustyPainter
 dotnet run --project RustyPainter.csproj
 ```
 
-You need the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0).
+You need the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0). The tests run with `dotnet test tests/RustyPainter.Tests`.
