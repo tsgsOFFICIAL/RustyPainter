@@ -21,7 +21,7 @@ namespace RustyPainter
             AppSettingsService settings = new();
             settings.Initialize();
 
-            return new MainWindowViewModel(new UpdateService(), new DialogService(), settings);
+            return new MainWindowViewModel(new UpdateService(), new DialogService(), settings, new SurfaceService());
         }
 
         /// <summary>Creates the window bound to the given view model and wires up the startup update check.</summary>

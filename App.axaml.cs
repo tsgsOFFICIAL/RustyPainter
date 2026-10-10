@@ -33,6 +33,7 @@ namespace RustyPainter
             IAppSettingsService settings = services.GetRequiredService<IAppSettingsService>();
             IUpdateService updates = services.GetRequiredService<IUpdateService>();
             IDialogService dialogs = services.GetRequiredService<IDialogService>();
+            ISurfaceService surfaces = services.GetRequiredService<ISurfaceService>();
 
             settings.Initialize();
 
@@ -41,7 +42,7 @@ namespace RustyPainter
             AppLog.ApplyRetention(settings.Current.LogRetentionDays);
             AppLog.ApplyVerbose(settings.Current.VerboseLogging);
 
-            MainWindowViewModel viewModel = new(updates, dialogs, settings);
+            MainWindowViewModel viewModel = new(updates, dialogs, settings, surfaces);
 
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
                 desktop.MainWindow = new MainWindow(viewModel);

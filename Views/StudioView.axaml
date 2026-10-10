@@ -1,0 +1,205 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia"
+             xmlns:vm="using:RustyPainter.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="660"
+             x:Class="RustyPainter.Views.StudioView"
+             x:DataType="vm:StudioViewModel"
+             DragDrop.AllowDrop="True">
+
+    <UserControl.Styles>
+        <Style Selector="TextBlock.eyebrow">
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedColor}"/>
+        </Style>
+
+        <Style Selector="Button.chip">
+            <Setter Property="Padding" Value="11,5"/>
+            <Setter Property="CornerRadius" Value="99"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedColor}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        <Style Selector="Button.chip:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource BorderColorMuted}"/>
+            <Setter Property="CornerRadius" Value="99"/>
+        </Style>
+        <Style Selector="Button.chip.active">
+            <Setter Property="Background" Value="{DynamicResource AccentSurfaceColor}"/>
+            <Setter Property="Foreground" Value="{DynamicResource AccentColor}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
+        </Style>
+        <Style Selector="Button.chip.active:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource AccentSurfaceColor}"/>
+            <Setter Property="CornerRadius" Value="99"/>
+        </Style>
+
+        <Style Selector="ListBox.surfaceList">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Padding" Value="0"/>
+        </Style>
+        <Style Selector="ListBox.surfaceList ListBoxItem">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderColor}"/>
+            <Setter Property="Background" Value="{DynamicResource BgColor}"/>
+        </Style>
+        <Style Selector="ListBox.surfaceList ListBoxItem:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource BorderColorMuted}"/>
+        </Style>
+        <Style Selector="ListBox.surfaceList ListBoxItem:selected">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
+        </Style>
+        <Style Selector="ListBox.surfaceList ListBoxItem:selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource AccentSurfaceColor}"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid ColumnDefinitions="304,*,284">
+
+        <!-- Source -->
+        <Border Grid.Column="0" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,1,0">
+            <ScrollViewer>
+                <StackPanel Margin="14" Spacing="12">
+                    <Border Classes="card">
+                        <StackPanel Spacing="12">
+                            <TextBlock Text="SOURCE" Classes="eyebrow"/>
+
+                            <Grid Height="150" IsVisible="{Binding NoImage}">
+                                <Rectangle Stroke="{DynamicResource AccentColor}" StrokeThickness="1.5"
+                                           StrokeDashArray="4,4" RadiusX="10" RadiusY="10" Opacity="0.6"/>
+                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
+                                    <iconPacks:PackIconPhosphorIcons Kind="UploadSimple" Width="30" Height="30"
+                                                                     Foreground="{DynamicResource AccentColor}" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Drop a picture here" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                    <Button Classes="secondaryButton" Click="OnBrowseClick" HorizontalAlignment="Center">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <iconPacks:PackIconPhosphorIcons Kind="FolderOpen" Width="16" Height="16"/>
+                                            <TextBlock Text="Browse"/>
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+
+                            <StackPanel Spacing="10" IsVisible="{Binding HasImage}">
+                                <Grid ColumnDefinitions="72,*">
+                                    <Border Width="72" Height="54" CornerRadius="8" ClipToBounds="True"
+                                            BorderBrush="{DynamicResource BorderColor}" BorderThickness="1">
+                                        <Image Source="{Binding Image}" Stretch="UniformToFill"/>
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Spacing="2">
+                                        <TextBlock Text="{Binding ImageName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding ImageInfo}" Classes="muted" FontSize="11"/>
+                                    </StackPanel>
+                                </Grid>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Button Classes="secondaryButton" Click="OnBrowseClick">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <iconPacks:PackIconPhosphorIcons Kind="FolderOpen" Width="16" Height="16"/>
+                                            <TextBlock Text="Replace"/>
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Classes="secondaryButton" Command="{Binding ClearImageCommand}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <iconPacks:PackIconPhosphorIcons Kind="Trash" Width="16" Height="16"/>
+                                            <TextBlock Text="Remove"/>
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </StackPanel>
+
+                            <TextBlock Text="PNG, JPG, WebP or BMP. You can also paste with Ctrl+V."
+                                       Classes="muted" FontSize="11" TextWrapping="Wrap"/>
+                            <TextBlock Text="{Binding ErrorText}" IsVisible="{Binding HasError}"
+                                       Foreground="{DynamicResource DangerColor}" FontSize="12" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <!-- Preview -->
+        <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
+            <Border Grid.Row="0" Padding="16,12" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Spacing="2" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding SelectedSurface.Name}" FontSize="16" FontWeight="Bold"/>
+                        <TextBlock Text="{Binding CanvasText}" Classes="muted" FontSize="12"/>
+                    </StackPanel>
+                    <TextBlock Grid.Column="1" Text="{Binding ScrollHint}" IsVisible="{Binding HasScrollHint}"
+                               Foreground="{DynamicResource AccentColor}" FontSize="12" VerticalAlignment="Center"/>
+                </Grid>
+            </Border>
+
+            <Border Grid.Row="1" Background="#0C0E12">
+                <Grid>
+                    <Viewbox Stretch="Uniform" Margin="40">
+                        <Border Width="{Binding CanvasWidth}" Height="{Binding CanvasHeight}" ClipToBounds="True"
+                                Background="{DynamicResource BorderColor}" CornerRadius="4">
+                            <Image Source="{Binding Image}" Stretch="UniformToFill" IsVisible="{Binding HasImage}"/>
+                        </Border>
+                    </Viewbox>
+                    <!-- Outside the Viewbox so the text keeps its size however big the canvas is. -->
+                    <TextBlock Text="Load a picture to see it on this canvas" IsVisible="{Binding NoImage}"
+                               Classes="muted" FontSize="14" TextAlignment="Center"
+                               HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"/>
+                </Grid>
+            </Border>
+
+            <Border Grid.Row="2" Padding="16,10" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,1,0,0">
+                <StackPanel Orientation="Horizontal" Spacing="16">
+                    <TextBlock Classes="muted" FontSize="12">
+                        <Run Text="Canvas"/>
+                        <Run Text="{Binding CanvasText}" Foreground="{DynamicResource TextColor}"/>
+                    </TextBlock>
+                    <TextBlock Classes="muted" FontSize="12" IsVisible="{Binding HasImage}">
+                        <Run Text="Picture"/>
+                        <Run Text="{Binding ImageInfo}" Foreground="{DynamicResource TextColor}"/>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- Surface -->
+        <Border Grid.Column="2" BorderBrush="{DynamicResource BorderColor}" BorderThickness="1,0,0,0">
+            <Grid RowDefinitions="Auto,Auto,*" Margin="14">
+                <TextBlock Grid.Row="0" Text="SURFACE" Classes="eyebrow" Margin="0,0,0,10"/>
+
+                <ItemsControl Grid.Row="1" ItemsSource="{Binding Categories}" Margin="0,0,0,10">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:CategoryChip">
+                            <Button Classes="chip" Classes.active="{Binding IsSelected}" Content="{Binding Name}"
+                                    Tag="{Binding Name}" Click="OnCategoryClick" Margin="0,0,6,6"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <ListBox Grid.Row="2" Classes="surfaceList" ItemsSource="{Binding VisibleSurfaces}"
+                         SelectedItem="{Binding SelectedSurface}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:SurfaceOption">
+                            <StackPanel Margin="12,10" Spacing="2">
+                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13"/>
+                                <TextBlock Text="{Binding SizeText}" Classes="muted" FontSize="11"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </Border>
+    </Grid>
+
+</UserControl>

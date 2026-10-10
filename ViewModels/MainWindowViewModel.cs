@@ -17,19 +17,22 @@ public sealed class MainWindowViewModel : ViewModelBase
     private readonly IAppSettingsService _settings;
     private readonly IUpdateService _updates;
     private readonly IDialogService _dialogs;
+    private readonly ISurfaceService _surfaces;
 
     private HomeViewModel? _home;
+    private StudioViewModel? _studio;
     private SettingsViewModel? _settingsPage;
     private ComingSoonViewModel? _comingSoon;
 
     private ViewModelBase? _currentPage;
 
     /// <summary>Creates the shell, its sidebar, and the initial Home page.</summary>
-    public MainWindowViewModel(IUpdateService updates, IDialogService dialogs, IAppSettingsService settings)
+    public MainWindowViewModel(IUpdateService updates, IDialogService dialogs, IAppSettingsService settings, ISurfaceService surfaces)
     {
         _settings = settings;
         _updates = updates;
         _dialogs = dialogs;
+        _surfaces = surfaces;
 
         Sidebar = new SidebarViewModel();
         Sidebar.NavigationRequested += (_, page) => Navigate(page);
@@ -125,6 +128,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         CurrentPage = page switch
         {
             SidebarPage.Home => _home ??= new HomeViewModel(Sidebar),
+            SidebarPage.Studio => _studio ??= new StudioViewModel(_surfaces),
             SidebarPage.Settings => _settingsPage ??= new SettingsViewModel(_settings, _updates, _dialogs),
             _ => ShowComingSoon(page)
         };
