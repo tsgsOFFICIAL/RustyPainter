@@ -7,6 +7,7 @@ using Avalonia.Threading;
 using RustyPainter.Interface;
 using RustyPainter.Imaging;
 using RustyPainter.Painting;
+using RustyPainter.Library;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -68,7 +69,7 @@ public sealed record ColorChip(string Hex)
 /// The Studio page: pick a surface, load a picture, place it on the canvas, choose how its colors are matched
 /// and see the result as it would be painted.
 /// </summary>
-public sealed class StudioViewModel : ViewModelBase
+public sealed partial class StudioViewModel : ViewModelBase
 {
     /// <summary>The picture formats that can be loaded. GIF is deliberately not one of them.</summary>
     public static readonly IReadOnlyList<string> SupportedExtensions = [".png", ".jpg", ".jpeg", ".webp", ".bmp"];
@@ -111,9 +112,11 @@ public sealed class StudioViewModel : ViewModelBase
     private double _splitPosition = 0.5;
     private bool _isBusy;
 
-    public StudioViewModel(ISurfaceService surfaces, IPictureDownloader? downloader = null)
+    public StudioViewModel(ISurfaceService surfaces, IPictureDownloader? downloader = null, IProjectStore? projects = null)
     {
         _surfaces = surfaces;
+        _projects = projects;
+        SaveCommand = new RelayCommand(SaveProject, () => CanSave);
         _downloader = downloader ?? new PictureDownloader();
 
         SourceChoices = new([("Picture", SourceKind.Picture), ("Link", SourceKind.Link), ("Text", SourceKind.Text)], SourceKind.Picture);
@@ -248,6 +251,8 @@ public sealed class StudioViewModel : ViewModelBase
                 return;
 
             OnPropertyChanged(nameof(HasImage));
+            OnPropertyChanged(nameof(CanSave));
+            SaveCommand.RaiseCanExecuteChanged();
             OnPropertyChanged(nameof(NoImage));
             OnPropertyChanged(nameof(ImageInfo));
             OnPropertyChanged(nameof(ShowResult));
@@ -635,6 +640,7 @@ public sealed class StudioViewModel : ViewModelBase
         {
             using FileStream stream = File.OpenRead(path);
             Show(new Bitmap(stream), name);
+            DetachProject();
             return true;
         }
         catch (Exception ex)
@@ -651,6 +657,7 @@ public sealed class StudioViewModel : ViewModelBase
         try
         {
             Show(bitmap, name);
+            DetachProject();
         }
         catch (Exception ex)
         {
@@ -732,6 +739,7 @@ public sealed class StudioViewModel : ViewModelBase
 
             using MemoryStream stream = new(data);
             Show(new Bitmap(stream), NameFromLink(address));
+            DetachProject();
             return true;
         }
         catch (PictureDownloadException ex)
@@ -1033,6 +1041,7 @@ public sealed class StudioViewModel : ViewModelBase
 
     private void ClearImage()
     {
+        DetachProject();
         _download?.Cancel();
         _pending?.Cancel();
         Image?.Dispose();
