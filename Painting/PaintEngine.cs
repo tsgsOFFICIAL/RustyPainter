@@ -436,11 +436,6 @@ public sealed class PaintEngine
             await MoveAsync(step.To, token);
             await WaitAsync(_timing.Hold, token);
         }
-        else
-        {
-            // A click with no drag has to stay down long enough for the game to see it, or the cell is left empty.
-            await WaitAsync(Math.Max(_timing.Hold * 2, 30), token);
-        }
 
         await ReleaseAsync(token);
         await WaitAsync(_timing.AfterStroke, token);
