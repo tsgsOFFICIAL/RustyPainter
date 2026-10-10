@@ -6,6 +6,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
+using RustyPainter.Imaging;
 using RustyPainter.Service;
 using RustyPainter.ViewModels;
 using RustyPainter.Views;
@@ -15,8 +16,6 @@ namespace RustyPainter.Tests;
 /// <summary>Draws the real Studio page headlessly and looks at the pixels.</summary>
 public class StudioRenderTests : IDisposable
 {
-    // A 1x1 red PNG, stretched by the page to cover the whole canvas.
-    private const string OnePixelPng = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
 
     private readonly string _folder = Path.Combine(Path.GetTempPath(), $"rustypainter-render-{Guid.NewGuid():N}");
 
@@ -78,10 +77,14 @@ public class StudioRenderTests : IDisposable
     public void A_loaded_picture_covers_the_whole_canvas()
     {
         string path = Path.Combine(_folder, "red.png");
-        File.WriteAllBytes(path, Convert.FromBase64String(OnePixelPng));
+        TestImages.SavePng(PixelBuffer.Solid(1, 1, 200, 30, 30), path);
 
         StudioViewModel studio = new(new SurfaceService());
         Assert.True(studio.TryLoad(path));
+
+        // Any colour, so the picture keeps its own red instead of the nearest game swatch.
+        studio.ColorModeChoices.Select(ColorMode.Free);
+        studio.ProcessNow();
 
         WriteableBitmap frame = Draw(studio, "studio-loaded");
 
@@ -97,19 +100,22 @@ public class StudioRenderTests : IDisposable
     public void The_canvas_follows_the_selected_surface()
     {
         string path = Path.Combine(_folder, "red.png");
-        File.WriteAllBytes(path, Convert.FromBase64String(OnePixelPng));
+        TestImages.SavePng(PixelBuffer.Solid(1, 1, 200, 30, 30), path);
 
         StudioViewModel studio = new(new SurfaceService());
         studio.TryLoad(path);
+        studio.ColorModeChoices.Select(ColorMode.Free);
 
         // The huge sign is wide and flat, so a point high above its centre must not be on the canvas.
         studio.SelectedSurface = studio.AllSurfaces.Single(option => option.Surface.Id == "sign-huge");
+        studio.ProcessNow();
         WriteableBitmap wide = Draw(studio, "studio-huge-sign");
         (byte r, byte g, byte b) top = PixelAt(wide, 700, 180);
         Assert.False(IsRed(top.r, top.g, top.b), $"The flat canvas should not reach up to y=180, got {top}");
 
         // The standing canvas is tall, so the same point must be on the canvas.
         studio.SelectedSurface = studio.AllSurfaces.Single(option => option.Surface.Id == "canvas-standing");
+        studio.ProcessNow();
         WriteableBitmap tall = Draw(studio, "studio-standing-canvas");
         (byte r, byte g, byte b) topTall = PixelAt(tall, 700, 180);
         Assert.True(IsRed(topTall.r, topTall.g, topTall.b), $"The tall canvas should reach up to y=180, got {topTall}");

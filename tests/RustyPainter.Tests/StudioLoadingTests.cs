@@ -1,4 +1,5 @@
 using Avalonia.Headless.XUnit;
+using RustyPainter.Imaging;
 using RustyPainter.Service;
 using RustyPainter.ViewModels;
 
@@ -7,9 +8,6 @@ namespace RustyPainter.Tests;
 /// <summary>Loading pictures for real, through Avalonia's decoder, in a headless application.</summary>
 public class StudioLoadingTests : IDisposable
 {
-    // A 1x1 red PNG.
-    private const string OnePixelPng = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
-
     private readonly string _folder = Path.Combine(Path.GetTempPath(), $"rustypainter-tests-{Guid.NewGuid():N}");
 
     public StudioLoadingTests() => Directory.CreateDirectory(_folder);
@@ -19,7 +17,7 @@ public class StudioLoadingTests : IDisposable
     private string WritePng(string name = "pixel.png")
     {
         string path = Path.Combine(_folder, name);
-        File.WriteAllBytes(path, Convert.FromBase64String(OnePixelPng));
+        TestImages.SavePng(PixelBuffer.Solid(1, 1, 200, 30, 30), path);
         return path;
     }
 

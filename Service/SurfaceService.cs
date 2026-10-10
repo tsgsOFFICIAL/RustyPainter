@@ -122,6 +122,9 @@ public sealed class SurfaceService : ISurfaceService
             if (!catalog.Layouts.ContainsKey(surface.Layout))
                 throw new InvalidDataException($"The surface '{surface.Id}' uses the unknown layout '{surface.Layout}'.");
 
+            if (surface.Texture is { } texture && (texture.Width <= 0 || texture.Height <= 0))
+                throw new InvalidDataException($"The texture size of '{surface.Id}' must be positive.");
+
             if (surface.ScrollOut is < 0 or > 40)
                 throw new InvalidDataException($"The scroll count of '{surface.Id}' must be between 0 and 40, got {surface.ScrollOut}.");
 

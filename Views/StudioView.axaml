@@ -4,10 +4,20 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia"
              xmlns:vm="using:RustyPainter.ViewModels"
-             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="660"
+             mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="700"
              x:Class="RustyPainter.Views.StudioView"
              x:DataType="vm:StudioViewModel"
              DragDrop.AllowDrop="True">
+
+    <UserControl.Resources>
+        <!-- Sliders in the app accent instead of the Windows accent. -->
+        <StaticResource x:Key="SliderTrackValueFill" ResourceKey="AccentColor"/>
+        <StaticResource x:Key="SliderTrackValueFillPointerOver" ResourceKey="AccentColorHover"/>
+        <StaticResource x:Key="SliderTrackValueFillPressed" ResourceKey="AccentColorHover"/>
+        <StaticResource x:Key="SliderThumbBackground" ResourceKey="AccentColor"/>
+        <StaticResource x:Key="SliderThumbBackgroundPointerOver" ResourceKey="AccentColorHover"/>
+        <StaticResource x:Key="SliderThumbBackgroundPressed" ResourceKey="AccentColorHover"/>
+    </UserControl.Resources>
 
     <UserControl.Styles>
         <Style Selector="TextBlock.eyebrow">
@@ -16,8 +26,15 @@
             <Setter Property="Foreground" Value="{DynamicResource TextMutedColor}"/>
         </Style>
 
+        <Style Selector="TextBlock.fieldLabel">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextMutedColor}"/>
+        </Style>
+
         <Style Selector="Button.chip">
             <Setter Property="Padding" Value="11,5"/>
+            <Setter Property="Margin" Value="0,0,6,6"/>
             <Setter Property="CornerRadius" Value="99"/>
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
@@ -38,6 +55,19 @@
         <Style Selector="Button.chip.active:pointerover /template/ ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource AccentSurfaceColor}"/>
             <Setter Property="CornerRadius" Value="99"/>
+        </Style>
+
+        <Style Selector="ItemsControl.chips">
+            <Setter Property="ItemsPanel">
+                <ItemsPanelTemplate>
+                    <WrapPanel/>
+                </ItemsPanelTemplate>
+            </Setter>
+        </Style>
+
+        <Style Selector="Button.small">
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="FontSize" Value="12"/>
         </Style>
 
         <Style Selector="ListBox.surfaceList">
@@ -63,17 +93,26 @@
         </Style>
     </UserControl.Styles>
 
-    <Grid ColumnDefinitions="304,*,284">
+    <UserControl.DataTemplates>
+        <!-- Every group of choices (Fit, Fill, Stretch and so on) is drawn as a row of chips. -->
+        <DataTemplate DataType="vm:Choice" x:DataType="vm:Choice">
+            <Button Classes="chip" Classes.active="{Binding IsSelected}" Content="{Binding Label}" Command="{Binding SelectCommand}"/>
+        </DataTemplate>
+    </UserControl.DataTemplates>
 
-        <!-- Source -->
+    <Grid ColumnDefinitions="320,*,284">
+
+        <!-- Settings -->
         <Border Grid.Column="0" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,1,0">
             <ScrollViewer>
                 <StackPanel Margin="14" Spacing="12">
+
+                    <!-- Source -->
                     <Border Classes="card">
                         <StackPanel Spacing="12">
                             <TextBlock Text="SOURCE" Classes="eyebrow"/>
 
-                            <Grid Height="150" IsVisible="{Binding NoImage}">
+                            <Grid Height="130" IsVisible="{Binding NoImage}">
                                 <Rectangle Stroke="{DynamicResource AccentColor}" StrokeThickness="1.5"
                                            StrokeDashArray="4,4" RadiusX="10" RadiusY="10" Opacity="0.6"/>
                                 <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
@@ -101,15 +140,15 @@
                                     </StackPanel>
                                 </Grid>
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <Button Classes="secondaryButton" Click="OnBrowseClick">
+                                    <Button Classes="secondaryButton small" Click="OnBrowseClick">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <iconPacks:PackIconPhosphorIcons Kind="FolderOpen" Width="16" Height="16"/>
+                                            <iconPacks:PackIconPhosphorIcons Kind="FolderOpen" Width="14" Height="14"/>
                                             <TextBlock Text="Replace"/>
                                         </StackPanel>
                                     </Button>
-                                    <Button Classes="secondaryButton" Command="{Binding ClearImageCommand}">
+                                    <Button Classes="secondaryButton small" Command="{Binding ClearImageCommand}">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <iconPacks:PackIconPhosphorIcons Kind="Trash" Width="16" Height="16"/>
+                                            <iconPacks:PackIconPhosphorIcons Kind="Trash" Width="14" Height="14"/>
                                             <TextBlock Text="Remove"/>
                                         </StackPanel>
                                     </Button>
@@ -122,6 +161,130 @@
                                        Foreground="{DynamicResource DangerColor}" FontSize="12" TextWrapping="Wrap"/>
                         </StackPanel>
                     </Border>
+
+                    <!-- Placement -->
+                    <Border Classes="card" IsVisible="{Binding HasImage}">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="PLACEMENT" Classes="eyebrow"/>
+                            <ItemsControl Classes="chips" ItemsSource="{Binding PlacementChoices.Choices}"/>
+
+                            <StackPanel Spacing="0">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Text="Zoom" Classes="fieldLabel"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding ZoomText}" FontSize="11"/>
+                                </Grid>
+                                <Slider Minimum="0.25" Maximum="4" SmallChange="0.05" LargeChange="0.25" Value="{Binding Zoom}"/>
+                            </StackPanel>
+                            <StackPanel Spacing="0">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Text="Move sideways" Classes="fieldLabel"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding OffsetXText}" FontSize="11"/>
+                                </Grid>
+                                <Slider Minimum="-100" Maximum="100" Value="{Binding OffsetX}"/>
+                            </StackPanel>
+                            <StackPanel Spacing="0">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Text="Move up or down" Classes="fieldLabel"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding OffsetYText}" FontSize="11"/>
+                                </Grid>
+                                <Slider Minimum="-100" Maximum="100" Value="{Binding OffsetY}"/>
+                            </StackPanel>
+
+                            <WrapPanel>
+                                <Button Classes="secondaryButton small" Command="{Binding RotateCommand}" Margin="0,0,6,6">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <iconPacks:PackIconPhosphorIcons Kind="ArrowClockwise" Width="14" Height="14"/>
+                                        <TextBlock Text="Rotate"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Classes="secondaryButton small" Command="{Binding FlipHorizontalCommand}" Margin="0,0,6,6">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <iconPacks:PackIconPhosphorIcons Kind="FlipHorizontal" Width="14" Height="14"/>
+                                        <TextBlock Text="Flip"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Classes="secondaryButton small" Command="{Binding FlipVerticalCommand}" Margin="0,0,6,6">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <iconPacks:PackIconPhosphorIcons Kind="FlipVertical" Width="14" Height="14"/>
+                                        <TextBlock Text="Flip"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Classes="secondaryButton small" Command="{Binding ResetPlacementCommand}" Margin="0,0,6,6">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <iconPacks:PackIconPhosphorIcons Kind="ArrowCounterClockwise" Width="14" Height="14"/>
+                                        <TextBlock Text="Reset"/>
+                                    </StackPanel>
+                                </Button>
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Colour -->
+                    <Border Classes="card" IsVisible="{Binding HasImage}">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="COLOUR" Classes="eyebrow"/>
+                            <ItemsControl Classes="chips" ItemsSource="{Binding ColorModeChoices.Choices}"/>
+
+                            <StackPanel Spacing="0" IsVisible="{Binding IsFreeMode}">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Text="Number of colours" Classes="fieldLabel"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding MaxColorsText}" FontSize="11"/>
+                                </Grid>
+                                <Slider Minimum="2" Maximum="64" Value="{Binding MaxColors}"/>
+                                <TextBlock Text="Fewer colours paint faster, every colour is one more change in the game."
+                                           Classes="muted" FontSize="11" TextWrapping="Wrap"/>
+                            </StackPanel>
+
+                            <TextBlock Text="Dithering" Classes="fieldLabel"/>
+                            <ItemsControl Classes="chips" ItemsSource="{Binding DitheringChoices.Choices}"/>
+
+                            <TextBlock Text="Filter" Classes="fieldLabel"/>
+                            <ItemsControl Classes="chips" ItemsSource="{Binding FilterChoices.Choices}"/>
+
+                            <StackPanel Spacing="0">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Text="Brightness" Classes="fieldLabel"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding BrightnessText}" FontSize="11"/>
+                                </Grid>
+                                <Slider Minimum="-100" Maximum="100" Value="{Binding Brightness}"/>
+                            </StackPanel>
+                            <StackPanel Spacing="0">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Text="Contrast" Classes="fieldLabel"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding ContrastText}" FontSize="11"/>
+                                </Grid>
+                                <Slider Minimum="-100" Maximum="100" Value="{Binding Contrast}"/>
+                            </StackPanel>
+                            <StackPanel Spacing="0">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Text="Saturation" Classes="fieldLabel"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding SaturationText}" FontSize="11"/>
+                                </Grid>
+                                <Slider Minimum="-100" Maximum="100" Value="{Binding Saturation}"/>
+                            </StackPanel>
+
+                            <Button Classes="secondaryButton small" Command="{Binding ResetAdjustmentsCommand}" HorizontalAlignment="Left">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <iconPacks:PackIconPhosphorIcons Kind="ArrowCounterClockwise" Width="14" Height="14"/>
+                                    <TextBlock Text="Reset"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Quality -->
+                    <Border Classes="card" IsVisible="{Binding HasImage}">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="QUALITY" Classes="eyebrow"/>
+                            <TextBlock Text="Brush size in game units. Small is fine and very slow, large is quick and blocky."
+                                       Classes="muted" FontSize="11" TextWrapping="Wrap"/>
+                            <ItemsControl Classes="chips" ItemsSource="{Binding QualityChoices.Choices}"/>
+                            <TextBlock Text="{Binding GridText}" FontWeight="SemiBold"/>
+                            <TextBlock Text="The size of this surface's texture is estimated until it has been measured in the game."
+                                       IsVisible="{Binding IsTextureEstimated}" Classes="muted" FontSize="11" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+
                 </StackPanel>
             </ScrollViewer>
         </Border>
@@ -133,9 +296,11 @@
                     <StackPanel Spacing="2" VerticalAlignment="Center">
                         <TextBlock Text="{Binding SelectedSurface.Name}" FontSize="16" FontWeight="Bold"/>
                         <TextBlock Text="{Binding CanvasText}" Classes="muted" FontSize="12"/>
+                        <TextBlock Text="{Binding ScrollHint}" IsVisible="{Binding HasScrollHint}"
+                                   Foreground="{DynamicResource AccentColor}" FontSize="12"/>
                     </StackPanel>
-                    <TextBlock Grid.Column="1" Text="{Binding ScrollHint}" IsVisible="{Binding HasScrollHint}"
-                               Foreground="{DynamicResource AccentColor}" FontSize="12" VerticalAlignment="Center"/>
+                    <ItemsControl Grid.Column="1" Classes="chips" ItemsSource="{Binding PreviewChoices.Choices}"
+                                  IsVisible="{Binding HasImage}" VerticalAlignment="Center"/>
                 </Grid>
             </Border>
 
@@ -144,45 +309,58 @@
                     <Viewbox Stretch="Uniform" Margin="40">
                         <Border Width="{Binding CanvasWidth}" Height="{Binding CanvasHeight}" ClipToBounds="True"
                                 Background="{DynamicResource BorderColor}" CornerRadius="4">
-                            <Image Source="{Binding Image}" Stretch="UniformToFill" IsVisible="{Binding HasImage}"/>
+                            <Grid>
+                                <Image Source="{Binding Preview}" Stretch="Fill" IsVisible="{Binding ShowResult}"
+                                       RenderOptions.BitmapInterpolationMode="None"/>
+                                <Image Source="{Binding Image}" Stretch="Uniform" IsVisible="{Binding ShowOriginal}"/>
+                            </Grid>
                         </Border>
                     </Viewbox>
                     <!-- Outside the Viewbox so the text keeps its size however big the canvas is. -->
                     <TextBlock Text="Load a picture to see it on this canvas" IsVisible="{Binding NoImage}"
                                Classes="muted" FontSize="14" TextAlignment="Center"
                                HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"/>
+                    <TextBlock Text="Updating..." IsVisible="{Binding IsBusy}" Classes="muted" FontSize="12"
+                               HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,12,16,0"/>
                 </Grid>
             </Border>
 
             <Border Grid.Row="2" Padding="16,10" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,1,0,0">
-                <StackPanel Orientation="Horizontal" Spacing="16">
-                    <TextBlock Classes="muted" FontSize="12">
+                <WrapPanel>
+                    <TextBlock Classes="muted" FontSize="12" Margin="0,0,18,0">
                         <Run Text="Canvas"/>
                         <Run Text="{Binding CanvasText}" Foreground="{DynamicResource TextColor}"/>
                     </TextBlock>
-                    <TextBlock Classes="muted" FontSize="12" IsVisible="{Binding HasImage}">
+                    <TextBlock Classes="muted" FontSize="12" Margin="0,0,18,0" IsVisible="{Binding HasImage}">
                         <Run Text="Picture"/>
                         <Run Text="{Binding ImageInfo}" Foreground="{DynamicResource TextColor}"/>
                     </TextBlock>
-                </StackPanel>
+                    <TextBlock Classes="muted" FontSize="12" Margin="0,0,18,0" IsVisible="{Binding HasPlan}">
+                        <Run Text="Grid"/>
+                        <Run Text="{Binding GridText}" Foreground="{DynamicResource TextColor}"/>
+                    </TextBlock>
+                    <TextBlock Classes="muted" FontSize="12" Margin="0,0,18,0" IsVisible="{Binding HasPlan}">
+                        <Run Text="Needs"/>
+                        <Run Text="{Binding StrokesText}" Foreground="{DynamicResource TextColor}"/>
+                    </TextBlock>
+                    <TextBlock Classes="muted" FontSize="12" IsVisible="{Binding HasPlan}">
+                        <Run Text="Uses"/>
+                        <Run Text="{Binding ColorsText}" Foreground="{DynamicResource TextColor}"/>
+                    </TextBlock>
+                </WrapPanel>
             </Border>
         </Grid>
 
         <!-- Surface -->
         <Border Grid.Column="2" BorderBrush="{DynamicResource BorderColor}" BorderThickness="1,0,0,0">
-            <Grid RowDefinitions="Auto,Auto,*" Margin="14">
+            <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="14">
                 <TextBlock Grid.Row="0" Text="SURFACE" Classes="eyebrow" Margin="0,0,0,10"/>
 
-                <ItemsControl Grid.Row="1" ItemsSource="{Binding Categories}" Margin="0,0,0,10">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <WrapPanel/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
+                <ItemsControl Grid.Row="1" Classes="chips" ItemsSource="{Binding Categories}" Margin="0,0,0,4">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:CategoryChip">
                             <Button Classes="chip" Classes.active="{Binding IsSelected}" Content="{Binding Name}"
-                                    Tag="{Binding Name}" Click="OnCategoryClick" Margin="0,0,6,6"/>
+                                    Tag="{Binding Name}" Click="OnCategoryClick"/>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
@@ -198,6 +376,25 @@
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
+
+                <StackPanel Grid.Row="3" Spacing="8" Margin="0,12,0,0" IsVisible="{Binding HasPlan}">
+                    <TextBlock Text="COLOURS USED" Classes="eyebrow"/>
+                    <ScrollViewer MaxHeight="96" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding UsedColors}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:ColorChip">
+                                    <Border Width="18" Height="18" Margin="0,0,4,4" CornerRadius="4" Background="{Binding Brush}"
+                                            BorderBrush="{DynamicResource BorderColor}" BorderThickness="1" ToolTip.Tip="{Binding Hex}"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </StackPanel>
             </Grid>
         </Border>
     </Grid>

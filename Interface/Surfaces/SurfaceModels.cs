@@ -158,6 +158,11 @@ public sealed record PaintLayout(
 /// <param name="Free">The layout while the game shows the free colour picker.</param>
 public sealed record LayoutFamily(PaintLayout Swatches, PaintLayout Free);
 
+/// <summary>The size of a surface's paint texture in the game's own units. One unit is what a brush of size 1 paints.</summary>
+/// <param name="Width">Units across.</param>
+/// <param name="Height">Units down.</param>
+public sealed record TextureSize(int Width, int Height);
+
 /// <summary>One paintable surface and where its canvas sits on screen.</summary>
 /// <param name="Id">A stable identifier, used in saved projects.</param>
 /// <param name="Name">The name shown in the UI.</param>
@@ -167,7 +172,10 @@ public sealed record LayoutFamily(PaintLayout Swatches, PaintLayout Free);
 /// How many times the mouse wheel has to be scrolled out after opening the paint screen before the whole
 /// canvas is visible. Some canvases open zoomed in and cropped, which is a game quirk.
 /// </param>
-public sealed record Surface(string Id, string Name, string Layout, ScreenRect Canvas, int ScrollOut = 0);
+/// <param name="Texture">
+/// The paint texture size, when it is known. Without it the size is estimated from the canvas on screen.
+/// </param>
+public sealed record Surface(string Id, string Name, string Layout, ScreenRect Canvas, int ScrollOut = 0, TextureSize? Texture = null);
 
 /// <summary>
 /// Everything known about Rust's paint screen, recorded once at a reference resolution and loaded from
