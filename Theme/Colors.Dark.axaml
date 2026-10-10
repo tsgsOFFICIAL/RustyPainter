@@ -17,6 +17,10 @@
          AccentColor or this theme's BgColor ever change. -->
     <SolidColorBrush x:Key="AccentSurfaceColor"     Color="#342118"/>
 
+    <!-- The area a picture is shown on, and the small floating chips over it. -->
+    <SolidColorBrush x:Key="StageColor"             Color="#0C0E12"/>
+    <SolidColorBrush x:Key="OverlayColor"           Color="#E6111318"/>
+
     <!-- Text boxes: the Fluent theme reads these, so they follow the app colors instead of the Windows accent. -->
     <SolidColorBrush x:Key="TextControlBackground"                 Color="#111318"/>
     <SolidColorBrush x:Key="TextControlBackgroundPointerOver"      Color="#111318"/>

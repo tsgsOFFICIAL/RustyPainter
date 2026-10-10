@@ -1,3 +1,4 @@
+using RustyPainter.Localization;
 using System.Collections.Generic;
 using System.Linq;
 using System;
@@ -33,6 +34,22 @@ public readonly record struct Hotkey(uint Modifiers, uint VirtualKey)
             if ((Modifiers & Alt) != 0) parts.Add("Alt");
             if ((Modifiers & Shift) != 0) parts.Add("Shift");
             parts.Add(KeyName(VirtualKey));
+            return string.Join('+', parts);
+        }
+    }
+
+    /// <summary>The key as it is written in the current language, for showing. <see cref="Display"/> stays the same in every language, for saving.</summary>
+    public string Localized
+    {
+        get
+        {
+            List<string> parts = [];
+            if ((Modifiers & Ctrl) != 0) parts.Add(Loc.Get("Key_Ctrl"));
+            if ((Modifiers & Alt) != 0) parts.Add(Loc.Get("Key_Alt"));
+            if ((Modifiers & Shift) != 0) parts.Add(Loc.Get("Key_Shift"));
+
+            string name = KeyName(VirtualKey);
+            parts.Add(Loc.Has($"Key_{name}") ? Loc.Get($"Key_{name}") : name);
             return string.Join('+', parts);
         }
     }

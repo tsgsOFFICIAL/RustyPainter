@@ -1,3 +1,4 @@
+using RustyPainter.Localization;
 using Avalonia.Media.Imaging;
 using RustyPainter.Interface;
 using RustyPainter.Library;
@@ -146,8 +147,7 @@ public sealed class LibraryViewModel : ViewModelBase
     public string CountText => _all.Count switch
     {
         0 => "",
-        1 => "1 project",
-        var count => $"{count} projects"
+        var count => Loc.Count("LibraryProjects", count)
     };
 
     /// <summary>Something to tell the user, such as a project that could not be opened.</summary>
@@ -163,6 +163,13 @@ public sealed class LibraryViewModel : ViewModelBase
 
     public bool HasMessage => Message.Length > 0;
 
+    /// <summary>The cards hold texts of their own, so they are built again in the new language.</summary>
+    protected override void OnLanguageChanged()
+    {
+        Refresh();
+        base.OnLanguageChanged();
+    }
+
     /// <summary>Reads the Library from disk again.</summary>
     public void Refresh()
     {
@@ -172,7 +179,7 @@ public sealed class LibraryViewModel : ViewModelBase
         List<ProjectCard> cards = [];
         foreach (ProjectEntry entry in _store.List())
         {
-            string surface = _surfaces.Catalog.Surfaces.FirstOrDefault(s => s.Id == entry.Project.SurfaceId)?.Name ?? "An unknown surface";
+            string surface = _surfaces.Catalog.Surfaces.FirstOrDefault(s => s.Id == entry.Project.SurfaceId) is { } known ? Loc.SurfaceName(known) : Loc.Get("LibraryUnknownSurface");
             cards.Add(new ProjectCard(this, entry, surface, LoadThumbnail(entry.ThumbnailPath), DescribeTime(entry.Project.Modified)));
         }
 
@@ -199,7 +206,7 @@ public sealed class LibraryViewModel : ViewModelBase
 
     internal void Duplicate(ProjectCard card)
     {
-        _store.Duplicate(card.Id, $"{card.Name} copy");
+        _store.Duplicate(card.Id, Loc.Format("LibraryCopyName", card.Name));
         Refresh();
     }
 
@@ -240,10 +247,10 @@ public sealed class LibraryViewModel : ViewModelBase
         DateTimeOffset now = _now().ToLocalTime();
 
         if (local.Date == now.Date)
-            return $"Today {local.ToString("t", CultureInfo.CurrentCulture)}";
+            return Loc.Format("LibraryToday", local.ToString("t", CultureInfo.CurrentCulture));
 
         if (local.Date == now.Date.AddDays(-1))
-            return $"Yesterday {local.ToString("t", CultureInfo.CurrentCulture)}";
+            return Loc.Format("LibraryYesterday", local.ToString("t", CultureInfo.CurrentCulture));
 
         return local.ToString("d MMM yyyy", CultureInfo.CurrentCulture);
     }

@@ -26,6 +26,12 @@ public sealed class AppSettings
     /// </summary>
     public bool VerboseLogging { get; set; }
 
+    /// <summary>The language of the app. Empty until the user chooses one, and then the language of Windows is used.</summary>
+    public AppLanguage? Language { get; set; }
+
+    /// <summary>Whether the app is light or dark, or follows Windows.</summary>
+    public AppTheme Theme { get; set; } = AppTheme.System;
+
     /// <summary>How fast painting is, from 1 (slowest, most reliable) to 100 (fastest).</summary>
     public int PaintSpeed { get; set; } = 60;
 

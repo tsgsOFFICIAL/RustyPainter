@@ -1,3 +1,4 @@
+using RustyPainter.Localization;
 using RustyPainter.ViewModels.Mvvm;
 using RustyPainter.Service.Logging;
 using RustyPainter.Service;
@@ -41,12 +42,15 @@ public enum SourceKind
 /// <summary>One entry of the surface picker.</summary>
 /// <param name="Surface">The surface itself.</param>
 /// <param name="Category">The group the surface is listed under.</param>
-public sealed record SurfaceOption(Surface Surface, string Category)
+public sealed class SurfaceOption(Surface surface, string category) : ViewModelBase
 {
-    public string Name => Surface.Name;
+    public Surface Surface { get; } = surface;
+    public string Category { get; } = category;
+
+    public string Name => Loc.SurfaceName(Surface);
 
     /// <summary>The canvas size on a 1440p screen, as shown in the picker.</summary>
-    public string SizeText => $"{Surface.Canvas.Width:0} x {Surface.Canvas.Height:0} px";
+    public string SizeText => Loc.Format("SizePixels", Surface.Canvas.Width, Surface.Canvas.Height);
 }
 
 /// <summary>One category filter button of the surface picker.</summary>
@@ -55,6 +59,9 @@ public sealed class CategoryChip(string name) : ViewModelBase
     private bool _isSelected;
 
     public string Name { get; } = name;
+
+    /// <summary>The name in the language in use.</summary>
+    public string Label => Loc.Get($"Category_{Name}");
 
     public bool IsSelected { get => _isSelected; set => SetProperty(ref _isSelected, value); }
 }
@@ -119,9 +126,9 @@ public sealed partial class StudioViewModel : ViewModelBase
         SaveCommand = new RelayCommand(SaveProject, () => CanSave);
         _downloader = downloader ?? new PictureDownloader();
 
-        SourceChoices = new([("Picture", SourceKind.Picture), ("Link", SourceKind.Link), ("Text", SourceKind.Text)], SourceKind.Picture);
-        TextBackgroundChoices = new([("Clear", false), ("Solid", true)], false);
-        TextWeightChoices = new([("Regular", false), ("Bold", true)], true);
+        SourceChoices = new([("SourceChoicePicture", SourceKind.Picture), ("SourceChoiceLink", SourceKind.Link), ("SourceChoiceText", SourceKind.Text)], SourceKind.Picture);
+        TextBackgroundChoices = new([("TextClear", false), ("TextSolid", true)], false);
+        TextWeightChoices = new([("TextRegular", false), ("TextBold", true)], true);
 
         SourceChoices.Changed += () =>
         {
@@ -144,17 +151,17 @@ public sealed partial class StudioViewModel : ViewModelBase
             .Select(name => new CategoryChip(name) { IsSelected = name == AllCategories })
             .ToList();
 
-        PlacementChoices = new([("Fit", FitMode.Fit), ("Fill", FitMode.Fill), ("Stretch", FitMode.Stretch)], FitMode.Fill);
-        ColorModeChoices = new([("Game swatches", ColorMode.Swatches), ("Any color", ColorMode.Free)], ColorMode.Swatches);
-        DitheringChoices = new([("Smooth", Dithering.Smooth), ("Pattern", Dithering.Ordered), ("None", Dithering.None)], Dithering.Smooth);
+        PlacementChoices = new([("PlaceFit", FitMode.Fit), ("PlaceFill", FitMode.Fill), ("PlaceStretch", FitMode.Stretch)], FitMode.Fill);
+        ColorModeChoices = new([("ModeSwatches", ColorMode.Swatches), ("ModeAnyColor", ColorMode.Free)], ColorMode.Swatches);
+        DitheringChoices = new([("DitherSmooth", Dithering.Smooth), ("DitherPattern", Dithering.Ordered), ("None", Dithering.None)], Dithering.Smooth);
         FilterChoices = new(
         [
-            ("None", ImageFilter.None), ("Black and white", ImageFilter.BlackAndWhite), ("Sepia", ImageFilter.Sepia),
-            ("Invert", ImageFilter.Invert), ("Brighten", ImageFilter.Brighten), ("Posterize", ImageFilter.Posterize)
+            ("None", ImageFilter.None), ("FilterBlackAndWhite", ImageFilter.BlackAndWhite), ("FilterSepia", ImageFilter.Sepia),
+            ("FilterInvert", ImageFilter.Invert), ("FilterBrighten", ImageFilter.Brighten), ("FilterPosterize", ImageFilter.Posterize)
         ], ImageFilter.None);
         QualityChoices = new([("1", 1), ("2", 2), ("4", 4), ("8", 8), ("16", 16), ("32", 32)], 4);
-        PresetChoices = new([("Fine", 0), ("Medium", 1), ("Thick", 2), ("Heavy", 3)], 1);
-        PreviewChoices = new([("Result", PreviewMode.Result), ("Original", PreviewMode.Original), ("Split", PreviewMode.Split)], PreviewMode.Result);
+        PresetChoices = new([("PresetFine", 0), ("PresetMedium", 1), ("PresetThick", 2), ("PresetHeavy", 3)], 1);
+        PreviewChoices = new([("Result", PreviewMode.Result), ("PreviewOriginal", PreviewMode.Original), ("PreviewSplit", PreviewMode.Split)], PreviewMode.Result);
 
         PlacementChoices.Changed += Changed;
         ColorModeChoices.Changed += () => { OnPropertyChanged(nameof(IsFreeMode)); Changed(); };
@@ -237,7 +244,7 @@ public sealed partial class StudioViewModel : ViewModelBase
     /// <summary>Whether the game needs scrolling out before this canvas is fully visible.</summary>
     public bool HasScrollHint => SelectedSurface.Surface.ScrollOut > 0;
 
-    public string ScrollHint => $"Needs {SelectedSurface.Surface.ScrollOut} scroll-outs in the game first.";
+    public string ScrollHint => Loc.Count("StudioScrollHint", SelectedSurface.Surface.ScrollOut);
 
     // ---- the picture ----
 
@@ -593,16 +600,16 @@ public sealed partial class StudioViewModel : ViewModelBase
         get
         {
             (int w, int h) = StudioGeometry.Grid(SelectedSurface.Surface, BlockSize);
-            return $"{w} x {h} cells";
+            return Loc.Format("StudioGridCells", w, h);
         }
     }
 
     /// <summary>Whether the paint texture of the selected surface is only an estimate.</summary>
     public bool IsTextureEstimated => !StudioGeometry.IsTextureKnown(SelectedSurface.Surface);
 
-    public string StrokesText => Plan is { } plan ? $"{plan.StrokeCount:N0} strokes" : "";
+    public string StrokesText => Plan is { } plan ? Loc.Count("StudioStrokes", plan.StrokeCount) : "";
 
-    public string ColorsText => Plan is { } plan ? $"{plan.ColorsUsed} colors" : "";
+    public string ColorsText => Plan is { } plan ? Loc.Count("StudioColors", plan.ColorsUsed) : "";
 
     /// <summary>A rough time for painting at the pace chosen in the get-ready page, or the default pace before that.</summary>
     public string TimeText => Plan is { } plan
@@ -632,7 +639,7 @@ public sealed partial class StudioViewModel : ViewModelBase
 
         if (!IsSupported(path))
         {
-            ErrorText = $"{name} is not supported. Use PNG, JPG, WebP or BMP.";
+            ErrorText = Loc.Format("StudioErrNotSupported", name);
             return false;
         }
 
@@ -646,7 +653,7 @@ public sealed partial class StudioViewModel : ViewModelBase
         catch (Exception ex)
         {
             AppLog.Warn("StudioViewModel", $"Could not load '{path}'.", ex);
-            ErrorText = $"{name} could not be opened. It may be damaged or not really an image.";
+            ErrorText = Loc.Format("StudioErrCouldNotOpen", name);
             return false;
         }
     }
@@ -662,12 +669,12 @@ public sealed partial class StudioViewModel : ViewModelBase
         catch (Exception ex)
         {
             AppLog.Warn("StudioViewModel", $"Could not use the picture '{name}'.", ex);
-            ErrorText = $"{name} could not be used.";
+            ErrorText = Loc.Format("StudioErrCouldNotUse", name);
         }
     }
 
     /// <summary>Tells the user that a drop or paste held nothing usable.</summary>
-    public void ReportNothingToLoad() => ErrorText = "There was no picture to load. Drop a PNG, JPG, WebP or BMP file.";
+    public void ReportNothingToLoad() => ErrorText = Loc.Get("StudioErrNothingToLoad");
 
     // ---- picture from a link ----
 
@@ -711,7 +718,7 @@ public sealed partial class StudioViewModel : ViewModelBase
     {
         if (!TryReadLink(link, out Uri? address))
         {
-            ErrorText = "That does not look like a web link. It should start with http:// or https://.";
+            ErrorText = Loc.Get("StudioErrNotALink");
             return false;
         }
 
@@ -730,10 +737,10 @@ public sealed partial class StudioViewModel : ViewModelBase
             switch (PictureFormatDetector.Detect(data))
             {
                 case PictureFormat.Gif:
-                    ErrorText = "GIF pictures are not supported. Use a PNG, JPG, WebP or BMP link.";
+                    ErrorText = Loc.Get("StudioErrGif");
                     return false;
                 case PictureFormat.Unknown:
-                    ErrorText = "That link does not lead to a PNG, JPG, WebP or BMP picture.";
+                    ErrorText = Loc.Get("StudioErrLinkNotPicture");
                     return false;
             }
 
@@ -754,7 +761,7 @@ public sealed partial class StudioViewModel : ViewModelBase
         catch (Exception ex)
         {
             AppLog.Warn("StudioViewModel", $"Could not use the picture at '{address}'.", ex);
-            ErrorText = "The picture at that link could not be opened.";
+            ErrorText = Loc.Get("StudioErrLinkOpen");
             return false;
         }
         finally
@@ -897,7 +904,7 @@ public sealed partial class StudioViewModel : ViewModelBase
         catch (Exception ex)
         {
             AppLog.Warn("StudioViewModel", "Could not draw the text.", ex);
-            ErrorText = "The text could not be turned into a picture.";
+            ErrorText = Loc.Get("StudioErrText");
         }
     }
 
@@ -966,7 +973,7 @@ public sealed partial class StudioViewModel : ViewModelBase
                 AppLog.Error("StudioViewModel", "Preparing the picture failed.", ex);
                 Dispatcher.UIThread.Post(() =>
                 {
-                    ErrorText = "The picture could not be prepared.";
+                    ErrorText = Loc.Get("StudioErrPrepare");
                     IsBusy = false;
                 });
             }

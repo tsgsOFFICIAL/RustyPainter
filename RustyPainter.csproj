@@ -50,6 +50,7 @@
             <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.9" />
+        <PackageReference Include="Svg.Controls.Skia.Avalonia" Version="12.0.0.13" />
     </ItemGroup>
 
     <ItemGroup>
@@ -62,6 +63,12 @@
         <!-- The surface and palette data. Edit Data\surfaces.json to add or correct surfaces. -->
         <None Remove="Data\surfaces.json" />
         <EmbeddedResource Include="Data\surfaces.json" LogicalName="surfaces.json" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- The texts of the app, one file per language. Add a file and a language entry to add a language. -->
+        <None Remove="Lang\*.json" />
+        <EmbeddedResource Include="Lang\*.json" LogicalName="Lang.%(Filename).json" />
     </ItemGroup>
 
     <ItemGroup>

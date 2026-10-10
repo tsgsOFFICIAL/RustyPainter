@@ -28,6 +28,8 @@ namespace RustyPainter
             {
                 Services = new ServiceCollection()
                     .AddSingleton<IAppSettingsService, AppSettingsService>()
+                    .AddSingleton<ILocalizationService, LocalizationService>()
+                    .AddSingleton<IThemeService, ThemeService>()
                     .AddSingleton<IUpdateService, UpdateService>()
                     .AddSingleton<IDialogService, DialogService>()
                     .AddSingleton<ISurfaceService, SurfaceService>()

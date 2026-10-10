@@ -1,6 +1,7 @@
 using RustyPainter.ViewModels.Mvvm;
 using RustyPainter.Imaging;
 using RustyPainter.Interface;
+using RustyPainter.Localization;
 using RustyPainter.Painting;
 using Avalonia.Threading;
 using System;
@@ -33,6 +34,7 @@ public sealed class GetReadyViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromSeconds(1) };
     private readonly PixelBuffer _picture;
 
+    private readonly Hotkey _startKey, _abortKey;
     private GameWindow? _window;
     private bool _clearFirst = true;
     private bool _showHologram;
@@ -50,8 +52,8 @@ public sealed class GetReadyViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
         _settings = settings;
         _hologram = hologram;
         _picture = request.Plan.Render();
-        StartKeyText = startKey.Display;
-        AbortKeyText = abortKey.Display;
+        _startKey = startKey;
+        _abortKey = abortKey;
 
         _speed = Math.Clamp(settings.Current.PaintSpeed, 1, 100);
         _showHologram = settings.Current.ShowHologram;
@@ -78,14 +80,20 @@ public sealed class GetReadyViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
     public RelayCommand BackCommand { get; }
 
     public string PictureName => Request.PictureName;
-    public string SurfaceName => Request.Surface.Name;
-    public string StartKeyText { get; }
-    public string AbortKeyText { get; }
+    public string SurfaceName => Loc.SurfaceName(Request.Surface);
+    public string StartKeyText => _startKey.Localized;
+    public string AbortKeyText => _abortKey.Localized;
 
-    public string StrokesText => $"{Request.Plan.StrokeCount:N0} strokes";
+    /// <summary>What is being painted and where, under the title.</summary>
+    public string Subtitle => Loc.Format("PictureOnSurface", Loc.PictureName(PictureName), SurfaceName);
+
+    /// <summary>What the keys do, in one sentence.</summary>
+    public string KeysLine => Loc.Format("GetReadyKeysLine", StartKeyText, AbortKeyText);
+
+    public string StrokesText => Loc.Count("StudioStrokes", Request.Plan.StrokeCount);
     public string ColorsText => Request.Mode == ColorMode.Swatches
-        ? $"{Request.Plan.ColorsUsed} swatches"
-        : $"{Request.Plan.ColorsUsed} typed colors";
+        ? Loc.Count("GetReadySwatches", Request.Plan.ColorsUsed)
+        : Loc.Count("GetReadyTypedColors", Request.Plan.ColorsUsed);
 
     /// <summary>A rough time for the whole painting at the chosen pace.</summary>
     public string TimeText => PaintTimeEstimator.Describe(
@@ -93,16 +101,16 @@ public sealed class GetReadyViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
 
     /// <summary>How the game has to be set up before the start key is pressed.</summary>
     public string SetupText => Request.Surface.ScrollOut > 0
-        ? $"Open the paint screen of the {SurfaceName} in Rust. Scrolling out {Request.Surface.ScrollOut} times is done for you."
-        : $"Open the paint screen of the {SurfaceName} in Rust.";
+        ? Loc.Format("GetReadySetupScroll", SurfaceName, Request.Surface.ScrollOut)
+        : Loc.Format("GetReadySetup", SurfaceName);
 
     // ---- Rust ----
 
     public bool IsRustRunning => _window is not null;
 
     public string RustText => _window is { } window
-        ? $"Rust is running at {window.Width} x {window.Height}."
-        : "Rust is not running, or its window cannot be found. Start the game first.";
+        ? Loc.Format("RustRunningAtFull", window.Width, window.Height)
+        : Loc.Get("RustNotFoundFull");
 
     /// <summary>Looks for the game again. Runs once a second while the page is shown.</summary>
     public void Refresh()

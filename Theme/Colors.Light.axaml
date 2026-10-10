@@ -1,0 +1,47 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <SolidColorBrush x:Key="TextColor"              Color="#111318"/>
+    <SolidColorBrush x:Key="TextMutedColor"         Color="#555C6E"/>
+    <SolidColorBrush x:Key="BgColor"                Color="#F3F4F6"/>
+    <SolidColorBrush x:Key="BorderColor"            Color="#C8CDD8"/>
+    <SolidColorBrush x:Key="BorderColorTransparent" Color="#00C8CDD8"/>
+    <SolidColorBrush x:Key="BorderColorMuted"       Color="#4DC8CDD8"/>
+    <!-- AccentColor (#F97316) at 15% alpha pre-blended opaque over this theme's BgColor (#F3F4F6), worked out the
+         same way as in Colors.Dark.axaml. Recompute it if AccentColor or BgColor ever change. -->
+    <SolidColorBrush x:Key="AccentSurfaceColor"     Color="#F4E1D5"/>
+
+    <!-- The area a picture is shown on, and the small floating chips over it. -->
+    <SolidColorBrush x:Key="StageColor"             Color="#E3E6ED"/>
+    <SolidColorBrush x:Key="OverlayColor"           Color="#E6FFFFFF"/>
+
+    <!-- Text boxes: the Fluent theme reads these, so they follow the app colors instead of the Windows accent. -->
+    <SolidColorBrush x:Key="TextControlBackground"                 Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="TextControlBackgroundPointerOver"      Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="TextControlBackgroundFocused"          Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="TextControlBorderBrush"                Color="#C8CDD8"/>
+    <SolidColorBrush x:Key="TextControlBorderBrushPointerOver"     Color="#555C6E"/>
+    <SolidColorBrush x:Key="TextControlBorderBrushFocused"         Color="#F97316"/>
+    <SolidColorBrush x:Key="TextControlForeground"                 Color="#111318"/>
+    <SolidColorBrush x:Key="TextControlForegroundPointerOver"      Color="#111318"/>
+    <SolidColorBrush x:Key="TextControlForegroundFocused"          Color="#111318"/>
+    <SolidColorBrush x:Key="TextControlPlaceholderForeground"      Color="#555C6E"/>
+    <SolidColorBrush x:Key="TextControlPlaceholderForegroundPointerOver" Color="#555C6E"/>
+    <SolidColorBrush x:Key="TextControlPlaceholderForegroundFocused" Color="#555C6E"/>
+
+    <!-- Toggle switches in the app accent. -->
+    <SolidColorBrush x:Key="ToggleSwitchFillOn"                  Color="#F97316"/>
+    <SolidColorBrush x:Key="ToggleSwitchFillOnPointerOver"       Color="#FB923C"/>
+    <SolidColorBrush x:Key="ToggleSwitchFillOnPressed"           Color="#FB923C"/>
+    <SolidColorBrush x:Key="ToggleSwitchStrokeOn"                Color="#F97316"/>
+    <SolidColorBrush x:Key="ToggleSwitchStrokeOnPointerOver"     Color="#FB923C"/>
+    <SolidColorBrush x:Key="ToggleSwitchStrokeOnPressed"         Color="#FB923C"/>
+
+    <!-- Check boxes in the app accent. -->
+    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillChecked"            Color="#F97316"/>
+    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillCheckedPointerOver" Color="#FB923C"/>
+    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillCheckedPressed"     Color="#FB923C"/>
+    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeChecked"          Color="#F97316"/>
+    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeCheckedPointerOver" Color="#FB923C"/>
+    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeCheckedPressed"   Color="#FB923C"/>
+    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeUnchecked"        Color="#555C6E"/>
+</ResourceDictionary>

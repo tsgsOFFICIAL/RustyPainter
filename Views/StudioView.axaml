@@ -1,4 +1,5 @@
 <UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:loc="using:RustyPainter.Localization"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -111,11 +112,11 @@
                     <!-- Source -->
                     <Border Classes="card">
                         <StackPanel Spacing="12">
-                            <TextBlock Text="SOURCE" Classes="eyebrow"/>
+                            <TextBlock Text="{loc:L StudioSourceHeader}" Classes="eyebrow"/>
 
                             <StackPanel Spacing="10" IsVisible="{Binding HasImage}">
                                 <Grid ColumnDefinitions="72,*">
-                                    <Border Width="72" Height="54" CornerRadius="8" ClipToBounds="True" Background="#0C0E12"
+                                    <Border Width="72" Height="54" CornerRadius="8" ClipToBounds="True" Background="{DynamicResource StageColor}"
                                             BorderBrush="{DynamicResource BorderColor}" BorderThickness="1">
                                         <Image Source="{Binding Image}" Stretch="Uniform"/>
                                     </Border>
@@ -128,13 +129,13 @@
                                     <Button Classes="secondaryButton small" Click="OnBrowseClick" IsVisible="{Binding !IsTextSource}">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <iconPacks:PackIconPhosphorIcons Kind="FolderOpen" Width="14" Height="14"/>
-                                            <TextBlock Text="Replace"/>
+                                            <TextBlock Text="{loc:L Replace}"/>
                                         </StackPanel>
                                     </Button>
                                     <Button Classes="secondaryButton small" Command="{Binding ClearImageCommand}">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <iconPacks:PackIconPhosphorIcons Kind="Trash" Width="14" Height="14"/>
-                                            <TextBlock Text="Remove"/>
+                                            <TextBlock Text="{loc:L Remove}"/>
                                         </StackPanel>
                                     </Button>
                                 </StackPanel>
@@ -150,48 +151,48 @@
                                     <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
                                         <iconPacks:PackIconPhosphorIcons Kind="UploadSimple" Width="30" Height="30"
                                                                          Foreground="{DynamicResource AccentColor}" HorizontalAlignment="Center"/>
-                                        <TextBlock Text="Drop a picture here" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="{loc:L StudioDropHere}" FontWeight="SemiBold" HorizontalAlignment="Center"/>
                                         <Button Classes="secondaryButton" Click="OnBrowseClick" HorizontalAlignment="Center">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <iconPacks:PackIconPhosphorIcons Kind="FolderOpen" Width="16" Height="16"/>
-                                                <TextBlock Text="Browse"/>
+                                                <TextBlock Text="{loc:L Browse}"/>
                                             </StackPanel>
                                         </Button>
                                     </StackPanel>
                                 </Grid>
-                                <TextBlock Text="PNG, JPG, WebP or BMP. You can also paste with Ctrl+V."
+                                <TextBlock Text="{loc:L StudioPictureNote}"
                                            Classes="muted" FontSize="11" TextWrapping="Wrap"/>
                             </StackPanel>
 
                             <!-- A web link -->
                             <StackPanel Spacing="8" IsVisible="{Binding IsLinkSource}">
-                                <TextBox Text="{Binding LinkText}" PlaceholderText="Paste a link to a picture" KeyDown="OnLinkKeyDown"/>
+                                <TextBox Text="{Binding LinkText}" PlaceholderText="{loc:L StudioLinkPlaceholder}" KeyDown="OnLinkKeyDown"/>
                                 <StackPanel Orientation="Horizontal" Spacing="10">
-                                    <Button Classes="accentButton small" Command="{Binding LoadLinkCommand}" Content="Load"/>
-                                    <TextBlock Text="Loading..." Classes="muted" FontSize="12" VerticalAlignment="Center"
+                                    <Button Classes="accentButton small" Command="{Binding LoadLinkCommand}" Content="{loc:L Load}"/>
+                                    <TextBlock Text="{loc:L Loading}" Classes="muted" FontSize="12" VerticalAlignment="Center"
                                                IsVisible="{Binding IsLoadingLink}"/>
                                 </StackPanel>
-                                <TextBlock Text="A link straight to a PNG, JPG, WebP or BMP picture."
+                                <TextBlock Text="{loc:L StudioLinkNote}"
                                            Classes="muted" FontSize="11" TextWrapping="Wrap"/>
                             </StackPanel>
 
                             <!-- Typed text -->
                             <StackPanel Spacing="8" IsVisible="{Binding IsTextSource}">
-                                <TextBox Text="{Binding Text}" PlaceholderText="Type something" AcceptsReturn="True"
+                                <TextBox Text="{Binding Text}" PlaceholderText="{loc:L StudioTextPlaceholder}" AcceptsReturn="True"
                                          TextWrapping="Wrap" MinHeight="70" MaxHeight="140"/>
-                                <TextBlock Text="Letters" Classes="fieldLabel"/>
+                                <TextBlock Text="{loc:L StudioTextLetters}" Classes="fieldLabel"/>
                                 <StackPanel Orientation="Horizontal" Spacing="10">
                                     <ColorPicker IsAlphaEnabled="False" IsAlphaVisible="False" Color="{Binding TextColorValue}"/>
                                     <TextBlock Text="{Binding TextColorHex}" VerticalAlignment="Center" FontSize="12"/>
                                 </StackPanel>
                                 <ItemsControl Classes="chips" ItemsSource="{Binding TextWeightChoices.Choices}"/>
-                                <TextBlock Text="Background" Classes="fieldLabel"/>
+                                <TextBlock Text="{loc:L StudioBackground}" Classes="fieldLabel"/>
                                 <ItemsControl Classes="chips" ItemsSource="{Binding TextBackgroundChoices.Choices}"/>
                                 <StackPanel Orientation="Horizontal" Spacing="10" IsVisible="{Binding IsTextBackgroundSolid}">
                                     <ColorPicker IsAlphaEnabled="False" IsAlphaVisible="False" Color="{Binding TextBackgroundValue}"/>
                                     <TextBlock Text="{Binding TextBackgroundHex}" VerticalAlignment="Center" FontSize="12"/>
                                 </StackPanel>
-                                <TextBlock Text="A clear background leaves that part of the sign unpainted."
+                                <TextBlock Text="{loc:L StudioTextClearBackgroundNote}"
                                            Classes="muted" FontSize="11" TextWrapping="Wrap" IsVisible="{Binding !IsTextBackgroundSolid}"/>
                             </StackPanel>
 
@@ -203,26 +204,26 @@
                     <!-- Placement -->
                     <Border Classes="card" IsVisible="{Binding HasImage}">
                         <StackPanel Spacing="10">
-                            <TextBlock Text="PLACEMENT" Classes="eyebrow"/>
+                            <TextBlock Text="{loc:L StudioPlacementHeader}" Classes="eyebrow"/>
                             <ItemsControl Classes="chips" ItemsSource="{Binding PlacementChoices.Choices}"/>
 
                             <StackPanel Spacing="0">
                                 <Grid ColumnDefinitions="*,Auto">
-                                    <TextBlock Text="Zoom" Classes="fieldLabel"/>
+                                    <TextBlock Text="{loc:L StudioZoom}" Classes="fieldLabel"/>
                                     <TextBlock Grid.Column="1" Text="{Binding ZoomText}" FontSize="11"/>
                                 </Grid>
                                 <Slider Minimum="0.25" Maximum="4" SmallChange="0.05" LargeChange="0.25" Value="{Binding Zoom}"/>
                             </StackPanel>
                             <StackPanel Spacing="0">
                                 <Grid ColumnDefinitions="*,Auto">
-                                    <TextBlock Text="Move sideways" Classes="fieldLabel"/>
+                                    <TextBlock Text="{loc:L StudioMoveSideways}" Classes="fieldLabel"/>
                                     <TextBlock Grid.Column="1" Text="{Binding OffsetXText}" FontSize="11"/>
                                 </Grid>
                                 <Slider Minimum="-100" Maximum="100" Value="{Binding OffsetX}"/>
                             </StackPanel>
                             <StackPanel Spacing="0">
                                 <Grid ColumnDefinitions="*,Auto">
-                                    <TextBlock Text="Move up or down" Classes="fieldLabel"/>
+                                    <TextBlock Text="{loc:L StudioMoveUpDown}" Classes="fieldLabel"/>
                                     <TextBlock Grid.Column="1" Text="{Binding OffsetYText}" FontSize="11"/>
                                 </Grid>
                                 <Slider Minimum="-100" Maximum="100" Value="{Binding OffsetY}"/>
@@ -232,25 +233,25 @@
                                 <Button Classes="secondaryButton small" Command="{Binding RotateCommand}" Margin="0,0,6,6">
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <iconPacks:PackIconPhosphorIcons Kind="ArrowClockwise" Width="14" Height="14"/>
-                                        <TextBlock Text="Rotate"/>
+                                        <TextBlock Text="{loc:L StudioRotate}"/>
                                     </StackPanel>
                                 </Button>
                                 <Button Classes="secondaryButton small" Command="{Binding FlipHorizontalCommand}" Margin="0,0,6,6">
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <iconPacks:PackIconPhosphorIcons Kind="FlipHorizontal" Width="14" Height="14"/>
-                                        <TextBlock Text="Flip"/>
+                                        <TextBlock Text="{loc:L StudioFlip}"/>
                                     </StackPanel>
                                 </Button>
                                 <Button Classes="secondaryButton small" Command="{Binding FlipVerticalCommand}" Margin="0,0,6,6">
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <iconPacks:PackIconPhosphorIcons Kind="FlipVertical" Width="14" Height="14"/>
-                                        <TextBlock Text="Flip"/>
+                                        <TextBlock Text="{loc:L StudioFlip}"/>
                                     </StackPanel>
                                 </Button>
                                 <Button Classes="secondaryButton small" Command="{Binding ResetPlacementCommand}" Margin="0,0,6,6">
                                     <StackPanel Orientation="Horizontal" Spacing="6">
                                         <iconPacks:PackIconPhosphorIcons Kind="ArrowCounterClockwise" Width="14" Height="14"/>
-                                        <TextBlock Text="Reset"/>
+                                        <TextBlock Text="{loc:L Reset}"/>
                                     </StackPanel>
                                 </Button>
                             </WrapPanel>
@@ -260,48 +261,48 @@
                     <!-- Color -->
                     <Border Classes="card" IsVisible="{Binding HasImage}">
                         <StackPanel Spacing="10">
-                            <TextBlock Text="COLOR" Classes="eyebrow"/>
+                            <TextBlock Text="{loc:L StudioColorHeader}" Classes="eyebrow"/>
                             <ItemsControl Classes="chips" ItemsSource="{Binding ColorModeChoices.Choices}"/>
 
                             <StackPanel Spacing="0" IsVisible="{Binding IsFreeMode}">
                                 <Grid ColumnDefinitions="*,Auto">
-                                    <TextBlock Text="Number of colors" Classes="fieldLabel"/>
+                                    <TextBlock Text="{loc:L StudioNumberOfColors}" Classes="fieldLabel"/>
                                     <TextBlock Grid.Column="1" Text="{Binding MaxColorsText}" FontSize="11"/>
                                 </Grid>
                                 <Slider Minimum="2" Maximum="256" Value="{Binding MaxColors}"/>
-                                <TextBlock Text="Fewer colors paint faster, every color is one more change in the game."
+                                <TextBlock Text="{loc:L StudioColorsNote}"
                                            Classes="muted" FontSize="11" TextWrapping="Wrap"/>
                             </StackPanel>
 
-                            <CheckBox Content="Fill empty areas with a background color" IsChecked="{Binding FillBackground}" FontSize="12"/>
+                            <CheckBox Content="{loc:L StudioFillBackground}" IsChecked="{Binding FillBackground}" FontSize="12"/>
                             <StackPanel Orientation="Horizontal" Spacing="10" IsVisible="{Binding FillBackground}">
                                 <ColorPicker IsAlphaEnabled="False" IsAlphaVisible="False" Color="{Binding BackgroundValue}"/>
                                 <TextBlock Text="{Binding BackgroundHex}" VerticalAlignment="Center" FontSize="12"/>
                             </StackPanel>
 
-                            <TextBlock Text="Dithering" Classes="fieldLabel"/>
+                            <TextBlock Text="{loc:L StudioDithering}" Classes="fieldLabel"/>
                             <ItemsControl Classes="chips" ItemsSource="{Binding DitheringChoices.Choices}"/>
 
-                            <TextBlock Text="Filter" Classes="fieldLabel"/>
+                            <TextBlock Text="{loc:L StudioFilter}" Classes="fieldLabel"/>
                             <ItemsControl Classes="chips" ItemsSource="{Binding FilterChoices.Choices}"/>
 
                             <StackPanel Spacing="0">
                                 <Grid ColumnDefinitions="*,Auto">
-                                    <TextBlock Text="Brightness" Classes="fieldLabel"/>
+                                    <TextBlock Text="{loc:L StudioBrightness}" Classes="fieldLabel"/>
                                     <TextBlock Grid.Column="1" Text="{Binding BrightnessText}" FontSize="11"/>
                                 </Grid>
                                 <Slider Minimum="-100" Maximum="100" Value="{Binding Brightness}"/>
                             </StackPanel>
                             <StackPanel Spacing="0">
                                 <Grid ColumnDefinitions="*,Auto">
-                                    <TextBlock Text="Contrast" Classes="fieldLabel"/>
+                                    <TextBlock Text="{loc:L StudioContrast}" Classes="fieldLabel"/>
                                     <TextBlock Grid.Column="1" Text="{Binding ContrastText}" FontSize="11"/>
                                 </Grid>
                                 <Slider Minimum="-100" Maximum="100" Value="{Binding Contrast}"/>
                             </StackPanel>
                             <StackPanel Spacing="0">
                                 <Grid ColumnDefinitions="*,Auto">
-                                    <TextBlock Text="Saturation" Classes="fieldLabel"/>
+                                    <TextBlock Text="{loc:L StudioSaturation}" Classes="fieldLabel"/>
                                     <TextBlock Grid.Column="1" Text="{Binding SaturationText}" FontSize="11"/>
                                 </Grid>
                                 <Slider Minimum="-100" Maximum="100" Value="{Binding Saturation}"/>
@@ -310,7 +311,7 @@
                             <Button Classes="secondaryButton small" Command="{Binding ResetAdjustmentsCommand}" HorizontalAlignment="Left">
                                 <StackPanel Orientation="Horizontal" Spacing="6">
                                     <iconPacks:PackIconPhosphorIcons Kind="ArrowCounterClockwise" Width="14" Height="14"/>
-                                    <TextBlock Text="Reset"/>
+                                    <TextBlock Text="{loc:L Reset}"/>
                                 </StackPanel>
                             </Button>
                         </StackPanel>
@@ -319,15 +320,15 @@
                     <!-- Quality -->
                     <Border Classes="card" IsVisible="{Binding HasImage}">
                         <StackPanel Spacing="10">
-                            <TextBlock Text="QUALITY" Classes="eyebrow"/>
-                            <TextBlock Text="Brush size in game units. Small is fine and very slow, large is quick and blocky."
+                            <TextBlock Text="{loc:L StudioQualityHeader}" Classes="eyebrow"/>
+                            <TextBlock Text="{loc:L StudioQualitySizeNote}"
                                        Classes="muted" FontSize="11" TextWrapping="Wrap" IsVisible="{Binding IsSizeSurface}"/>
                             <ItemsControl Classes="chips" ItemsSource="{Binding QualityChoices.Choices}" IsVisible="{Binding IsSizeSurface}"/>
-                            <TextBlock Text="Neon signs have four fixed brushes. A fine brush draws thin lines on a fine grid and takes longer, a heavy one is quick and bold."
+                            <TextBlock Text="{loc:L StudioQualityNeonNote}"
                                        Classes="muted" FontSize="11" TextWrapping="Wrap" IsVisible="{Binding IsPresetSurface}"/>
                             <ItemsControl Classes="chips" ItemsSource="{Binding PresetChoices.Choices}" IsVisible="{Binding IsPresetSurface}"/>
                             <TextBlock Text="{Binding GridText}" FontWeight="SemiBold"/>
-                            <TextBlock Text="The size of this surface's texture is estimated until it has been measured in the game."
+                            <TextBlock Text="{loc:L StudioTextureEstimated}"
                                        IsVisible="{Binding IsTextureEstimated}" Classes="muted" FontSize="11" TextWrapping="Wrap"/>
                         </StackPanel>
                     </Border>
@@ -351,23 +352,23 @@
                         <TextBlock Text="{Binding SaveStatus}" IsVisible="{Binding HasSaveStatus}" Classes="muted" FontSize="12"
                                    VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="160"/>
                         <Button Classes="secondaryButton" Command="{Binding SaveCommand}" VerticalAlignment="Center" Padding="12,7"
-                                ToolTip.Tip="Save this setup to the Library">
+                                ToolTip.Tip="{loc:L StudioSaveTooltip}">
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <iconPacks:PackIconPhosphorIcons Kind="FloppyDisk" Width="16" Height="16"/>
-                                <TextBlock Text="Save"/>
+                                <TextBlock Text="{loc:L Save}"/>
                             </StackPanel>
                         </Button>
                         <Button Classes="accentButton" Command="{Binding PaintCommand}" VerticalAlignment="Center" Padding="14,7">
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <iconPacks:PackIconPhosphorIcons Kind="PaintBrush" Width="16" Height="16"/>
-                                <TextBlock Text="Paint"/>
+                                <TextBlock Text="{loc:L Paint}"/>
                             </StackPanel>
                         </Button>
                     </StackPanel>
                 </Grid>
             </Border>
 
-            <Border Grid.Row="1" Background="#0C0E12">
+            <Border Grid.Row="1" Background="{DynamicResource StageColor}">
                 <Grid>
                     <Viewbox Stretch="Uniform" Margin="40">
                         <Border x:Name="Stage" Width="{Binding CanvasWidth}" Height="{Binding CanvasHeight}" ClipToBounds="True"
@@ -405,32 +406,32 @@
                                         </Border>
                                         <Border x:Name="PictureLabel" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10"
                                                 Padding="7,3" Background="#AA000000" CornerRadius="6" IsHitTestVisible="False">
-                                            <TextBlock Text="Picture" Foreground="White" FontSize="12" FontWeight="Bold"/>
+                                            <TextBlock Text="{loc:L Picture}" Foreground="White" FontSize="12" FontWeight="Bold"/>
                                         </Border>
                                     </Panel>
                                 </Border>
                                 <Border x:Name="ResultLabel" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="10"
                                         Padding="7,3" Background="#AA000000" CornerRadius="6" IsHitTestVisible="False"
                                         IsVisible="{Binding ShowSplit}">
-                                    <TextBlock Text="Result" Foreground="White" FontSize="12" FontWeight="Bold"/>
+                                    <TextBlock Text="{loc:L Result}" Foreground="White" FontSize="12" FontWeight="Bold"/>
                                 </Border>
                             </Grid>
                         </Border>
                     </Viewbox>
                     <!-- Outside the Viewbox so the text keeps its size however big the canvas is. -->
-                    <TextBlock Text="Drag to move, scroll to zoom, double click to reset" Classes="muted" FontSize="11"
+                    <TextBlock Text="{loc:L StudioCanvasHint}" Classes="muted" FontSize="11"
                                IsVisible="{Binding HasImage}" HorizontalAlignment="Center" VerticalAlignment="Bottom"
                                Margin="0,0,0,10" IsHitTestVisible="False"/>
-                    <TextBlock Text="Load a picture to see it on this canvas" IsVisible="{Binding NoImage}"
+                    <TextBlock Text="{loc:L StudioNoPicture}" IsVisible="{Binding NoImage}"
                                Classes="muted" FontSize="14" TextAlignment="Center"
                                HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"/>
-                    <Border IsVisible="{Binding IsBusy}" IsHitTestVisible="False" Background="#E6111318"
+                    <Border IsVisible="{Binding IsBusy}" IsHitTestVisible="False" Background="{DynamicResource OverlayColor}"
                             BorderBrush="{DynamicResource BorderColor}" BorderThickness="1" CornerRadius="14" Padding="10,6"
                             HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,12,16,0">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <Arc Classes="spinner" Width="14" Height="14" StartAngle="0" SweepAngle="270"
                                  StrokeThickness="2" StrokeLineCap="Round" Stroke="{DynamicResource AccentColor}"/>
-                            <TextBlock Text="Rendering" Classes="muted" FontSize="12" VerticalAlignment="Center"/>
+                            <TextBlock Text="{loc:L Rendering}" Classes="muted" FontSize="12" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -439,27 +440,27 @@
             <Border Grid.Row="2" Padding="16,10" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,1,0,0">
                 <WrapPanel>
                     <TextBlock Classes="muted" FontSize="12" Margin="0,0,18,0">
-                        <Run Text="Canvas"/>
+                        <Run Text="{loc:L StudioStatCanvas}"/>
                         <Run Text="{Binding CanvasText}" Foreground="{DynamicResource TextColor}"/>
                     </TextBlock>
                     <TextBlock Classes="muted" FontSize="12" Margin="0,0,18,0" IsVisible="{Binding HasImage}">
-                        <Run Text="Picture"/>
+                        <Run Text="{loc:L Picture}"/>
                         <Run Text="{Binding ImageInfo}" Foreground="{DynamicResource TextColor}"/>
                     </TextBlock>
                     <TextBlock Classes="muted" FontSize="12" Margin="0,0,18,0" IsVisible="{Binding HasPlan}">
-                        <Run Text="Grid"/>
+                        <Run Text="{loc:L StudioStatGrid}"/>
                         <Run Text="{Binding GridText}" Foreground="{DynamicResource TextColor}"/>
                     </TextBlock>
                     <TextBlock Classes="muted" FontSize="12" Margin="0,0,18,0" IsVisible="{Binding HasPlan}">
-                        <Run Text="Needs"/>
+                        <Run Text="{loc:L StudioStatNeeds}"/>
                         <Run Text="{Binding StrokesText}" Foreground="{DynamicResource TextColor}"/>
                     </TextBlock>
                     <TextBlock Classes="muted" FontSize="12" IsVisible="{Binding HasPlan}">
-                        <Run Text="Uses"/>
+                        <Run Text="{loc:L StudioStatUses}"/>
                         <Run Text="{Binding ColorsText}" Foreground="{DynamicResource TextColor}"/>
                     </TextBlock>
                     <TextBlock Classes="muted" FontSize="12" Margin="18,0,0,0" IsVisible="{Binding HasPlan}">
-                        <Run Text="Time"/>
+                        <Run Text="{loc:L StudioStatTime}"/>
                         <Run Text="{Binding TimeText}" Foreground="{DynamicResource TextColor}"/>
                     </TextBlock>
                 </WrapPanel>
@@ -469,12 +470,12 @@
         <!-- Surface -->
         <Border Grid.Column="2" BorderBrush="{DynamicResource BorderColor}" BorderThickness="1,0,0,0">
             <Grid RowDefinitions="Auto,Auto,*,Auto" Margin="14">
-                <TextBlock Grid.Row="0" Text="SURFACE" Classes="eyebrow" Margin="0,0,0,10"/>
+                <TextBlock Grid.Row="0" Text="{loc:L StudioSurfaceHeader}" Classes="eyebrow" Margin="0,0,0,10"/>
 
                 <ItemsControl Grid.Row="1" Classes="chips" ItemsSource="{Binding Categories}" Margin="0,0,0,4">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="vm:CategoryChip">
-                            <Button Classes="chip" Classes.active="{Binding IsSelected}" Content="{Binding Name}"
+                            <Button Classes="chip" Classes.active="{Binding IsSelected}" Content="{Binding Label}"
                                     Tag="{Binding Name}" Click="OnCategoryClick"/>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
@@ -493,7 +494,7 @@
                 </ListBox>
 
                 <StackPanel Grid.Row="3" Spacing="8" Margin="0,12,0,0" IsVisible="{Binding HasPlan}">
-                    <TextBlock Text="COLORS USED" Classes="eyebrow"/>
+                    <TextBlock Text="{loc:L StudioColorsUsedHeader}" Classes="eyebrow"/>
                     <ScrollViewer MaxHeight="96" VerticalScrollBarVisibility="Auto">
                         <ItemsControl ItemsSource="{Binding UsedColors}">
                             <ItemsControl.ItemsPanel>

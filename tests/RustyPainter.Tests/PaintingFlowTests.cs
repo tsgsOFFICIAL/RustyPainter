@@ -445,7 +445,7 @@ public class PaintingPageTests
     public async Task Paints_the_whole_picture_and_says_so()
     {
         FakeMachine machine = new();
-        PaintingViewModel page = new(Session(), new FakeGame(FakeGame.Rust()), new SurfaceService(), new FakeEngines(machine), "F8", "F9");
+        PaintingViewModel page = new(Session(), new FakeGame(FakeGame.Rust()), new SurfaceService(), new FakeEngines(machine), new Hotkey(0, 0x77), new Hotkey(0, 0x78));
 
         await page.StartAsync();
         await Settle(() => page.IsOver);
@@ -464,7 +464,7 @@ public class PaintingPageTests
     [AvaloniaFact]
     public async Task Fails_with_an_explanation_when_rust_is_not_running()
     {
-        PaintingViewModel page = new(Session(), new FakeGame(null), new SurfaceService(), new FakeEngines(new FakeMachine()), "F8", "F9");
+        PaintingViewModel page = new(Session(), new FakeGame(null), new SurfaceService(), new FakeEngines(new FakeMachine()), new Hotkey(0, 0x77), new Hotkey(0, 0x78));
 
         await page.StartAsync();
 
@@ -477,7 +477,7 @@ public class PaintingPageTests
     public async Task Waits_for_rust_and_carries_on_when_the_start_key_is_pressed_in_it()
     {
         FakeMachine machine = new() { GameInFront = false };
-        PaintingViewModel page = new(Session(), new FakeGame(FakeGame.Rust()), new SurfaceService(), new FakeEngines(machine), "F8", "F9");
+        PaintingViewModel page = new(Session(), new FakeGame(FakeGame.Rust()), new SurfaceService(), new FakeEngines(machine), new Hotkey(0, 0x77), new Hotkey(0, 0x78));
 
         Task run = page.StartAsync();
         await Settle(() => page.IsPaused);
@@ -501,7 +501,7 @@ public class PaintingPageTests
     public async Task The_pause_key_pauses_and_the_same_key_resumes()
     {
         FakeMachine machine = new();
-        PaintingViewModel page = new(Session(), new FakeGame(FakeGame.Rust()), new SurfaceService(), new FakeEngines(machine), "F8", "F9");
+        PaintingViewModel page = new(Session(), new FakeGame(FakeGame.Rust()), new SurfaceService(), new FakeEngines(machine), new Hotkey(0, 0x77), new Hotkey(0, 0x78));
 
         // The key is pressed while the first stroke is being painted.
         machine.Before = what =>
@@ -530,7 +530,7 @@ public class PaintingPageTests
     public async Task The_abort_key_stops_for_good()
     {
         FakeMachine machine = new();
-        PaintingViewModel page = new(Session(), new FakeGame(FakeGame.Rust()), new SurfaceService(), new FakeEngines(machine), "F8", "F9");
+        PaintingViewModel page = new(Session(), new FakeGame(FakeGame.Rust()), new SurfaceService(), new FakeEngines(machine), new Hotkey(0, 0x77), new Hotkey(0, 0x78));
 
         machine.Before = what =>
         {
@@ -554,7 +554,7 @@ public class PaintingPageTests
     public async Task Moving_the_mouse_shows_why_it_paused()
     {
         FakeMachine machine = new();
-        PaintingViewModel page = new(Session(), new FakeGame(FakeGame.Rust()), new SurfaceService(), new FakeEngines(machine), "F8", "F9");
+        PaintingViewModel page = new(Session(), new FakeGame(FakeGame.Rust()), new SurfaceService(), new FakeEngines(machine), new Hotkey(0, 0x77), new Hotkey(0, 0x78));
 
         machine.Before = what =>
         {
@@ -577,7 +577,7 @@ public class PaintingPageTests
     [AvaloniaFact]
     public async Task Done_asks_to_leave_the_page()
     {
-        PaintingViewModel page = new(Session(), new FakeGame(FakeGame.Rust()), new SurfaceService(), new FakeEngines(new FakeMachine()), "F8", "F9");
+        PaintingViewModel page = new(Session(), new FakeGame(FakeGame.Rust()), new SurfaceService(), new FakeEngines(new FakeMachine()), new Hotkey(0, 0x77), new Hotkey(0, 0x78));
         bool done = false;
         page.DoneRequested += () => done = true;
 
@@ -591,7 +591,7 @@ public class PaintingPageTests
     [AvaloniaFact]
     public async Task Gives_a_time_left_that_shrinks_to_nothing()
     {
-        PaintingViewModel page = new(Session(), new FakeGame(FakeGame.Rust()), new SurfaceService(), new FakeEngines(new FakeMachine()), "F8", "F9");
+        PaintingViewModel page = new(Session(), new FakeGame(FakeGame.Rust()), new SurfaceService(), new FakeEngines(new FakeMachine()), new Hotkey(0, 0x77), new Hotkey(0, 0x78));
         string before = page.RemainingText;
 
         await page.StartAsync();

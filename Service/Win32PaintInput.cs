@@ -1,3 +1,4 @@
+using RustyPainter.Localization;
 using RustyPainter.Interface;
 using RustyPainter.Painting;
 using RustyPainter.Service.Native;
@@ -39,7 +40,7 @@ public sealed class Win32PaintInput : IPaintInput
     {
         short scan = InputNativeMethods.VkKeyScan(key);
         if (scan == -1)
-            throw new PaintException($"The key {key} cannot be typed with this keyboard layout.");
+            throw new PaintException(Loc.Format("InputKeyNotTypable", key));
 
         ushort virtualKey = (ushort)(scan & 0xFF);
         ushort scanCode = (ushort)InputNativeMethods.MapVirtualKey(virtualKey, 0);
@@ -64,6 +65,6 @@ public sealed class Win32PaintInput : IPaintInput
         uint sent = InputNativeMethods.SendInput((uint)records.Length, records, InputSize);
 
         if (sent != records.Length)
-            throw new PaintException("Windows did not accept the input. The game may be running as administrator; start this app as administrator too.");
+            throw new PaintException(Loc.Get("InputNotAccepted"));
     }
 }

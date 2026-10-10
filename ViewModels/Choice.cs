@@ -1,3 +1,4 @@
+using RustyPainter.Localization;
 using RustyPainter.ViewModels.Mvvm;
 using System;
 using System.Collections.Generic;
@@ -12,12 +13,15 @@ public sealed class Choice : ViewModelBase
 
     internal Choice(string label, object value, Action<Choice> select)
     {
-        Label = label;
+        _label = label;
         Value = value;
         SelectCommand = new RelayCommand(() => select(this));
     }
 
-    public string Label { get; }
+    private readonly string _label;
+
+    /// <summary>The text of the button. The label given is a key of the texts of the app, or a text that is used as it is, such as a number.</summary>
+    public string Label => Loc.Get(_label);
     public object Value { get; }
 
     public RelayCommand SelectCommand { get; }

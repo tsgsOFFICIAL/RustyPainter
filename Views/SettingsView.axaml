@@ -1,4 +1,5 @@
 <UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:loc="using:RustyPainter.Localization"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -51,26 +52,72 @@
         <StackPanel Margin="24" Spacing="24" MaxWidth="820" HorizontalAlignment="Left">
 
             <StackPanel Spacing="4">
-                <TextBlock Text="Settings" FontSize="26" FontWeight="Bold" Foreground="{DynamicResource TextColor}"/>
-                <TextBlock Text="Updates, painting, the Library and diagnostics." Classes="muted"/>
+                <TextBlock Text="{loc:L NavSettings}" FontSize="26" FontWeight="Bold" Foreground="{DynamicResource TextColor}"/>
+                <TextBlock Text="{loc:L SettingsSubtitle}" Classes="muted"/>
             </StackPanel>
 
-            <!-- Updates -->
+            <!-- Appearance and language -->
             <Border Classes="card">
                 <StackPanel Spacing="0">
                     <StackPanel Spacing="0" Margin="0,0,0,4">
-                        <TextBlock Text="Updates" Classes="sectionTitle"/>
-                        <TextBlock Classes="sectionSubtitle">
-                            <Run Text="You're running version"/>
-                            <Run Text="{Binding VersionText}" FontWeight="Bold"/>
-                        </TextBlock>
+                        <TextBlock Text="{loc:L SettingsAppearance}" Classes="sectionTitle"/>
+                        <TextBlock Text="{loc:L SettingsAppearanceSubtitle}" Classes="sectionSubtitle"/>
                     </StackPanel>
 
                     <Border Classes="settingRow" Margin="0,10,0,0">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Center">
-                                <TextBlock Text="Check for updates on startup" Classes="settingLabel"/>
-                                <TextBlock Text="Looks for a newer release on GitHub each time the app opens." Classes="settingDescription"/>
+                                <TextBlock Text="{loc:L SettingsTheme}" Classes="settingLabel"/>
+                                <TextBlock Text="{loc:L SettingsThemeDescription}" Classes="settingDescription"/>
+                            </StackPanel>
+                            <ComboBox Grid.Column="1" VerticalAlignment="Center" MinWidth="160"
+                                      ItemsSource="{Binding ThemeOptions}"
+                                      SelectedItem="{Binding SelectedTheme}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:ThemeOption">
+                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </Grid>
+                    </Border>
+
+                    <Border Classes="settingRow">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Center">
+                                <TextBlock Text="{loc:L SettingsLanguage}" Classes="settingLabel"/>
+                                <TextBlock Text="{loc:L SettingsLanguageDescription}" Classes="settingDescription"/>
+                            </StackPanel>
+                            <ComboBox Grid.Column="1" VerticalAlignment="Center" MinWidth="160"
+                                      ItemsSource="{Binding LanguageOptions}"
+                                      SelectedItem="{Binding SelectedLanguage}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:LanguageOption">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <Image Source="{Binding Flag}" Height="14" Stretch="Uniform" VerticalAlignment="Center"/>
+                                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <!-- Updates -->
+            <Border Classes="card">
+                <StackPanel Spacing="0">
+                    <StackPanel Spacing="0" Margin="0,0,0,4">
+                        <TextBlock Text="{loc:L SettingsUpdates}" Classes="sectionTitle"/>
+                        <TextBlock Text="{Binding RunningVersionText}" Classes="sectionSubtitle"/>
+                    </StackPanel>
+
+                    <Border Classes="settingRow" Margin="0,10,0,0">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Center">
+                                <TextBlock Text="{loc:L SettingsCheckOnStartup}" Classes="settingLabel"/>
+                                <TextBlock Text="{loc:L SettingsCheckOnStartupDescription}" Classes="settingDescription"/>
                             </StackPanel>
                             <ToggleSwitch Grid.Column="1" VerticalAlignment="Center" OnContent="" OffContent=""
                                           IsChecked="{Binding CheckForUpdatesOnStartup}"/>
@@ -80,8 +127,8 @@
                     <Border Classes="settingRow">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Center">
-                                <TextBlock Text="Install updates automatically" Classes="settingLabel"/>
-                                <TextBlock Text="Downloads and applies a new version without asking, then restarts the app. Needs the startup check." Classes="settingDescription"/>
+                                <TextBlock Text="{loc:L SettingsAutoUpdate}" Classes="settingLabel"/>
+                                <TextBlock Text="{loc:L SettingsAutoUpdateDescription}" Classes="settingDescription"/>
                             </StackPanel>
                             <ToggleSwitch Grid.Column="1" VerticalAlignment="Center" OnContent="" OffContent=""
                                           IsEnabled="{Binding CanAutoUpdate}"
@@ -92,7 +139,7 @@
                     <Border Classes="settingRow">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Center">
-                                <TextBlock Text="Check now" Classes="settingLabel"/>
+                                <TextBlock Text="{loc:L SettingsCheckNow}" Classes="settingLabel"/>
                                 <TextBlock Text="{Binding UpdateStatusText}"
                                            IsVisible="{Binding IsUpdateStatusVisible}"
                                            Classes="settingDescription"/>
@@ -101,7 +148,7 @@
                                     Command="{Binding CheckForUpdatesCommand}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <iconPacks:PackIconPhosphorIcons Kind="ArrowsClockwise" Width="16" Height="16"/>
-                                    <TextBlock Text="Check for updates"/>
+                                    <TextBlock Text="{loc:L SettingsCheckForUpdates}"/>
                                 </StackPanel>
                             </Button>
                         </Grid>
@@ -113,16 +160,16 @@
             <Border Classes="card">
                 <StackPanel Spacing="0">
                     <StackPanel Spacing="0" Margin="0,0,0,4">
-                        <TextBlock Text="Painting" Classes="sectionTitle"/>
-                        <TextBlock Text="How painting starts out. You can still change the speed and the picture on the get-ready page." Classes="sectionSubtitle"/>
+                        <TextBlock Text="{loc:L SettingsPainting}" Classes="sectionTitle"/>
+                        <TextBlock Text="{loc:L SettingsPaintingSubtitle}" Classes="sectionSubtitle"/>
                     </StackPanel>
 
                     <Border Classes="settingRow" Margin="0,10,0,0">
                         <StackPanel Spacing="2">
                             <Grid ColumnDefinitions="*,Auto">
                                 <StackPanel Margin="0,0,16,0">
-                                    <TextBlock Text="Speed" Classes="settingLabel"/>
-                                    <TextBlock Text="Slower is more reliable. Lower it if the game misses clicks or letters." Classes="settingDescription"/>
+                                    <TextBlock Text="{loc:L Speed}" Classes="settingLabel"/>
+                                    <TextBlock Text="{loc:L SettingsSpeedDescription}" Classes="settingDescription"/>
                                 </StackPanel>
                                 <TextBlock Grid.Column="1" Text="{Binding PaintSpeedText}" VerticalAlignment="Center" FontSize="13"/>
                             </Grid>
@@ -133,8 +180,8 @@
                     <Border Classes="settingRow">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Center">
-                                <TextBlock Text="Show the picture over the game" Classes="settingLabel"/>
-                                <TextBlock Text="Draws the picture where it will be painted, on the get-ready page, so the position can be checked." Classes="settingDescription"/>
+                                <TextBlock Text="{loc:L SettingsHologram}" Classes="settingLabel"/>
+                                <TextBlock Text="{loc:L SettingsHologramDescription}" Classes="settingDescription"/>
                             </StackPanel>
                             <ToggleSwitch Grid.Column="1" VerticalAlignment="Center" OnContent="" OffContent=""
                                           IsChecked="{Binding ShowHologram}"/>
@@ -145,8 +192,8 @@
                         <StackPanel Spacing="2">
                             <Grid ColumnDefinitions="*,Auto">
                                 <StackPanel Margin="0,0,16,0">
-                                    <TextBlock Text="Picture strength" Classes="settingLabel"/>
-                                    <TextBlock Text="How solid the picture over the game is." Classes="settingDescription"/>
+                                    <TextBlock Text="{loc:L SettingsPictureStrength}" Classes="settingLabel"/>
+                                    <TextBlock Text="{loc:L SettingsStrengthDescription}" Classes="settingDescription"/>
                                 </StackPanel>
                                 <TextBlock Grid.Column="1" Text="{Binding HologramStrengthText}" VerticalAlignment="Center" FontSize="13"/>
                             </Grid>
@@ -157,8 +204,8 @@
                     <Border Classes="settingRow">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Center">
-                                <TextBlock Text="Show progress over the game" Classes="settingLabel"/>
-                                <TextBlock Text="A small box at the top of the game with how far painting has come, so the app does not have to be in view." Classes="settingDescription"/>
+                                <TextBlock Text="{loc:L SettingsStatusBox}" Classes="settingLabel"/>
+                                <TextBlock Text="{loc:L SettingsStatusBoxDescription}" Classes="settingDescription"/>
                             </StackPanel>
                             <ToggleSwitch Grid.Column="1" VerticalAlignment="Center" OnContent="" OffContent=""
                                           IsChecked="{Binding ShowStatusBox}"/>
@@ -168,13 +215,13 @@
                     <Border Classes="settingRow">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Center">
-                                <TextBlock Text="Back to the defaults" Classes="settingLabel"/>
-                                <TextBlock Text="Puts the speed, the picture, the progress box and the painting keys back as they were at the start." Classes="settingDescription"/>
+                                <TextBlock Text="{loc:L SettingsBackToDefaults}" Classes="settingLabel"/>
+                                <TextBlock Text="{loc:L SettingsResetPaintingDescription}" Classes="settingDescription"/>
                             </StackPanel>
                             <Button Grid.Column="1" VerticalAlignment="Center" Classes="secondaryButton" Command="{Binding ResetPaintingCommand}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <iconPacks:PackIconPhosphorIcons Kind="ArrowCounterClockwise" Width="16" Height="16"/>
-                                    <TextBlock Text="Reset painting"/>
+                                    <TextBlock Text="{loc:L SettingsResetPainting}"/>
                                 </StackPanel>
                             </Button>
                         </Grid>
@@ -186,15 +233,15 @@
             <Border Classes="card">
                 <StackPanel Spacing="0">
                     <StackPanel Spacing="0" Margin="0,0,0,4">
-                        <TextBlock Text="Painting keys" Classes="sectionTitle"/>
-                        <TextBlock Text="These keys only work while Rust is the window in front. Every other program keeps its keys." Classes="sectionSubtitle"/>
+                        <TextBlock Text="{loc:L SettingsPaintingKeys}" Classes="sectionTitle"/>
+                        <TextBlock Text="{loc:L SettingsKeysSubtitle}" Classes="sectionSubtitle"/>
                     </StackPanel>
 
                     <Border Classes="settingRow" Margin="0,10,0,0">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Center">
-                                <TextBlock Text="Start, pause and resume" Classes="settingLabel"/>
-                                <TextBlock Text="Click the key, then press the one you want. Letters, numbers, function keys, Space and Esc work." Classes="settingDescription"/>
+                                <TextBlock Text="{loc:L SettingsStartPauseKey}" Classes="settingLabel"/>
+                                <TextBlock Text="{loc:L SettingsKeyCaptureHelp}" Classes="settingDescription"/>
                             </StackPanel>
                             <Button Grid.Column="1" VerticalAlignment="Center" Classes="secondaryButton" MinWidth="120"
                                     Command="{Binding CaptureStartPauseCommand}" LostFocus="OnCaptureLostFocus">
@@ -206,8 +253,8 @@
                     <Border Classes="settingRow">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Center">
-                                <TextBlock Text="Stop" Classes="settingLabel"/>
-                                <TextBlock Text="Ends the painting for good. What is already painted stays on the canvas." Classes="settingDescription"/>
+                                <TextBlock Text="{loc:L Stop}" Classes="settingLabel"/>
+                                <TextBlock Text="{loc:L SettingsStopKeyDescription}" Classes="settingDescription"/>
                             </StackPanel>
                             <Button Grid.Column="1" VerticalAlignment="Center" Classes="secondaryButton" MinWidth="120"
                                     Command="{Binding CaptureAbortCommand}" LostFocus="OnCaptureLostFocus">
@@ -219,7 +266,7 @@
                     <Border Classes="settingRow">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Center">
-                                <TextBlock Text="Back to the defaults" Classes="settingLabel"/>
+                                <TextBlock Text="{loc:L SettingsBackToDefaults}" Classes="settingLabel"/>
                                 <TextBlock Text="{Binding HotkeyMessage}" IsVisible="{Binding HasHotkeyMessage}"
                                            Classes="settingDescription" Foreground="{DynamicResource DangerColor}"/>
                             </StackPanel>
@@ -227,7 +274,7 @@
                                     Command="{Binding ResetHotkeysCommand}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <iconPacks:PackIconPhosphorIcons Kind="ArrowCounterClockwise" Width="16" Height="16"/>
-                                    <TextBlock Text="Reset keys"/>
+                                    <TextBlock Text="{loc:L SettingsResetKeys}"/>
                                 </StackPanel>
                             </Button>
                         </Grid>
@@ -239,20 +286,20 @@
             <Border Classes="card">
                 <StackPanel Spacing="0">
                     <StackPanel Spacing="0" Margin="0,0,0,4">
-                        <TextBlock Text="Library" Classes="sectionTitle"/>
-                        <TextBlock Text="Saved projects are kept as ordinary folders, so they are easy to back up or move to another computer." Classes="sectionSubtitle"/>
+                        <TextBlock Text="{loc:L NavLibrary}" Classes="sectionTitle"/>
+                        <TextBlock Text="{loc:L SettingsLibrarySubtitle}" Classes="sectionSubtitle"/>
                     </StackPanel>
 
                     <Border Classes="settingRow" Margin="0,10,0,0">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Center">
-                                <TextBlock Text="Library folder" Classes="settingLabel"/>
-                                <TextBlock Text="Opens the folder where each project keeps its picture and settings." Classes="settingDescription"/>
+                                <TextBlock Text="{loc:L SettingsLibraryFolder}" Classes="settingLabel"/>
+                                <TextBlock Text="{loc:L SettingsLibraryFolderDescription}" Classes="settingDescription"/>
                             </StackPanel>
                             <Button Grid.Column="1" VerticalAlignment="Center" Classes="secondaryButton" Command="{Binding OpenLibraryFolderCommand}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <iconPacks:PackIconPhosphorIcons Kind="FolderOpen" Width="16" Height="16"/>
-                                    <TextBlock Text="Open folder"/>
+                                    <TextBlock Text="{loc:L OpenFolder}"/>
                                 </StackPanel>
                             </Button>
                         </Grid>
@@ -264,15 +311,15 @@
             <Border Classes="card">
                 <StackPanel Spacing="0">
                     <StackPanel Spacing="0" Margin="0,0,0,4">
-                        <TextBlock Text="Diagnostics" Classes="sectionTitle"/>
-                        <TextBlock Text="Log files help when something goes wrong." Classes="sectionSubtitle"/>
+                        <TextBlock Text="{loc:L SettingsDiagnostics}" Classes="sectionTitle"/>
+                        <TextBlock Text="{loc:L SettingsDiagnosticsSubtitle}" Classes="sectionSubtitle"/>
                     </StackPanel>
 
                     <Border Classes="settingRow" Margin="0,10,0,0">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Center">
-                                <TextBlock Text="Verbose logging" Classes="settingLabel"/>
-                                <TextBlock Text="Also record debug-level detail. Turn this on when diagnosing a problem." Classes="settingDescription"/>
+                                <TextBlock Text="{loc:L SettingsVerbose}" Classes="settingLabel"/>
+                                <TextBlock Text="{loc:L SettingsVerboseDescription}" Classes="settingDescription"/>
                             </StackPanel>
                             <ToggleSwitch Grid.Column="1" VerticalAlignment="Center" OnContent="" OffContent=""
                                           IsChecked="{Binding VerboseLogging}"/>
@@ -282,14 +329,14 @@
                     <Border Classes="settingRow">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Center">
-                                <TextBlock Text="Log folder" Classes="settingLabel"/>
-                                <TextBlock Text="Opens the folder containing the daily log files." Classes="settingDescription"/>
+                                <TextBlock Text="{loc:L SettingsLogFolder}" Classes="settingLabel"/>
+                                <TextBlock Text="{loc:L SettingsLogFolderDescription}" Classes="settingDescription"/>
                             </StackPanel>
                             <Button Grid.Column="1" VerticalAlignment="Center" Classes="secondaryButton"
                                     Command="{Binding OpenLogsCommand}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <iconPacks:PackIconPhosphorIcons Kind="FolderOpen" Width="16" Height="16"/>
-                                    <TextBlock Text="Open folder"/>
+                                    <TextBlock Text="{loc:L OpenFolder}"/>
                                 </StackPanel>
                             </Button>
                         </Grid>

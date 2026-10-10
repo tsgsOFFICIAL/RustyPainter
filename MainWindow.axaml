@@ -1,4 +1,5 @@
 <Window xmlns="https://github.com/avaloniaui"
+             xmlns:loc="using:RustyPainter.Localization"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -32,7 +33,7 @@
                     <TextBlock Text="RustyPainter" Classes="muted" FontSize="12" />
                     <TextBlock Text="{Binding VersionText}" Classes="muted" FontSize="12" />
                     <TextBlock Text="·" Classes="muted" FontSize="12" />
-                    <TextBlock Text="by" Classes="muted" FontSize="12" />
+                    <TextBlock Text="{loc:L FooterBy}" Classes="muted" FontSize="12" />
                     <TextBlock Text="tsgsOFFICIAL" Classes="muted" FontSize="12" />
                     <TextBlock Text="·" Classes="muted" FontSize="12" />
                     <Ellipse Classes="rustStatusDot" Classes.running="{Binding IsRustRunning}" Width="8" Height="8" VerticalAlignment="Center" />
@@ -41,7 +42,7 @@
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center"
                             VerticalAlignment="Center">
-                    <TextBlock Text="Join the community" Classes="muted" FontSize="12" VerticalAlignment="Center" />
+                    <TextBlock Text="{loc:L FooterJoinCommunity}" Classes="muted" FontSize="12" VerticalAlignment="Center" />
 
                     <Button Classes="linkIcon" Command="{Binding OpenGitHubCommand}" ToolTip.Tip="GitHub">
                         <iconPacks:PackIconSimpleIcons Kind="GitHub" Width="16" Height="16" />
@@ -60,7 +61,7 @@
                             VerticalAlignment="Center">
                     <iconPacks:PackIconPhosphorIcons Kind="Heart" Width="14" Height="14"
                                                      Foreground="{StaticResource SuccessColor}" />
-                    <TextBlock Text="Free &amp; open source" Classes="muted" FontSize="12" />
+                    <TextBlock Text="{loc:L FooterFreeOpenSource}" Classes="muted" FontSize="12" />
                 </StackPanel>
             </Grid>
         </Border>

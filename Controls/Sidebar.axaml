@@ -1,4 +1,5 @@
 <UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:loc="using:RustyPainter.Localization"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -32,7 +33,7 @@
                         Command="{Binding #Root.ViewModel.NavigateCommand}" CommandParameter="{Binding $self.Tag}">
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <iconPacks:PackIconPhosphorIcons Kind="House" Width="18" Height="18" />
-                        <TextBlock Text="Home" />
+                        <TextBlock Text="{loc:L NavHome}" />
                     </StackPanel>
                 </Button>
                 <Button x:Name="NavStudio" Tag="Studio" Classes="navItem"
@@ -40,7 +41,7 @@
                         Command="{Binding #Root.ViewModel.NavigateCommand}" CommandParameter="{Binding $self.Tag}">
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <iconPacks:PackIconPhosphorIcons Kind="PaintBrushBroad" Width="18" Height="18" />
-                        <TextBlock Text="Studio" />
+                        <TextBlock Text="{loc:L NavStudio}" />
                     </StackPanel>
                 </Button>
                 <Button x:Name="NavLibrary" Tag="Library" Classes="navItem"
@@ -48,7 +49,7 @@
                         Command="{Binding #Root.ViewModel.NavigateCommand}" CommandParameter="{Binding $self.Tag}">
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <iconPacks:PackIconPhosphorIcons Kind="Books" Width="18" Height="18" />
-                        <TextBlock Text="Library" />
+                        <TextBlock Text="{loc:L NavLibrary}" />
                     </StackPanel>
                 </Button>
 
@@ -59,7 +60,7 @@
                         Command="{Binding #Root.ViewModel.NavigateCommand}" CommandParameter="{Binding $self.Tag}">
                     <StackPanel Orientation="Horizontal" Spacing="10">
                         <iconPacks:PackIconPhosphorIcons Kind="Gear" Width="18" Height="18" />
-                        <TextBlock Text="Settings" />
+                        <TextBlock Text="{loc:L NavSettings}" />
                     </StackPanel>
                 </Button>
             </StackPanel>

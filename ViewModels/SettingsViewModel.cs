@@ -1,4 +1,5 @@
 using RustyPainter.ViewModels.Mvvm;
+using RustyPainter.Localization;
 using RustyPainter.Service.Logging;
 using RustyPainter.Interface;
 using RustyPainter.Painting;
@@ -23,14 +24,18 @@ public sealed class SettingsViewModel : ViewModelBase
     private bool _autoUpdate;
     private bool _verboseLogging;
 
-    private string _updateStatusText = "";
+    private readonly ILocalizationService _localization;
+    private readonly IThemeService? _theme;
+    private Func<string> _updateStatus = () => "";
     private bool _isUpdateStatusVisible;
     private bool _isCheckingForUpdates;
     private readonly string _libraryFolder;
 
     /// <param name="libraryFolder">The folder the Library keeps projects in, to open from the page. Empty when there is none.</param>
-    public SettingsViewModel(IAppSettingsService settings, IUpdateService updates, IDialogService dialogs, string libraryFolder = "")
+    public SettingsViewModel(IAppSettingsService settings, IUpdateService updates, IDialogService dialogs, string libraryFolder = "", ILocalizationService? localization = null, IThemeService? theme = null)
     {
+        _localization = localization ?? Loc.Service;
+        _theme = theme;
         _libraryFolder = libraryFolder;
         _settings = settings;
         _updates = updates;
@@ -52,6 +57,56 @@ public sealed class SettingsViewModel : ViewModelBase
 
     /// <summary>The running version, including any nightly suffix.</summary>
     public string VersionText { get; }
+
+    /// <summary>The line under the Updates title.</summary>
+    public string RunningVersionText => Loc.Format("SettingsRunningVersionLine", VersionText);
+
+    // ---- language and theme ----
+
+    /// <summary>The languages to pick from, each named in its own language.</summary>
+    public LanguageOption[] LanguageOptions { get; } =
+    [
+        LanguageOption.Create(AppLanguage.English, "English", "gb"),
+        LanguageOption.Create(AppLanguage.Danish, "Dansk", "dk"),
+        LanguageOption.Create(AppLanguage.Russian, "Русский", "ru")
+    ];
+
+    /// <summary>The language in use. Picking another one changes every text at once and is remembered.</summary>
+    public LanguageOption SelectedLanguage
+    {
+        get => Array.Find(LanguageOptions, option => option.Language == _localization.Current) ?? LanguageOptions[0];
+        set
+        {
+            if (value is null || value.Language == _localization.Current)
+                return;
+
+            _localization.SetLanguage(value.Language);
+        }
+    }
+
+    /// <summary>The looks to pick from. A new list each time, so the names follow the language.</summary>
+    public ThemeOption[] ThemeOptions => [new(AppTheme.System), new(AppTheme.Light), new(AppTheme.Dark)];
+
+    /// <summary>The look in use. System follows Windows.</summary>
+    public ThemeOption SelectedTheme
+    {
+        get => new(_settings.Current.Theme);
+        set
+        {
+            if (value is null || value.Theme == _settings.Current.Theme)
+                return;
+
+            if (_theme is not null)
+                _theme.SetTheme(value.Theme);
+            else
+            {
+                _settings.Current.Theme = value.Theme;
+                _settings.Save();
+            }
+
+            OnPropertyChanged();
+        }
+    }
 
     public AsyncRelayCommand CheckForUpdatesCommand { get; }
     public RelayCommand OpenLogsCommand { get; }
@@ -212,16 +267,16 @@ public sealed class SettingsViewModel : ViewModelBase
     private string _hotkeyMessage = "";
 
     /// <summary>The key that starts, pauses and resumes painting, as shown to the user.</summary>
-    public string StartPauseKeyText => CurrentKeys()[HotkeyAction.StartPause].Display;
+    public string StartPauseKeyText => CurrentKeys()[HotkeyAction.StartPause].Localized;
 
     /// <summary>The key that stops painting, as shown to the user.</summary>
-    public string AbortKeyText => CurrentKeys()[HotkeyAction.Abort].Display;
+    public string AbortKeyText => CurrentKeys()[HotkeyAction.Abort].Localized;
 
     /// <summary>What the start and pause button says: the key, or a prompt while it is waiting for a new one.</summary>
-    public string StartPauseButtonText => _capturing == HotkeyAction.StartPause ? "Press a key..." : StartPauseKeyText;
+    public string StartPauseButtonText => _capturing == HotkeyAction.StartPause ? Loc.Get("SettingsPressAKey") : StartPauseKeyText;
 
     /// <summary>What the stop button says: the key, or a prompt while it is waiting for a new one.</summary>
-    public string AbortButtonText => _capturing == HotkeyAction.Abort ? "Press a key..." : AbortKeyText;
+    public string AbortButtonText => _capturing == HotkeyAction.Abort ? Loc.Get("SettingsPressAKey") : AbortKeyText;
 
     /// <summary>The key that is being chosen, or <see langword="null"/> when none is.</summary>
     public HotkeyAction? CapturingAction => _capturing;
@@ -273,7 +328,7 @@ public sealed class SettingsViewModel : ViewModelBase
 
         if (!Hotkey.IsUsableKey(virtualKey))
         {
-            HotkeyMessage = "That key cannot be used. Pick a letter, a number, a function key or one of the common keys such as Space or Esc.";
+            HotkeyMessage = Loc.Get("SettingsKeyNotUsable");
             return true;
         }
 
@@ -283,7 +338,7 @@ public sealed class SettingsViewModel : ViewModelBase
 
         if (keys[other] == chosen)
         {
-            HotkeyMessage = $"{chosen.Display} is already used for {(other == HotkeyAction.Abort ? "stopping" : "pausing and resuming")}.";
+            HotkeyMessage = Loc.Format("SettingsKeyInUse", chosen.Localized, Loc.Get(other == HotkeyAction.Abort ? "SettingsKeyInUseStop" : "SettingsKeyInUsePause"));
             return true;
         }
 
@@ -318,7 +373,13 @@ public sealed class SettingsViewModel : ViewModelBase
         OnPropertyChanged(nameof(CapturingAction));
     }
 
-    public string UpdateStatusText { get => _updateStatusText; private set => SetProperty(ref _updateStatusText, value); }
+    public string UpdateStatusText => _updateStatus();
+
+    private void SetUpdateStatus(Func<string> status)
+    {
+        _updateStatus = status;
+        OnPropertyChanged(nameof(UpdateStatusText));
+    }
     public bool IsUpdateStatusVisible { get => _isUpdateStatusVisible; private set => SetProperty(ref _isUpdateStatusVisible, value); }
     public bool IsCheckingForUpdates { get => _isCheckingForUpdates; private set => SetProperty(ref _isCheckingForUpdates, value); }
 
@@ -326,7 +387,7 @@ public sealed class SettingsViewModel : ViewModelBase
     private async Task CheckForUpdatesAsync()
     {
         IsCheckingForUpdates = true;
-        UpdateStatusText = "Checking for updates...";
+        SetUpdateStatus(() => Loc.Get("SettingsChecking"));
         IsUpdateStatusVisible = true;
 
         UpdateInfo? update;
@@ -337,14 +398,15 @@ public sealed class SettingsViewModel : ViewModelBase
         catch (Exception ex)
         {
             AppLog.Warn("SettingsViewModel", "Manual update check failed.", ex);
-            UpdateStatusText = $"Could not check for updates: {ex.Message}";
+            string reason = ex.Message;
+            SetUpdateStatus(() => Loc.Format("SettingsCheckFailed", reason));
             IsCheckingForUpdates = false;
             return;
         }
 
         if (update is null)
         {
-            UpdateStatusText = "You're up to date.";
+            SetUpdateStatus(() => Loc.Get("SettingsUpToDate"));
             IsCheckingForUpdates = false;
             return;
         }

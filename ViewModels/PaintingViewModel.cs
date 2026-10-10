@@ -1,4 +1,5 @@
 using RustyPainter.ViewModels.Mvvm;
+using RustyPainter.Localization;
 using RustyPainter.Service.Logging;
 using RustyPainter.Interface;
 using RustyPainter.Painting;
@@ -22,6 +23,7 @@ public sealed class PaintingViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
     private readonly Stopwatch _active = new();
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(500) };
     private readonly TimeSpan _estimate;
+    private readonly Hotkey _startKey, _abortKey;
 
     private PaintEngine? _engine;
     private Task _run = Task.CompletedTask;
@@ -30,14 +32,14 @@ public sealed class PaintingViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
     private string _detail = "";
     private string _hotkeyNotice = "";
 
-    public PaintingViewModel(PaintSession session, IGameWindowService game, ISurfaceService surfaces, IPaintEngineFactory factory, string startKey, string abortKey)
+    public PaintingViewModel(PaintSession session, IGameWindowService game, ISurfaceService surfaces, IPaintEngineFactory factory, Hotkey startKey, Hotkey abortKey)
     {
         _session = session;
         _game = game;
         _surfaces = surfaces;
         _factory = factory;
-        StartKeyText = startKey;
-        AbortKeyText = abortKey;
+        _startKey = startKey;
+        _abortKey = abortKey;
 
         _estimate = PaintTimeEstimator.Estimate(session.Request.Plan.Strokes, session.Timing, session.Request.Mode,
             session.Request.Surface.ScrollOut, session.Options.ClearFirst);
@@ -59,9 +61,12 @@ public sealed class PaintingViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
     public RelayCommand DoneCommand { get; }
 
     public string PictureName => _session.Request.PictureName;
-    public string SurfaceName => _session.Request.Surface.Name;
-    public string StartKeyText { get; }
-    public string AbortKeyText { get; }
+    public string SurfaceName => Loc.SurfaceName(_session.Request.Surface);
+    public string StartKeyText => _startKey.Localized;
+    public string AbortKeyText => _abortKey.Localized;
+
+    /// <summary>What is being painted and where, under the title.</summary>
+    public string Subtitle => Loc.Format("PictureOnSurface", Loc.PictureName(PictureName), SurfaceName);
 
     public PaintState State
     {
@@ -95,12 +100,12 @@ public sealed class PaintingViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
 
     public string StatusText => State switch
     {
-        PaintState.Idle => "Starting",
-        PaintState.Running => "Painting",
-        PaintState.Paused => "Paused",
-        PaintState.Finished => "Finished",
-        PaintState.Aborted => "Stopped",
-        PaintState.Failed => "Could not continue",
+        PaintState.Idle => Loc.Get("PaintStarting"),
+        PaintState.Running => Loc.Get("PaintPainting"),
+        PaintState.Paused => Loc.Get("PaintPaused"),
+        PaintState.Finished => Loc.Get("PaintFinished"),
+        PaintState.Aborted => Loc.Get("PaintStopped"),
+        PaintState.Failed => Loc.Get("PaintFailed"),
         _ => ""
     };
 
@@ -136,36 +141,36 @@ public sealed class PaintingViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
     /// <summary>What to do next, for the current state.</summary>
     public string Hint => State switch
     {
-        PaintState.Paused => $"Switch to Rust and press {StartKeyText} to carry on, or {AbortKeyText} to stop.",
-        PaintState.Running => $"Press {StartKeyText} to pause or {AbortKeyText} to stop. Moving the mouse also pauses.",
-        PaintState.Finished => "The picture is on the canvas. Save it in the game.",
-        PaintState.Aborted => "What was painted so far is still on the canvas.",
-        PaintState.Failed => "What was painted so far is still on the canvas.",
+        PaintState.Paused => Loc.Format("PaintHintPaused", StartKeyText, AbortKeyText),
+        PaintState.Running => Loc.Format("PaintHintRunning", StartKeyText, AbortKeyText),
+        PaintState.Finished => Loc.Get("PaintHintFinished"),
+        PaintState.Aborted => Loc.Get("PaintHintStopped"),
+        PaintState.Failed => Loc.Get("PaintHintStopped"),
         _ => ""
     };
 
-    public string PauseResumeText => IsPaused ? "Resume" : "Pause";
+    public string PauseResumeText => IsPaused ? Loc.Get("Resume") : Loc.Get("Pause");
 
     // ---- the box over the game ----
 
     /// <summary>The headline of the box over the game, such as "Painting 42%".</summary>
     public string OverlayTitle => State switch
     {
-        PaintState.Running => $"Painting {Fraction * 100:0}%",
-        PaintState.Paused => $"Paused {Fraction * 100:0}%",
-        PaintState.Finished => "Finished",
-        PaintState.Aborted => "Stopped",
-        PaintState.Failed => "Could not continue",
-        _ => "Starting"
+        PaintState.Running => Loc.Format("PaintTitleRunning", Fraction * 100),
+        PaintState.Paused => Loc.Format("PaintTitlePaused", Fraction * 100),
+        PaintState.Finished => Loc.Get("PaintFinished"),
+        PaintState.Aborted => Loc.Get("PaintStopped"),
+        PaintState.Failed => Loc.Get("PaintFailed"),
+        _ => Loc.Get("PaintStarting")
     };
 
     /// <summary>The line under the progress bar of the box over the game: what the keys do, or why it stopped.</summary>
     public string OverlayLine => State switch
     {
-        PaintState.Running => $"{StartKeyText} pauses, {AbortKeyText} stops. About {RemainingText} left.",
-        PaintState.Paused => HasDetail ? $"{Detail} {StartKeyText} carries on, {AbortKeyText} stops." : $"{StartKeyText} carries on, {AbortKeyText} stops.",
-        PaintState.Finished => "Save the picture in the game.",
-        PaintState.Aborted => "What was painted so far is still on the canvas.",
+        PaintState.Running => Loc.Format("PaintLineRunning", StartKeyText, AbortKeyText, RemainingText),
+        PaintState.Paused => HasDetail ? $"{Detail} {Loc.Format("PaintLinePaused", StartKeyText, AbortKeyText)}" : Loc.Format("PaintLinePaused", StartKeyText, AbortKeyText),
+        PaintState.Finished => Loc.Get("PaintLineFinished"),
+        PaintState.Aborted => Loc.Get("PaintHintStopped"),
         PaintState.Failed => Detail,
         _ => ""
     };
@@ -174,7 +179,7 @@ public sealed class PaintingViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
 
     public double Fraction => _progress.Fraction;
 
-    public string ProgressText => $"{_progress.StrokesDone:N0} of {_progress.StrokeCount:N0} strokes";
+    public string ProgressText => Loc.Format("PaintProgress", _progress.StrokesDone, _progress.StrokeCount);
 
     public string ElapsedText => Format(_active.Elapsed);
 
@@ -214,7 +219,7 @@ public sealed class PaintingViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
         GameWindow? window = _game.Find();
         if (window is null)
         {
-            Detail = "Rust is not running, so there is nothing to paint on.";
+            Detail = Loc.Get("PaintRustNotRunning");
             State = PaintState.Failed;
             return Task.CompletedTask;
         }
@@ -228,7 +233,7 @@ public sealed class PaintingViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
         catch (Exception ex)
         {
             AppLog.Error("PaintingViewModel", "Could not prepare the painting.", ex);
-            Detail = "The painting could not be prepared for this game resolution.";
+            Detail = Loc.Get("PaintCouldNotPrepare");
             State = PaintState.Failed;
             return Task.CompletedTask;
         }
@@ -296,7 +301,7 @@ public sealed class PaintingViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
         if (IsPaused)
             _engine.Resume();
         else if (IsRunning)
-            _engine.Pause($"Paused with {StartKeyText}.");
+            _engine.Pause(Loc.Format("PaintPausedWith", StartKeyText));
     }
 
     private void Abort() => _engine?.Abort();

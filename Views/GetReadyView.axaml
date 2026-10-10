@@ -1,4 +1,5 @@
 <UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:loc="using:RustyPainter.Localization"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -22,27 +23,23 @@
         <StackPanel MaxWidth="680" Margin="32,28" Spacing="16" HorizontalAlignment="Center">
 
             <StackPanel Spacing="4">
-                <TextBlock Text="Get ready to paint" FontSize="22" FontWeight="Bold"/>
-                <TextBlock Classes="muted" FontSize="13" TextWrapping="Wrap">
-                    <Run Text="{Binding PictureName}"/>
-                    <Run Text="on the"/>
-                    <Run Text="{Binding SurfaceName}"/>
-                </TextBlock>
+                <TextBlock Text="{loc:L GetReadyTitle}" FontSize="22" FontWeight="Bold"/>
+                <TextBlock Text="{Binding Subtitle}" Classes="muted" FontSize="13" TextWrapping="Wrap"/>
             </StackPanel>
 
             <!-- What will be painted -->
             <Border Classes="card">
                 <Grid ColumnDefinitions="*,*,*">
                     <StackPanel Spacing="2">
-                        <TextBlock Text="STROKES" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextMutedColor}"/>
+                        <TextBlock Text="{loc:L GetReadyStrokesHeader}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextMutedColor}"/>
                         <TextBlock Text="{Binding StrokesText}" FontSize="15" FontWeight="SemiBold"/>
                     </StackPanel>
                     <StackPanel Grid.Column="1" Spacing="2">
-                        <TextBlock Text="COLORS" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextMutedColor}"/>
+                        <TextBlock Text="{loc:L GetReadyColorsHeader}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextMutedColor}"/>
                         <TextBlock Text="{Binding ColorsText}" FontSize="15" FontWeight="SemiBold"/>
                     </StackPanel>
                     <StackPanel Grid.Column="2" Spacing="2">
-                        <TextBlock Text="TIME" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextMutedColor}"/>
+                        <TextBlock Text="{loc:L GetReadyTimeHeader}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextMutedColor}"/>
                         <TextBlock Text="{Binding TimeText}" FontSize="15" FontWeight="SemiBold"/>
                     </StackPanel>
                 </Grid>
@@ -51,7 +48,7 @@
             <!-- Checklist -->
             <Border Classes="card">
                 <StackPanel Spacing="12">
-                    <TextBlock Text="BEFORE YOU START" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextMutedColor}"/>
+                    <TextBlock Text="{loc:L GetReadyBeforeYouStart}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextMutedColor}"/>
 
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
                         <iconPacks:PackIconPhosphorIcons Kind="CheckCircleFill" Width="18" Height="18"
@@ -70,13 +67,7 @@
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
                         <iconPacks:PackIconPhosphorIcons Kind="Keyboard" Width="18" Height="18"
                                                          Foreground="{DynamicResource AccentColor}"/>
-                        <TextBlock Grid.Column="1" VerticalAlignment="Center" TextWrapping="Wrap">
-                            <Run Text="Press"/>
-                            <Run Text="{Binding StartKeyText}" FontWeight="Bold"/>
-                            <Run Text="in Rust to start. While painting, the same key pauses and resumes and"/>
-                            <Run Text="{Binding AbortKeyText}" FontWeight="Bold"/>
-                            <Run Text="stops. Moving the mouse also pauses. You can change the keys in Settings."/>
-                        </TextBlock>
+                        <TextBlock Grid.Column="1" Text="{Binding KeysLine}" VerticalAlignment="Center" TextWrapping="Wrap"/>
                     </Grid>
 
                     <TextBlock Text="{Binding HotkeyProblem}" IsVisible="{Binding HasHotkeyProblem}"
@@ -87,15 +78,15 @@
             <!-- Options -->
             <Border Classes="card">
                 <StackPanel Spacing="12">
-                    <TextBlock Text="OPTIONS" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextMutedColor}"/>
+                    <TextBlock Text="{loc:L GetReadyOptionsHeader}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextMutedColor}"/>
 
-                    <CheckBox Content="Clear the canvas first" IsChecked="{Binding ClearFirst}"/>
+                    <CheckBox Content="{loc:L GetReadyClearFirst}" IsChecked="{Binding ClearFirst}"/>
 
-                    <CheckBox Content="Show the picture over the game, where it will be painted" IsChecked="{Binding ShowHologram}"/>
+                    <CheckBox Content="{loc:L GetReadyShowHologram}" IsChecked="{Binding ShowHologram}"/>
 
                     <StackPanel Spacing="0" IsVisible="{Binding ShowHologram}">
                         <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Text="Picture strength" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextMutedColor}"/>
+                            <TextBlock Text="{loc:L SettingsPictureStrength}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextMutedColor}"/>
                             <TextBlock Grid.Column="1" Text="{Binding HologramOpacityText}" FontSize="12"/>
                         </Grid>
                         <Slider Minimum="10" Maximum="90" Value="{Binding HologramOpacity}"/>
@@ -103,17 +94,17 @@
 
                     <StackPanel Spacing="0">
                         <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Text="Speed" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextMutedColor}"/>
+                            <TextBlock Text="{loc:L Speed}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextMutedColor}"/>
                             <TextBlock Grid.Column="1" Text="{Binding SpeedText}" FontSize="12"/>
                         </Grid>
                         <Slider Minimum="1" Maximum="100" Value="{Binding Speed}"/>
-                        <TextBlock Text="Slower is more reliable. If the game misses clicks or letters, lower the speed."
+                        <TextBlock Text="{loc:L GetReadySpeedNote}"
                                    Classes="muted" FontSize="11" TextWrapping="Wrap"/>
                     </StackPanel>
 
                     <StackPanel Spacing="0">
                         <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Text="Move sideways" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextMutedColor}"/>
+                            <TextBlock Text="{loc:L StudioMoveSideways}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextMutedColor}"/>
                             <TextBlock Grid.Column="1" Text="{Binding NudgeXText}" FontSize="12"/>
                         </Grid>
                         <Slider Minimum="-30" Maximum="30" Value="{Binding NudgeX}"/>
@@ -121,11 +112,11 @@
 
                     <StackPanel Spacing="0">
                         <Grid ColumnDefinitions="*,Auto">
-                            <TextBlock Text="Move up or down" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextMutedColor}"/>
+                            <TextBlock Text="{loc:L StudioMoveUpDown}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextMutedColor}"/>
                             <TextBlock Grid.Column="1" Text="{Binding NudgeYText}" FontSize="12"/>
                         </Grid>
                         <Slider Minimum="-30" Maximum="30" Value="{Binding NudgeY}"/>
-                        <TextBlock Text="Moves the picture shown over the game, and the painting with it. Only needed if it sits a few pixels off the edge of the canvas."
+                        <TextBlock Text="{loc:L GetReadyNudgeNote}"
                                    Classes="muted" FontSize="11" TextWrapping="Wrap"/>
                     </StackPanel>
                 </StackPanel>
@@ -135,13 +126,13 @@
                 <Button Classes="secondaryButton" Command="{Binding BackCommand}">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <iconPacks:PackIconPhosphorIcons Kind="ArrowLeft" Width="16" Height="16"/>
-                        <TextBlock Text="Back to Studio"/>
+                        <TextBlock Text="{loc:L BackToStudio}"/>
                     </StackPanel>
                 </Button>
                 <Button Classes="accentButton" Command="{Binding StartCommand}">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <iconPacks:PackIconPhosphorIcons Kind="Play" Width="16" Height="16"/>
-                        <TextBlock Text="Start painting"/>
+                        <TextBlock Text="{loc:L GetReadyStart}"/>
                     </StackPanel>
                 </Button>
             </StackPanel>

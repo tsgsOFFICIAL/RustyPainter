@@ -1,3 +1,4 @@
+using RustyPainter.Localization;
 using RustyPainter.ViewModels.Mvvm;
 using RustyPainter.Service.Logging;
 using RustyPainter.Interface;
@@ -60,7 +61,7 @@ public sealed class UpdateAvailableViewModel : ViewModelBase
         }
     }
 
-    public string UpdateButtonText => IsFailed ? "Retry" : "Update now";
+    public string UpdateButtonText => IsFailed ? Loc.Get("Retry") : Loc.Get("UpdateNow");
 
     /// <summary>Download completion, 0-100.</summary>
     public int ProgressPercent { get => _progressPercent; private set => SetProperty(ref _progressPercent, value); }
@@ -88,7 +89,7 @@ public sealed class UpdateAvailableViewModel : ViewModelBase
         IsStatusVisible = true;
         IsProgressIndeterminate = true;
         ProgressPercent = 0;
-        StatusText = "Starting update...";
+        StatusText = Loc.Get("UpdateStarting");
 
         // Progress<T> captures the UI synchronization context here, so callbacks land on the UI thread.
         Progress<UpdateProgress> progress = new(Report);
@@ -101,7 +102,7 @@ public sealed class UpdateAvailableViewModel : ViewModelBase
         catch (Exception ex)
         {
             AppLog.Error("UpdateAvailableViewModel", "Applying the update failed.", ex);
-            StatusText = $"Update failed: {ex.Message} Your installed version was not changed.";
+            StatusText = Loc.Format("UpdateFailed", ex.Message);
             IsFailed = true;
             IsBusy = false;
         }
@@ -116,18 +117,18 @@ public sealed class UpdateAvailableViewModel : ViewModelBase
                 ProgressPercent = p.Percent;
                 StatusText = p.Retry
                     ?? (p.BytesTotal > 0
-                        ? $"Downloading... {FormatBytes(p.BytesDone)} / {FormatBytes(p.BytesTotal)} ({p.Percent}%)"
-                        : $"Downloading... {FormatBytes(p.BytesDone)}");
+                        ? Loc.Format("UpdateDownloadingOf", FormatBytes(p.BytesDone), FormatBytes(p.BytesTotal), p.Percent)
+                        : Loc.Format("UpdateDownloading", FormatBytes(p.BytesDone)));
                 break;
 
             case UpdateStage.Verifying:
                 IsProgressIndeterminate = true;
-                StatusText = "Verifying the download...";
+                StatusText = Loc.Get("UpdateVerifying");
                 break;
 
             case UpdateStage.Restarting:
                 IsProgressIndeterminate = true;
-                StatusText = "Restarting to finish the update...";
+                StatusText = Loc.Get("UpdateRestarting");
                 break;
         }
     }

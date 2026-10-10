@@ -1,4 +1,5 @@
 using RustyPainter.Imaging;
+using RustyPainter.Localization;
 using System;
 
 namespace RustyPainter.Painting;
@@ -42,18 +43,15 @@ public static class PaintTimeEstimator
     public static string Describe(TimeSpan time)
     {
         if (time < TimeSpan.FromSeconds(10))
-            return "A few seconds";
+            return Loc.Get("TimeFewSeconds");
 
         if (time < TimeSpan.FromMinutes(1))
-            return $"About {Math.Round(time.TotalSeconds / 5) * 5:0} seconds";
+            return Loc.Count("TimeAboutSeconds", (long)(Math.Round(time.TotalSeconds / 5) * 5));
 
         if (time < TimeSpan.FromMinutes(90))
-        {
-            double minutes = Math.Round(time.TotalMinutes);
-            return minutes == 1 ? "About 1 minute" : $"About {minutes:0} minutes";
-        }
+        return Loc.Count("TimeAboutMinutes", (long)Math.Round(time.TotalMinutes));
 
-        return $"About {time.TotalHours:0.0} hours";
+        return Loc.Format("TimeAboutHours", time.TotalHours);
     }
 
     private static double Wait(int milliseconds)

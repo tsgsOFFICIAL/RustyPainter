@@ -1,5 +1,6 @@
 using RustyPainter.Imaging;
 using RustyPainter.Interface;
+using RustyPainter.Localization;
 using RustyPainter.Service.Logging;
 using System.Threading;
 using System.Threading.Tasks;
@@ -165,7 +166,7 @@ public sealed class PaintEngine
         {
             ReleaseButton();
             AppLog.Error("PaintEngine", $"Painting failed at step {CurrentStep}.", ex);
-            FailureMessage = ex is PaintException ? ex.Message : "Painting stopped because sending input to the game failed.";
+            FailureMessage = ex is PaintException ? ex.Message : Loc.Get("EngineInputFailed");
             SetState(PaintState.Failed);
         }
         finally
@@ -177,7 +178,7 @@ public sealed class PaintEngine
     }
 
     /// <summary>Stops sending input until <see cref="Resume"/> is called. Safe to call from any thread, such as a hotkey.</summary>
-    public void Pause(string reason = "Paused")
+    public void Pause(string? reason = null)
     {
         lock (_lock)
         {
@@ -185,7 +186,7 @@ public sealed class PaintEngine
                 return;
 
             _pauseRequested = true;
-            PauseReason = reason;
+            PauseReason = reason ?? Loc.Get("EnginePaused");
         }
     }
 
@@ -294,13 +295,13 @@ public sealed class PaintEngine
     private string? FindProblem()
     {
         if (!_sensors.IsGameInFront())
-            return "Rust is not in front.";
+            return Loc.Get("EngineRustNotInFront");
 
         if (_expectedCursor is { } expected)
         {
             ScreenPoint now = _sensors.CursorPosition;
             if (Math.Abs(now.X - expected.X) > MouseTolerance || Math.Abs(now.Y - expected.Y) > MouseTolerance)
-                return "The mouse was moved.";
+                return Loc.Get("EngineMouseMoved");
         }
 
         return null;
@@ -421,7 +422,7 @@ public sealed class PaintEngine
                 break;
 
             default:
-                throw new PaintException($"The painter does not know the step {step.GetType().Name}.");
+                throw new PaintException(Loc.Format("EngineUnknownStep", step.GetType().Name));
         }
     }
 
@@ -457,7 +458,7 @@ public sealed class PaintEngine
         await ClickAsync(step.Toggle, _timing.AfterClick + 150, token);
 
         if (await ReadModeAsync(step.Toggle, token) != step.Mode)
-            throw new PaintException("The game did not switch color mode. Switch it by hand and try again.");
+            throw new PaintException(Loc.Get("EngineColorModeFailed"));
     }
 
     private async Task<ColorMode?> ReadModeAsync(ScreenPoint toggle, CancellationToken token)

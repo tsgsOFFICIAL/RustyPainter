@@ -1,3 +1,4 @@
+using RustyPainter.Localization;
 using RustyPainter.ViewModels.Mvvm;
 using RustyPainter.Service.Logging;
 using RustyPainter.Interface;
@@ -29,10 +30,11 @@ public sealed class MainWindowViewModel : ViewModelBase
     private readonly IHologramService _hologram;
     private readonly IStatusOverlayService _overlay;
     private readonly IProjectStore _projects;
+    private readonly IThemeService? _theme;
     private LibraryViewModel? _library;
     private readonly DispatcherTimer _rustTimer = new() { Interval = TimeSpan.FromSeconds(2) };
     private bool _isRustRunning;
-    private string _rustStatusText = "Rust is not running";
+    private GameWindow? _rustWindow;
     private int _overlayVersion;
 
     private HomeViewModel? _home;
@@ -46,9 +48,10 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     /// <summary>Creates the shell, its sidebar, and the initial Home page.</summary>
     public MainWindowViewModel(IUpdateService updates, IDialogService dialogs, IAppSettingsService settings, ISurfaceService surfaces,
-        IGameWindowService game, IHotkeyService hotkeys, IPaintEngineFactory engines, IHologramService hologram, IStatusOverlayService overlay, IProjectStore projects)
+        IGameWindowService game, IHotkeyService hotkeys, IPaintEngineFactory engines, IHologramService hologram, IStatusOverlayService overlay, IProjectStore projects, IThemeService? theme = null)
     {
         _settings = settings;
+        _theme = theme;
         _game = game;
         _hotkeys = hotkeys;
         _engines = engines;
@@ -166,7 +169,7 @@ public sealed class MainWindowViewModel : ViewModelBase
             SidebarPage.Home => _home ??= new HomeViewModel(Sidebar),
             SidebarPage.Studio => GetStudio(),
             SidebarPage.Library => GetLibrary(),
-            SidebarPage.Settings => _settingsPage ??= new SettingsViewModel(_settings, _updates, _dialogs, _projects.Root),
+            SidebarPage.Settings => _settingsPage ??= new SettingsViewModel(_settings, _updates, _dialogs, _projects.Root, theme: _theme),
             _ => ShowComingSoon(page)
         };
     }
@@ -202,7 +205,7 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         // It could not be opened, so say so where the user is looking.
         if (_library is not null)
-            _library.Message = "That project could not be opened. It may be damaged or removed.";
+            _library.Message = Loc.Get("LibraryCouldNotOpen");
 
         _library?.Refresh();
     }
@@ -243,7 +246,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         _ready?.Dispose();
         _ready = null;
 
-        PaintingViewModel painting = new(session, _game, _surfaces, _engines, keys[HotkeyAction.StartPause].Display, keys[HotkeyAction.Abort].Display);
+        PaintingViewModel painting = new(session, _game, _surfaces, _engines, keys[HotkeyAction.StartPause], keys[HotkeyAction.Abort]);
         painting.DoneRequested += () =>
         {
             CloseSession();
@@ -272,7 +275,7 @@ public sealed class MainWindowViewModel : ViewModelBase
     private static string HotkeyProblem(IReadOnlyList<HotkeyAction> failed, IReadOnlyDictionary<HotkeyAction, Hotkey> keys)
         => failed.Count == 0
             ? ""
-            : $"{string.Join(" and ", failed.Select(action => keys[action].Display))} could not be set up. You can still start, pause and stop with the buttons.";
+            : Loc.Format("HotkeyProblem", string.Join(Loc.Get("And"), failed.Select(action => keys[action].Localized)));
 
     /// <summary>Ends the get-ready or painting page, gives the hotkeys back and stops any painting that is still going.</summary>
     private void CloseSession()
@@ -347,11 +350,9 @@ public sealed class MainWindowViewModel : ViewModelBase
     }
 
     /// <summary>What the footer says about the game.</summary>
-    public string RustStatusText
-    {
-        get => _rustStatusText;
-        private set => SetProperty(ref _rustStatusText, value);
-    }
+    public string RustStatusText => _rustWindow is { } window
+        ? Loc.Format("RustStatusRunning", window.Width, window.Height)
+        : Loc.Get("RustStatusNotRunning");
 
     /// <summary>Starts checking every couple of seconds whether the game is running. Call once, after the window has opened.</summary>
     public void StartRustStatus()
@@ -367,14 +368,15 @@ public sealed class MainWindowViewModel : ViewModelBase
         GameWindow? window = _game.Find();
 
         IsRustRunning = window is not null;
-        RustStatusText = window is null ? "Rust is not running" : $"Rust is running at {window.Width} x {window.Height}";
+        _rustWindow = window;
+        OnPropertyChanged(nameof(RustStatusText));
     }
 
     /// <summary>Returns the shared "coming soon" placeholder, retitled for the given page.</summary>
     private ComingSoonViewModel ShowComingSoon(SidebarPage page)
     {
         ComingSoonViewModel comingSoon = _comingSoon ??= new ComingSoonViewModel();
-        comingSoon.Title = page.ToString();
+        comingSoon.Title = Loc.Has($"Nav{page}") ? Loc.Get($"Nav{page}") : page.ToString();
         return comingSoon;
     }
 }

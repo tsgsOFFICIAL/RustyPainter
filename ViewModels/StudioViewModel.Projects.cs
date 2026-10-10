@@ -1,3 +1,4 @@
+using RustyPainter.Localization;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using RustyPainter.Imaging;
@@ -113,11 +114,11 @@ public sealed partial class StudioViewModel
         if (isText)
         {
             string firstLine = Text.Split('\n', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()?.Trim() ?? "";
-            return firstLine.Length > 0 ? firstLine : "Text";
+            return firstLine.Length > 0 ? firstLine : Loc.Get("TextPictureName");
         }
 
         string name = Path.GetFileNameWithoutExtension(ImageName);
-        return name.Length > 0 ? name : "Untitled";
+        return name.Length > 0 ? name : Loc.Get("Untitled");
     }
 
     private void SaveProject()
@@ -134,7 +135,7 @@ public sealed partial class StudioViewModel
             CurrentProjectId = saved.Id;
             ProjectName = saved.Name;
             _projectCreated = saved.Created;
-            SaveStatus = IsSavedProject ? $"Saved as {saved.Name}" : "Saved";
+            SaveStatus = IsSavedProject ? Loc.Format("StudioSavedAs", saved.Name) : Loc.Get("Saved");
             ProjectSaved?.Invoke();
 
             DispatcherTimer.RunOnce(() => SaveStatus = "", TimeSpan.FromSeconds(4));
@@ -142,7 +143,7 @@ public sealed partial class StudioViewModel
         catch (Exception ex)
         {
             AppLog.Warn("StudioViewModel", "Could not save the project.", ex);
-            ErrorText = "The project could not be saved.";
+            ErrorText = Loc.Get("StudioErrSave");
         }
     }
 
@@ -173,7 +174,7 @@ public sealed partial class StudioViewModel
     {
         if (_projects?.Load(id) is not { } loaded)
         {
-            ErrorText = "That project could not be opened. It may have been removed.";
+            ErrorText = Loc.Get("StudioErrProjectGone");
             return false;
         }
 
@@ -185,7 +186,7 @@ public sealed partial class StudioViewModel
         catch (Exception ex)
         {
             AppLog.Warn("StudioViewModel", $"Could not open the project '{id}'.", ex);
-            ErrorText = "That project could not be opened.";
+            ErrorText = Loc.Get("StudioErrProjectOpen");
             return false;
         }
     }
@@ -255,7 +256,7 @@ public sealed partial class StudioViewModel
         CurrentProjectId = project.Id.Length > 0 ? project.Id : null;
         ProjectName = project.Name;
         _projectCreated = project.Created;
-        ErrorText = surface is null ? "The surface of that project is not known any more, so it was put on the one that was selected." : "";
+        ErrorText = surface is null ? Loc.Get("StudioErrSurfaceUnknown") : "";
 
         SaveCommand.RaiseCanExecuteChanged();
         OnPropertyChanged(nameof(CanSave));

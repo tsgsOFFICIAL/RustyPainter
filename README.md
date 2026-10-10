@@ -20,7 +20,7 @@ Windows 10 or 11 (64-bit)
 
 Download the latest build from the [Releases](https://github.com/tsgsOFFICIAL/RustyPainter/releases) page. There are three files to choose from:
 
-- `*-Setup.exe` is the guided installer.
+- `*-Setup.exe` is the guided installer. *(Recommended for most)*
 - `*-self-contained.zip` is a portable copy that needs nothing installed.
 - `*-framework-dependent.zip` is a smaller portable copy that needs the [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0).
 

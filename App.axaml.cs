@@ -3,6 +3,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using RustyPainter.Service.Logging;
 using RustyPainter.ViewModels;
 using RustyPainter.Interface;
+using RustyPainter.Localization;
 using RustyPainter.Library;
 using RustyPainter.Painting;
 using Avalonia.Markup.Xaml;
@@ -45,12 +46,18 @@ namespace RustyPainter
 
             settings.Initialize();
 
+            // The theme and the language come from the settings, so they start right after them.
+            services.GetRequiredService<IThemeService>().Initialize();
+            ILocalizationService localization = services.GetRequiredService<ILocalizationService>();
+            localization.Initialize();
+            Loc.Install(localization);
+
             // The logger starts before the container exists, so it prunes on a default window first
             // and only learns the user's retention preference once settings are loaded.
             AppLog.ApplyRetention(settings.Current.LogRetentionDays);
             AppLog.ApplyVerbose(settings.Current.VerboseLogging);
 
-            MainWindowViewModel viewModel = new(updates, dialogs, settings, surfaces, game, hotkeys, engines, hologram, overlay, projects);
+            MainWindowViewModel viewModel = new(updates, dialogs, settings, surfaces, game, hotkeys, engines, hologram, overlay, projects, services.GetRequiredService<IThemeService>());
 
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
                 desktop.MainWindow = new MainWindow(viewModel);

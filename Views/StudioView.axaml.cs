@@ -1,3 +1,4 @@
+using RustyPainter.Localization;
 using Avalonia.Platform.Storage;
 using RustyPainter.ViewModels;
 using Avalonia.Interactivity;
@@ -55,14 +56,14 @@ public partial class StudioView : UserControl
         if (TopLevel.GetTopLevel(this) is not { } topLevel || ViewModel is not { } viewModel)
             return;
 
-        FilePickerFileType pictures = new("Pictures")
+        FilePickerFileType pictures = new(Loc.Get("PicturesFileType"))
         {
             Patterns = StudioViewModel.SupportedExtensions.Select(extension => "*" + extension).ToArray()
         };
 
         var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "Choose a picture",
+            Title = Loc.Get("ChoosePicture"),
             AllowMultiple = false,
             FileTypeFilter = [pictures]
         });
@@ -357,7 +358,7 @@ public partial class StudioView : UserControl
             Bitmap? bitmap = await data.TryGetBitmapAsync();
             if (bitmap is not null)
             {
-                viewModel.Load(bitmap, "Pasted picture");
+                viewModel.Load(bitmap, Loc.Get("PastedPicture"));
                 return;
             }
 

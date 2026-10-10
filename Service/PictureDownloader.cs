@@ -1,3 +1,4 @@
+using RustyPainter.Localization;
 using RustyPainter.Interface;
 using System.Net.Http;
 using System.Threading;
@@ -22,14 +23,14 @@ public sealed class PictureDownloader : IPictureDownloader
     public async Task<byte[]> DownloadAsync(Uri link, CancellationToken cancellation = default)
     {
         if (link.Scheme != Uri.UriSchemeHttp && link.Scheme != Uri.UriSchemeHttps)
-            throw new PictureDownloadException("Only http and https links can be used.");
+            throw new PictureDownloadException(Loc.Get("DownloadOnlyHttp"));
 
         try
         {
             using HttpResponseMessage response = await Http.GetAsync(link, HttpCompletionOption.ResponseHeadersRead, cancellation);
 
             if (!response.IsSuccessStatusCode)
-                throw new PictureDownloadException($"The website answered with error {(int)response.StatusCode}.");
+                throw new PictureDownloadException(Loc.Format("DownloadHttpError", (int)response.StatusCode));
 
             if (response.Content.Headers.ContentLength > IPictureDownloader.MaxBytes)
                 throw TooBig();
@@ -50,13 +51,13 @@ public sealed class PictureDownloader : IPictureDownloader
         }
         catch (HttpRequestException)
         {
-            throw new PictureDownloadException("The link could not be reached. Check the address and your connection.");
+            throw new PictureDownloadException(Loc.Get("DownloadUnreachable"));
         }
         catch (TaskCanceledException) when (!cancellation.IsCancellationRequested)
         {
-            throw new PictureDownloadException("The website took too long to answer.");
+            throw new PictureDownloadException(Loc.Get("DownloadTimeout"));
         }
     }
 
-    private static PictureDownloadException TooBig() => new($"The picture is bigger than {IPictureDownloader.MaxBytes / (1024 * 1024)} MB.");
+    private static PictureDownloadException TooBig() => new(Loc.Format("DownloadTooBig", IPictureDownloader.MaxBytes / (1024 * 1024)));
 }

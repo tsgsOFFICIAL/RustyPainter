@@ -149,7 +149,7 @@ public class StatusOverlayTests
 
         PaintRequest request = new(new PaintPlan(8, 4, swatches, cells), surface, ColorMode.Swatches, 8, "cat.png");
         PaintSession session = new(request, new PaintOptions(ColorMode.Swatches, 8, false), PaintTiming.Default);
-        return new PaintingViewModel(session, new FakeGame(FakeGame.Rust()), surfaces, new FakeEngines(machine), "Space", "Esc");
+        return new PaintingViewModel(session, new FakeGame(FakeGame.Rust()), surfaces, new FakeEngines(machine), HotkeyDefaults.StartPause, HotkeyDefaults.Abort);
     }
 
     [AvaloniaFact]

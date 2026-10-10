@@ -1,3 +1,4 @@
+using RustyPainter.Localization;
 using System.Security.Cryptography;
 using System.Net.Http.Headers;
 using RustyPainter.Service.Logging;
@@ -307,7 +308,7 @@ public sealed class UpdateService : IUpdateService
                 throw failure;
 
             AppLog.Warn("UpdateService", $"Download failed ({failure.Message}). Retrying ({attempt}/{MaxAttempts - 1}).");
-            progress?.Report(new UpdateProgress(UpdateStage.Downloading, Retry: $"{failure.Message} Retrying ({attempt}/{MaxAttempts - 1})..."));
+            progress?.Report(new UpdateProgress(UpdateStage.Downloading, Retry: Loc.Format("UpdateRetrying", failure.Message, attempt, MaxAttempts - 1)));
             await Task.Delay(TimeSpan.FromSeconds(2 * attempt), ct);
         }
     }
