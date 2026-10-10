@@ -105,6 +105,7 @@ public sealed class StudioViewModel : ViewModelBase
     private PaintPlan? _plan;
     private WriteableBitmap? _preview;
     private WriteableBitmap? _reference;
+    private double _splitPosition = 0.5;
     private bool _isBusy;
 
     public StudioViewModel(ISurfaceService surfaces, IPictureDownloader? downloader = null)
@@ -203,7 +204,7 @@ public sealed class StudioViewModel : ViewModelBase
                 return;
 
             OnPropertyChanged(nameof(CanvasWidth));
-            OnPropertyChanged(nameof(HalfCanvasWidth));
+            OnPropertyChanged(nameof(SplitWidth));
             OnPropertyChanged(nameof(CanvasHeight));
             OnPropertyChanged(nameof(CanvasText));
             OnPropertyChanged(nameof(ScrollHint));
@@ -437,8 +438,19 @@ public sealed class StudioViewModel : ViewModelBase
     /// <summary>Whether the left half of the canvas shows the placed picture, before colors are matched.</summary>
     public bool ShowSplit => HasImage && PreviewChoices.Selected == PreviewMode.Split && Reference is not null;
 
-    /// <summary>Half the canvas width, for the left half of the split view.</summary>
-    public double HalfCanvasWidth => CanvasWidth / 2;
+    /// <summary>Where the divider of the split view is, from 0 (left edge) to 1 (right edge).</summary>
+    public double SplitPosition
+    {
+        get => _splitPosition;
+        set
+        {
+            if (SetProperty(ref _splitPosition, Math.Clamp(value, 0, 1)))
+                OnPropertyChanged(nameof(SplitWidth));
+        }
+    }
+
+    /// <summary>The width of the part of the canvas left of the divider, in canvas units.</summary>
+    public double SplitWidth => CanvasWidth * SplitPosition;
 
     /// <summary>The plan for the current settings, or <see langword="null"/> while no picture is loaded.</summary>
     public PaintPlan? Plan

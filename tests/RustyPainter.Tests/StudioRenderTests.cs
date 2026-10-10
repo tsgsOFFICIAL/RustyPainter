@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.VisualTree;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -165,7 +166,7 @@ public class StudioRenderTests : IDisposable
     }
 
     [AvaloniaFact]
-    public void Dragging_the_picture_on_the_canvas_moves_it()
+    public async Task Dragging_the_picture_moves_the_shown_render_and_applies_the_settings_once()
     {
         string path = Path.Combine(_folder, "red.png");
         TestImages.SavePng(TestImages.RedAndGreen(), path);
@@ -179,6 +180,7 @@ public class StudioRenderTests : IDisposable
         Dispatcher.UIThread.RunJobs();
 
         Border stage = window.GetVisualDescendants().OfType<Border>().First(border => border.Name == "Stage");
+        Image shown = window.GetVisualDescendants().OfType<Image>().First(image => image.Name == "PreviewImage");
         Point topLeft = stage.TranslatePoint(new Point(0, 0), window)!.Value;
         Point bottomRight = stage.TranslatePoint(new Point(stage.Bounds.Width, stage.Bounds.Height), window)!.Value;
         double shownWidth = bottomRight.X - topLeft.X;
@@ -187,15 +189,98 @@ public class StudioRenderTests : IDisposable
         window.MouseDown(middle, MouseButton.Left);
         window.MouseMove(new Point(middle.X + 60, middle.Y));
         window.MouseMove(new Point(middle.X + 60, middle.Y + 30));
+
+        // While the mouse is down the settings stay as they were and the shown render is simply moved.
+        Assert.Equal(0, studio.OffsetX);
+        Assert.False(shown.RenderTransform is null);
+        Assert.True(((MatrixTransform)shown.RenderTransform!).Matrix.M31 > 0);
+
         window.MouseUp(new Point(middle.X + 60, middle.Y + 30), MouseButton.Left);
 
         Assert.InRange(studio.OffsetX, 60 / shownWidth * 100 - 0.6, 60 / shownWidth * 100 + 0.6);
         Assert.True(studio.OffsetY > 0);
 
+        // Once the new render arrives the moved copy is dropped.
+        for (int i = 0; i < 100 && studio.IsBusy; i++)
+        {
+            Dispatcher.UIThread.RunJobs();
+            await Task.Delay(30);
+        }
+
+        Dispatcher.UIThread.RunJobs();
+        Assert.Equal(Matrix.Identity, ((MatrixTransform)shown.RenderTransform!).Matrix);
+
         // Moving the mouse afterwards without a button held must not drag.
         double before = studio.OffsetX;
         window.MouseMove(new Point(middle.X + 200, middle.Y));
         Assert.Equal(before, studio.OffsetX);
+    }
+
+    [AvaloniaFact]
+    public async Task The_mouse_wheel_zooms_once_it_stops()
+    {
+        string path = Path.Combine(_folder, "red.png");
+        TestImages.SavePng(TestImages.RedAndGreen(), path);
+
+        StudioViewModel studio = new(new SurfaceService());
+        Assert.True(studio.TryLoad(path));
+        studio.ProcessNow();
+
+        Window window = new() { Width = 1296, Height = 760, Content = new StudioView { DataContext = studio } };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        Border stage = window.GetVisualDescendants().OfType<Border>().First(border => border.Name == "Stage");
+        Image shown = window.GetVisualDescendants().OfType<Image>().First(image => image.Name == "PreviewImage");
+        Point middle = stage.TranslatePoint(new Point(stage.Bounds.Width / 2, stage.Bounds.Height / 2), window)!.Value;
+
+        window.MouseWheel(middle, new Vector(0, 1));
+        window.MouseWheel(middle, new Vector(0, 1));
+
+        Assert.Equal(1, studio.Zoom);
+        Assert.True(((MatrixTransform)shown.RenderTransform!).Matrix.M11 > 1.2);
+
+        for (int i = 0; i < 100 && studio.Zoom == 1; i++)
+        {
+            Dispatcher.UIThread.RunJobs();
+            await Task.Delay(30);
+        }
+
+        Assert.Equal(1.21, studio.Zoom, 2);
+    }
+
+    [AvaloniaFact]
+    public void Dragging_the_divider_moves_the_split_without_moving_the_picture()
+    {
+        string path = Path.Combine(_folder, "red.png");
+        TestImages.SavePng(TestImages.Rainbow(), path);
+
+        StudioViewModel studio = new(new SurfaceService());
+        Assert.True(studio.TryLoad(path));
+        studio.ProcessNow();
+        studio.PreviewChoices.Select(PreviewMode.Split);
+
+        Window window = new() { Width = 1296, Height = 760, Content = new StudioView { DataContext = studio } };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        Border stage = window.GetVisualDescendants().OfType<Border>().First(border => border.Name == "Stage");
+        Border strip = window.GetVisualDescendants().OfType<Border>().First(border => border.Name == "SplitStrip");
+        Point topLeft = stage.TranslatePoint(new Point(0, 0), window)!.Value;
+        Point bottomRight = stage.TranslatePoint(new Point(stage.Bounds.Width, stage.Bounds.Height), window)!.Value;
+        double shownWidth = bottomRight.X - topLeft.X;
+
+        Point handle = strip.TranslatePoint(new Point(strip.Bounds.Width / 2, strip.Bounds.Height / 2), window)!.Value;
+        Assert.Equal(topLeft.X + shownWidth / 2, handle.X, 1);
+
+        double target = topLeft.X + shownWidth * 0.25;
+        window.MouseDown(handle, MouseButton.Left);
+        window.MouseMove(new Point(target, handle.Y));
+        window.MouseUp(new Point(target, handle.Y), MouseButton.Left);
+
+        Assert.Equal(0.25, studio.SplitPosition, 2);
+        Assert.Equal(0, studio.OffsetX);
+        Assert.Equal(0, studio.OffsetY);
     }
 
     [AvaloniaFact]

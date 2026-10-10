@@ -4,6 +4,7 @@ using Avalonia.Interactivity;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using Avalonia.Media;
+using Avalonia.Threading;
 using Avalonia;
 using Avalonia.Input;
 using System.Linq;
@@ -25,6 +26,7 @@ public partial class StudioView : UserControl
 
         AddHandler(DragDrop.DragOverEvent, OnDragOver);
         AddHandler(DragDrop.DropEvent, OnDrop);
+        WireGesture();
     }
 
     private StudioViewModel? ViewModel => DataContext as StudioViewModel;
@@ -76,13 +78,99 @@ public partial class StudioView : UserControl
 
     // ---- moving and zooming the picture on the canvas ----
 
+    // The picture is moved and zoomed by transforming the render that is already shown, so dragging stays smooth.
+    // The real settings change once, when the gesture ends, and the next render replaces the moved one.
+
+    private readonly PlacementGesture _gesture = new();
+    private readonly MatrixTransform _gestureTransform = new();
+    private readonly DispatcherTimer _wheelTimer = new() { Interval = TimeSpan.FromMilliseconds(220) };
     private Point? _dragFrom;
+    private StudioViewModel? _watched;
+
+    private void WireGesture()
+    {
+        foreach (Image image in new[] { PreviewImage, ReferenceImage })
+        {
+            image.RenderTransform = _gestureTransform;
+            image.RenderTransformOrigin = RelativePoint.TopLeft;
+        }
+
+        _wheelTimer.Tick += (_, _) =>
+        {
+            _wheelTimer.Stop();
+            CommitGesture();
+        };
+
+        DataContextChanged += (_, _) =>
+        {
+            if (_watched is not null)
+                _watched.PropertyChanged -= OnViewModelChanged;
+
+            _watched = ViewModel;
+            if (_watched is not null)
+                _watched.PropertyChanged += OnViewModelChanged;
+
+            EndGesture();
+        };
+
+        Stage.LayoutUpdated += (_, _) => UpdateSplitOverlayScale();
+    }
+
+    private void OnViewModelChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        // A new render arrived. If it already holds everything the gesture changed, the moved copy is not needed any more.
+        // If the mouse is still busy, the render holds what was committed so far and the picture only moves by the rest.
+        if (e.PropertyName is not (nameof(StudioViewModel.Preview) or nameof(StudioViewModel.Reference))
+            || sender is not StudioViewModel viewModel || !_gesture.IsActive)
+            return;
+
+        if (_dragFrom is null && !_gesture.HasUncommitted)
+        {
+            EndGesture();
+            return;
+        }
+
+        _gesture.Rebase(viewModel.Zoom, viewModel.OffsetX, viewModel.OffsetY);
+        ShowGesture();
+    }
+
+    private void EndGesture()
+    {
+        _gesture.Reset();
+        _gestureTransform.Matrix = Matrix.Identity;
+    }
+
+    private void ShowGesture()
+    {
+        System.Numerics.Matrix3x2 m = _gesture.Matrix;
+        _gestureTransform.Matrix = new Matrix(m.M11, m.M12, m.M21, m.M22, m.M31, m.M32);
+    }
+
+    private void BeginGesture(StudioViewModel viewModel)
+        => _gesture.Begin(viewModel.CanvasWidth, viewModel.CanvasHeight, viewModel.Zoom, viewModel.OffsetX, viewModel.OffsetY);
+
+    /// <summary>Hands what the gesture changed to the settings. They render once and the moved picture is replaced.</summary>
+    private void CommitGesture()
+    {
+        if (ViewModel is not { } viewModel || !_gesture.HasUncommitted)
+            return;
+
+        viewModel.Zoom = _gesture.Zoom;
+        viewModel.OffsetX = _gesture.OffsetXPercent;
+        viewModel.OffsetY = _gesture.OffsetYPercent;
+        _gesture.MarkCommitted();
+
+        // Nothing to render means nothing will replace the moved picture, so drop it now.
+        if (!viewModel.IsBusy)
+            EndGesture();
+    }
 
     private void OnStagePressed(object? sender, PointerPressedEventArgs e)
     {
-        if (sender is not Control stage || ViewModel is not { ShowResult: true } || !e.GetCurrentPoint(stage).Properties.IsLeftButtonPressed)
+        if (sender is not Control stage || ViewModel is not { ShowResult: true } viewModel || !e.GetCurrentPoint(stage).Properties.IsLeftButtonPressed)
             return;
 
+        BeginGesture(viewModel);
         _dragFrom = e.GetPosition(stage);
         e.Pointer.Capture(stage);
         e.Handled = true;
@@ -90,14 +178,13 @@ public partial class StudioView : UserControl
 
     private void OnStageMoved(object? sender, PointerEventArgs e)
     {
-        if (_dragFrom is not { } from || sender is not Control stage || ViewModel is not { } viewModel)
+        if (_dragFrom is not { } from || sender is not Control stage)
             return;
 
         // The stage is drawn inside a Viewbox, so positions are already in canvas units whatever size it is shown at.
         Point now = e.GetPosition(stage);
-        if (stage.Bounds.Width > 0 && stage.Bounds.Height > 0)
-            viewModel.MoveBy((now.X - from.X) / stage.Bounds.Width, (now.Y - from.Y) / stage.Bounds.Height);
-
+        _gesture.Pan(now.X - from.X, now.Y - from.Y);
+        ShowGesture();
         _dragFrom = now;
     }
 
@@ -105,16 +192,30 @@ public partial class StudioView : UserControl
     {
         _dragFrom = null;
         e.Pointer.Capture(null);
+        CommitGesture();
     }
 
-    private void OnStageCaptureLost(object? sender, PointerCaptureLostEventArgs e) => _dragFrom = null;
+    private void OnStageCaptureLost(object? sender, PointerCaptureLostEventArgs e)
+    {
+        if (_dragFrom is not null)
+        {
+            _dragFrom = null;
+            CommitGesture();
+        }
+    }
 
     private void OnStageWheel(object? sender, PointerWheelEventArgs e)
     {
         if (ViewModel is not { ShowResult: true } viewModel)
             return;
 
-        viewModel.ZoomBy(e.Delta.Y > 0 ? 1.1 : 1 / 1.1);
+        BeginGesture(viewModel);
+        _gesture.ZoomBy(e.Delta.Y > 0 ? 1.1 : 1 / 1.1);
+        ShowGesture();
+
+        // Commit once the wheel has stopped, not for every notch.
+        _wheelTimer.Stop();
+        _wheelTimer.Start();
         e.Handled = true;
     }
 
@@ -123,6 +224,66 @@ public partial class StudioView : UserControl
         if (ViewModel is { ShowResult: true } viewModel)
             viewModel.ResetView();
     }
+
+    // ---- the divider of the split view ----
+
+    private bool _splitDragging;
+
+    private void OnSplitPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (sender is not Control strip || !e.GetCurrentPoint(strip).Properties.IsLeftButtonPressed)
+            return;
+
+        _splitDragging = true;
+        e.Pointer.Capture(strip);
+        e.Handled = true;
+        MoveSplit(e);
+    }
+
+    private void OnSplitMoved(object? sender, PointerEventArgs e)
+    {
+        if (_splitDragging)
+            MoveSplit(e);
+    }
+
+    private void OnSplitReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        _splitDragging = false;
+        e.Pointer.Capture(null);
+        e.Handled = true;
+    }
+
+    private void OnSplitCaptureLost(object? sender, PointerCaptureLostEventArgs e) => _splitDragging = false;
+
+    private void MoveSplit(PointerEventArgs e)
+    {
+        if (ViewModel is { } viewModel && Stage.Bounds.Width > 0)
+            viewModel.SplitPosition = e.GetPosition(Stage).X / Stage.Bounds.Width;
+    }
+
+    /// <summary>Keeps the handle and labels the same size on screen however much the canvas is scaled to fit.</summary>
+    private void UpdateSplitOverlayScale()
+    {
+        if (Stage.TransformToVisual(this) is not { } matrix || matrix.M11 <= 0)
+            return;
+
+        double inverse = 1 / matrix.M11;
+        if (Math.Abs(inverse - _overlayInverse) < 0.001)
+            return;
+
+        _overlayInverse = inverse;
+        SplitStrip.Width = 34 * inverse;
+        SplitStrip.Margin = new Thickness(0, 0, -17 * inverse, 0);
+        SplitLine.Width = 2 * inverse;
+
+        SplitHandle.RenderTransform = new ScaleTransform(inverse, inverse);
+        PictureLabel.RenderTransformOrigin = new RelativePoint(0, 1, RelativeUnit.Relative);
+        PictureLabel.RenderTransform = new ScaleTransform(inverse, inverse);
+        ResultLabel.RenderTransformOrigin = new RelativePoint(1, 1, RelativeUnit.Relative);
+        ResultLabel.RenderTransform = new ScaleTransform(inverse, inverse);
+    }
+
+    private double _overlayInverse;
 
     private void OnLinkKeyDown(object? sender, KeyEventArgs e)
     {
