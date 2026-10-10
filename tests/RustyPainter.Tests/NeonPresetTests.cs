@@ -136,7 +136,7 @@ public class NeonPresetTests
         PaintPlan plan = new(w, h, swatches, Enumerable.Repeat(1, w * h).ToArray());
         PaintRequest request = new(plan, neon, ColorMode.Swatches, 2, "line.png");
 
-        GetReadyViewModel page = new(request, new FakeGame(FakeGame.Rust()), surfaces, new AppSettingsService(), new FakeHologram(), new Hotkey(0, 0x20), new Hotkey(0, 0x1B));
+        GetReadyViewModel page = new(request, new FakeGame(FakeGame.Rust()), surfaces, TestSettings.Create(), new FakeHologram(), new Hotkey(0, 0x20), new Hotkey(0, 0x1B));
         PaintSession? session = null;
         page.StartRequested += s => session = s;
         page.StartCommand.Execute(null);
@@ -159,7 +159,7 @@ public class NeonPresetTests
         PaintPlan plan = new(4, 2, swatches, [1, 1, 1, 1, 1, 1, 1, 1]);
         PaintRequest request = new(plan, sign, ColorMode.Swatches, 8, "line.png");
 
-        GetReadyViewModel page = new(request, new FakeGame(FakeGame.Rust()), Surfaces, new AppSettingsService(), new FakeHologram(), new Hotkey(0, 0x20), new Hotkey(0, 0x1B));
+        GetReadyViewModel page = new(request, new FakeGame(FakeGame.Rust()), Surfaces, TestSettings.Create(), new FakeHologram(), new Hotkey(0, 0x20), new Hotkey(0, 0x1B));
         PaintSession? session = null;
         page.StartRequested += s => session = s;
         page.StartCommand.Execute(null);

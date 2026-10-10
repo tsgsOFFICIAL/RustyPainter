@@ -9,11 +9,17 @@ namespace RustyPainter.Service;
 /// <inheritdoc cref="IAppSettingsService" />
 public sealed class AppSettingsService : IAppSettingsService
 {
-    private static readonly string SettingsPath = Path.Combine(
+    /// <summary>Where the settings of the real app live.</summary>
+    public static readonly string DefaultPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "RustyPainter", "settings.json");
 
     private static readonly JsonSerializerOptions SerializerOptions = new() { WriteIndented = true };
+
+    private readonly string SettingsPath;
+
+    /// <param name="path">The file the settings are kept in. Tests give their own so they never touch the real settings.</param>
+    public AppSettingsService(string? path = null) => SettingsPath = path ?? DefaultPath;
 
     public AppSettings Current { get; private set; } = new();
 

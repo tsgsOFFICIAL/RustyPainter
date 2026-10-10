@@ -272,7 +272,7 @@ public class GetReadyTests
 
     private static GetReadyViewModel Page(FakeGame game, AppSettingsService? settings = null, PaintRequest? request = null, FakeHologram? hologram = null, FakeOverlay? overlay = null)
     {
-        settings ??= new AppSettingsService();
+        settings ??= TestSettings.Create();
         return new GetReadyViewModel(request ?? Request(), game, new SurfaceService(), settings, hologram ?? new FakeHologram(), new Hotkey(0, 0x77), new Hotkey(0, 0x78));
     }
 
@@ -351,7 +351,7 @@ public class GetReadyTests
     [AvaloniaFact]
     public void The_speed_is_remembered_but_clearing_is_on_every_time()
     {
-        AppSettingsService settings = new();
+        AppSettingsService settings = TestSettings.Create();
         GetReadyViewModel page = Page(new FakeGame(FakeGame.Rust()), settings);
 
         Assert.True(page.ClearFirst);
@@ -606,7 +606,7 @@ public class PaintingNavigationTests
 {
     private static MainWindowViewModel Shell(FakeGame game, FakeHotkeys hotkeys, FakeMachine machine, FakeHologram? hologram = null, FakeOverlay? overlay = null)
     {
-        AppSettingsService settings = new();
+        AppSettingsService settings = TestSettings.Create();
         return new MainWindowViewModel(new UpdateService(), new DialogService(), settings, new SurfaceService(), game, hotkeys, new FakeEngines(machine), hologram ?? new FakeHologram(), overlay ?? new FakeOverlay());
     }
 
@@ -760,7 +760,7 @@ public class PaintingNavigationTests
 public class PaintingKeySettingsTests
 {
     private static SettingsViewModel Page(AppSettingsService? settings = null)
-        => new(settings ?? new AppSettingsService(), new UpdateService(), new DialogService());
+        => new(settings ?? TestSettings.Create(), new UpdateService(), new DialogService());
 
     [Fact]
     public void Starts_with_space_and_escape()
@@ -776,7 +776,7 @@ public class PaintingKeySettingsTests
     [Fact]
     public void Choosing_a_key_saves_it()
     {
-        AppSettingsService settings = new();
+        AppSettingsService settings = TestSettings.Create();
         SettingsViewModel page = Page(settings);
 
         page.CaptureStartPauseCommand.Execute(null);
@@ -858,7 +858,7 @@ public class PaintingKeySettingsTests
     [Fact]
     public void Resetting_brings_the_defaults_back()
     {
-        AppSettingsService settings = new();
+        AppSettingsService settings = TestSettings.Create();
         SettingsViewModel page = Page(settings);
         page.CaptureStartPauseCommand.Execute(null);
         page.CaptureKey(0x50, 0);
@@ -876,7 +876,7 @@ public class PaintingKeySettingsTests
     [Fact]
     public void The_chosen_keys_are_what_painting_uses()
     {
-        AppSettingsService settings = new();
+        AppSettingsService settings = TestSettings.Create();
         SettingsViewModel page = Page(settings);
         page.CaptureStartPauseCommand.Execute(null);
         page.CaptureKey(0x50, 0);
@@ -917,7 +917,7 @@ public class HologramTests
     }
 
     private static GetReadyViewModel Page(FakeGame game, FakeHologram hologram, PaintRequest? request = null)
-        => new(request ?? Request(), game, new SurfaceService(), new AppSettingsService(), hologram, new Hotkey(0, 0x20), new Hotkey(0, 0x1B));
+        => new(request ?? Request(), game, new SurfaceService(), TestSettings.Create(), hologram, new Hotkey(0, 0x20), new Hotkey(0, 0x1B));
 
     [AvaloniaFact]
     public void The_picture_is_shown_over_the_game_where_it_will_be_painted()
