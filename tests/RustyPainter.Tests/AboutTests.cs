@@ -52,7 +52,7 @@ public class AboutTests
         Assert.False(string.IsNullOrWhiteSpace(about.BuildText));
         Assert.Contains("UTC", about.BuildText);
         Assert.Contains(Environment.OSVersion.Version.ToString(), about.OsText);
-        Assert.Equal("Free and open source", about.LicenseText);
+        Assert.Equal("Free", about.LicenseText);
     }
 
     [AvaloniaFact]
