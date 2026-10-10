@@ -1,7 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
-using RustyPainter.Service.Native;
 
 namespace RustyPainter.Windows;
 
@@ -18,7 +17,7 @@ public partial class HologramWindow : Window
         ScalingChanged += (_, _) => ApplyArea();
         Opened += (_, _) =>
         {
-            MakeClickThrough();
+            ClickThrough.Apply(this);
             ApplyArea();
         };
     }
@@ -54,17 +53,5 @@ public partial class HologramWindow : Window
         double scale = RenderScaling <= 0 ? 1 : RenderScaling;
         Width = _area.Width / scale;
         Height = _area.Height / scale;
-    }
-
-    /// <summary>Makes Windows treat the window as not there for the mouse, and keeps it from ever becoming the active window.</summary>
-    private void MakeClickThrough()
-    {
-        if (TryGetPlatformHandle()?.Handle is not { } handle || handle == 0)
-            return;
-
-        nint style = WindowStyleNativeMethods.GetWindowLongPtr(handle, WindowStyleNativeMethods.ExtendedStyle);
-        style |= WindowStyleNativeMethods.Layered | WindowStyleNativeMethods.Transparent
-               | WindowStyleNativeMethods.NoActivate | WindowStyleNativeMethods.ToolWindow;
-        WindowStyleNativeMethods.SetWindowLongPtr(handle, WindowStyleNativeMethods.ExtendedStyle, style);
     }
 }

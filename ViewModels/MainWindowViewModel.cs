@@ -26,6 +26,11 @@ public sealed class MainWindowViewModel : ViewModelBase
     private readonly IHotkeyService _hotkeys;
     private readonly IPaintEngineFactory _engines;
     private readonly IHologramService _hologram;
+    private readonly IStatusOverlayService _overlay;
+    private readonly DispatcherTimer _rustTimer = new() { Interval = TimeSpan.FromSeconds(2) };
+    private bool _isRustRunning;
+    private string _rustStatusText = "Rust is not running";
+    private int _overlayVersion;
 
     private HomeViewModel? _home;
     private StudioViewModel? _studio;
@@ -38,13 +43,14 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     /// <summary>Creates the shell, its sidebar, and the initial Home page.</summary>
     public MainWindowViewModel(IUpdateService updates, IDialogService dialogs, IAppSettingsService settings, ISurfaceService surfaces,
-        IGameWindowService game, IHotkeyService hotkeys, IPaintEngineFactory engines, IHologramService hologram)
+        IGameWindowService game, IHotkeyService hotkeys, IPaintEngineFactory engines, IHologramService hologram, IStatusOverlayService overlay)
     {
         _settings = settings;
         _game = game;
         _hotkeys = hotkeys;
         _engines = engines;
         _hologram = hologram;
+        _overlay = overlay;
         _hotkeys.Pressed += action => Dispatcher.UIThread.Post(() => RouteHotkey(action));
         _updates = updates;
         _dialogs = dialogs;
@@ -210,8 +216,13 @@ public sealed class MainWindowViewModel : ViewModelBase
         painting.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(PaintingViewModel.IsOver) && painting.IsOver)
+            {
                 _hotkeys.Stop();
+                HideOverlayLater();
+            }
         };
+
+        ShowOverlay(painting);
 
         _ = painting.StartAsync();
     }
@@ -225,6 +236,8 @@ public sealed class MainWindowViewModel : ViewModelBase
     private void CloseSession()
     {
         _hotkeys.Stop();
+        _overlayVersion++;
+        _overlay.Hide();
 
         _ready?.Dispose();
         _ready = null;
@@ -239,6 +252,80 @@ public sealed class MainWindowViewModel : ViewModelBase
             painting.OnHotkey(action);
         else
             _ready?.OnHotkey(action);
+    }
+
+    // ---- the box over the game ----
+
+    /// <summary>How long the box over the game stays after painting ends, so the last state can be read.</summary>
+    public TimeSpan OverlayLinger { get; set; } = TimeSpan.FromSeconds(6);
+
+    /// <summary>The box is drawn at the top middle of the game, clear of the paint screen's buttons and of the canvas.</summary>
+    public static ScreenRect OverlayArea(GameWindow window)
+    {
+        double scale = window.Client.Height / 1440.0;
+        double width = 460 * scale;
+        double height = 88 * scale;
+        double left = window.Client.X1 + (window.Client.Width - width) / 2;
+        double top = window.Client.Y1 + 14 * scale;
+
+        return new ScreenRect(left, top, left + width, top + height);
+    }
+
+    private void ShowOverlay(PaintingViewModel painting)
+    {
+        if (_game.Find() is { IsMinimized: false } window)
+            _overlay.Show(painting, OverlayArea(window));
+    }
+
+    /// <summary>Takes the box away a little after painting ended, unless something else was started by then.</summary>
+    private async void HideOverlayLater()
+    {
+        int version = ++_overlayVersion;
+
+        try
+        {
+            await Task.Delay(OverlayLinger);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        if (version == _overlayVersion)
+            _overlay.Hide();
+    }
+
+    // ---- Rust ----
+
+    /// <summary>Whether the game is running, for the dot in the footer.</summary>
+    public bool IsRustRunning
+    {
+        get => _isRustRunning;
+        private set => SetProperty(ref _isRustRunning, value);
+    }
+
+    /// <summary>What the footer says about the game.</summary>
+    public string RustStatusText
+    {
+        get => _rustStatusText;
+        private set => SetProperty(ref _rustStatusText, value);
+    }
+
+    /// <summary>Starts checking every couple of seconds whether the game is running. Call once, after the window has opened.</summary>
+    public void StartRustStatus()
+    {
+        RefreshRustStatus();
+        _rustTimer.Tick += (_, _) => RefreshRustStatus();
+        _rustTimer.Start();
+    }
+
+    /// <summary>Looks for the game now and updates <see cref="IsRustRunning"/> and <see cref="RustStatusText"/>.</summary>
+    public void RefreshRustStatus()
+    {
+        GameWindow? window = _game.Find();
+
+        IsRustRunning = window is not null;
+        RustStatusText = window is null ? "Rust is not running" : $"Rust is running at {window.Width} x {window.Height}";
     }
 
     /// <summary>Returns the shared "coming soon" placeholder, retitled for the given page.</summary>

@@ -121,3 +121,22 @@ internal sealed class FakeHologram : IHologramService
         Hides++;
     }
 }
+
+/// <summary>Remembers what would be drawn over the game while painting.</summary>
+internal sealed class FakeOverlay : IStatusOverlayService
+{
+    public bool IsShown { get; private set; }
+    public object? Content { get; private set; }
+    public ScreenRect Area { get; private set; }
+    public int Shows { get; private set; }
+
+    public void Show(object content, ScreenRect area)
+    {
+        IsShown = true;
+        Content = content;
+        Area = area;
+        Shows++;
+    }
+
+    public void Hide() => IsShown = false;
+}

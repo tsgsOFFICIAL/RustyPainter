@@ -21,3 +21,21 @@ public interface IHologramService
     /// <summary>Takes the picture off the screen.</summary>
     void Hide();
 }
+
+/// <summary>
+/// A small box drawn over the game while painting, showing how far it has come, so the user does not have to leave the game
+/// to see it. Like the hologram it never takes a click or the focus.
+/// </summary>
+public interface IStatusOverlayService
+{
+    /// <summary>Whether the box is on screen.</summary>
+    bool IsShown { get; }
+
+    /// <summary>Shows the box over a rectangle of the screen. It draws itself from the object it is given, and keeps up with it.</summary>
+    /// <param name="content">The painting page, which says what the box shows.</param>
+    /// <param name="area">Where it goes, in screen pixels.</param>
+    void Show(object content, ScreenRect area);
+
+    /// <summary>Takes the box off the screen.</summary>
+    void Hide();
+}

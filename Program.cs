@@ -34,6 +34,7 @@ namespace RustyPainter
                     .AddSingleton<IHotkeyService, GlobalHotkeyService>()
                     .AddSingleton<IPaintEngineFactory, PaintEngineFactory>()
                     .AddSingleton<IHologramService, HologramService>()
+                    .AddSingleton<IStatusOverlayService, StatusOverlayService>()
                     .BuildServiceProvider();
 
                 BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);

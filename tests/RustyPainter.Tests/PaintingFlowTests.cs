@@ -270,7 +270,7 @@ public class GetReadyTests
         return new PaintRequest(new PaintPlan(8, 4, swatches, cells), surface, mode, 8, "cat.png");
     }
 
-    private static GetReadyViewModel Page(FakeGame game, AppSettingsService? settings = null, PaintRequest? request = null, FakeHologram? hologram = null)
+    private static GetReadyViewModel Page(FakeGame game, AppSettingsService? settings = null, PaintRequest? request = null, FakeHologram? hologram = null, FakeOverlay? overlay = null)
     {
         settings ??= new AppSettingsService();
         return new GetReadyViewModel(request ?? Request(), game, new SurfaceService(), settings, hologram ?? new FakeHologram(), new Hotkey(0, 0x77), new Hotkey(0, 0x78));
@@ -604,10 +604,10 @@ public class PaintingPageTests
 
 public class PaintingNavigationTests
 {
-    private static MainWindowViewModel Shell(FakeGame game, FakeHotkeys hotkeys, FakeMachine machine, FakeHologram? hologram = null)
+    private static MainWindowViewModel Shell(FakeGame game, FakeHotkeys hotkeys, FakeMachine machine, FakeHologram? hologram = null, FakeOverlay? overlay = null)
     {
         AppSettingsService settings = new();
-        return new MainWindowViewModel(new UpdateService(), new DialogService(), settings, new SurfaceService(), game, hotkeys, new FakeEngines(machine), hologram ?? new FakeHologram());
+        return new MainWindowViewModel(new UpdateService(), new DialogService(), settings, new SurfaceService(), game, hotkeys, new FakeEngines(machine), hologram ?? new FakeHologram(), overlay ?? new FakeOverlay());
     }
 
     private static StudioViewModel PreparedStudio(MainWindowViewModel shell)

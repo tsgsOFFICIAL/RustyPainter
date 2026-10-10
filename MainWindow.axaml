@@ -34,6 +34,9 @@
                     <TextBlock Text="·" Classes="muted" FontSize="12" />
                     <TextBlock Text="by" Classes="muted" FontSize="12" />
                     <TextBlock Text="tsgsOFFICIAL" Classes="muted" FontSize="12" />
+                    <TextBlock Text="·" Classes="muted" FontSize="12" />
+                    <Ellipse Classes="rustStatusDot" Classes.running="{Binding IsRustRunning}" Width="8" Height="8" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding RustStatusText}" Classes="muted" FontSize="12" />
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center"

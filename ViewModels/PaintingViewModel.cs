@@ -77,6 +77,8 @@ public sealed class PaintingViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
             OnPropertyChanged(nameof(IsOver));
             OnPropertyChanged(nameof(IsFailed));
             OnPropertyChanged(nameof(PauseResumeText));
+            OnPropertyChanged(nameof(OverlayTitle));
+            OnPropertyChanged(nameof(OverlayLine));
             OnPropertyChanged(nameof(Hint));
             PauseResumeCommand.RaiseCanExecuteChanged();
             AbortCommand.RaiseCanExecuteChanged();
@@ -109,7 +111,10 @@ public sealed class PaintingViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
         private set
         {
             if (SetProperty(ref _detail, value))
+            {
                 OnPropertyChanged(nameof(HasDetail));
+                OnPropertyChanged(nameof(OverlayLine));
+            }
         }
     }
 
@@ -141,6 +146,30 @@ public sealed class PaintingViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
 
     public string PauseResumeText => IsPaused ? "Resume" : "Pause";
 
+    // ---- the box over the game ----
+
+    /// <summary>The headline of the box over the game, such as "Painting 42%".</summary>
+    public string OverlayTitle => State switch
+    {
+        PaintState.Running => $"Painting {Fraction * 100:0}%",
+        PaintState.Paused => $"Paused {Fraction * 100:0}%",
+        PaintState.Finished => "Finished",
+        PaintState.Aborted => "Stopped",
+        PaintState.Failed => "Could not continue",
+        _ => "Starting"
+    };
+
+    /// <summary>The line under the progress bar of the box over the game: what the keys do, or why it stopped.</summary>
+    public string OverlayLine => State switch
+    {
+        PaintState.Running => $"{StartKeyText} pauses, {AbortKeyText} stops. About {RemainingText} left.",
+        PaintState.Paused => HasDetail ? $"{Detail} {StartKeyText} carries on, {AbortKeyText} stops." : $"{StartKeyText} carries on, {AbortKeyText} stops.",
+        PaintState.Finished => "Save the picture in the game.",
+        PaintState.Aborted => "What was painted so far is still on the canvas.",
+        PaintState.Failed => Detail,
+        _ => ""
+    };
+
     // ---- progress ----
 
     public double Fraction => _progress.Fraction;
@@ -170,6 +199,7 @@ public sealed class PaintingViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
     {
         OnPropertyChanged(nameof(ElapsedText));
         OnPropertyChanged(nameof(RemainingText));
+        OnPropertyChanged(nameof(OverlayLine));
     }
 
     // ---- running ----
@@ -241,6 +271,7 @@ public sealed class PaintingViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
         _progress = progress;
         OnPropertyChanged(nameof(Fraction));
         OnPropertyChanged(nameof(ProgressText));
+        OnPropertyChanged(nameof(OverlayTitle));
         RefreshTimes();
     }
 

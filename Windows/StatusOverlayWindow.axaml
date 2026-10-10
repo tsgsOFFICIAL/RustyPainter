@@ -1,0 +1,34 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:RustyPainter.ViewModels"
+        x:Class="RustyPainter.Windows.StatusOverlayWindow"
+        x:DataType="vm:PaintingViewModel"
+        Title="RustyPainter status"
+        SystemDecorations="None"
+        Background="Transparent"
+        TransparencyLevelHint="Transparent"
+        ShowInTaskbar="False"
+        ShowActivated="False"
+        Topmost="True"
+        CanResize="False"
+        Focusable="False"
+        IsHitTestVisible="False"
+        WindowStartupLocation="Manual">
+
+    <!-- Drawn at one size and scaled to the window, so it is the same shape at every game resolution. -->
+    <Viewbox Stretch="Uniform">
+        <Border Width="460" Height="88" CornerRadius="12" Padding="16,10"
+                Background="#E6111318" BorderBrush="#2E3340" BorderThickness="1">
+            <StackPanel Spacing="7" VerticalAlignment="Center">
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBlock Text="{Binding OverlayTitle}" FontSize="17" FontWeight="Bold" Foreground="#F0F2F7"/>
+                    <TextBlock Grid.Column="1" Text="{Binding ProgressText}" FontSize="12" Foreground="#8B92A5" VerticalAlignment="Center"/>
+                </Grid>
+                <ProgressBar Minimum="0" Maximum="1" Value="{Binding Fraction}" Height="8" CornerRadius="4"
+                             Foreground="#F97316" Background="#2E3340"/>
+                <TextBlock Text="{Binding OverlayLine}" FontSize="12" Foreground="#8B92A5" TextTrimming="CharacterEllipsis"/>
+            </StackPanel>
+        </Border>
+    </Viewbox>
+
+</Window>
