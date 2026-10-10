@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.VisualTree;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Media.Imaging;
@@ -136,6 +137,30 @@ public class StudioRenderTests : IDisposable
             }
 
         Assert.True(white, "Expected white letters on the canvas.");
+    }
+
+    [AvaloniaFact]
+    public void The_letter_color_picker_opens_with_a_spectrum()
+    {
+        StudioViewModel studio = new(new SurfaceService());
+        studio.SourceChoices.Select(SourceKind.Text);
+        studio.Text = "Hi";
+
+        Window window = new() { Width = 1296, Height = 760, Content = new StudioView { DataContext = studio } };
+        window.Show();
+        Dispatcher.UIThread.RunJobs();
+
+        ColorPicker picker = window.GetVisualDescendants().OfType<ColorPicker>().First();
+        DropDownButton button = picker.GetVisualDescendants().OfType<DropDownButton>().First();
+        Flyout flyout = Assert.IsType<Flyout>(button.Flyout);
+        flyout.ShowAt(button);
+        Dispatcher.UIThread.RunJobs();
+
+        Assert.True(flyout.IsOpen);
+
+        WriteableBitmap frame = window.CaptureRenderedFrame()!;
+        if (Environment.GetEnvironmentVariable("RUSTYPAINTER_SHOTS") is { Length: > 0 } folder)
+            frame.Save(Path.Combine(folder, "studio-color-picker.png"));
     }
 
     [AvaloniaFact]

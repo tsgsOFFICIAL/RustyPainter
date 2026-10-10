@@ -20,6 +20,7 @@ public class TestApp : Application
         RequestedThemeVariant = ThemeVariant.Dark;
 
         Styles.Add(new FluentTheme());
+        Styles.Add(new StyleInclude(new Uri("avares://RustyPainter/")) { Source = new Uri("avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml") });
         Styles.Add(new StyleInclude(new Uri("avares://RustyPainter/")) { Source = new Uri("avares://RustyPainter/Styles/AppStyles.axaml") });
         Styles.Add(new StyleInclude(new Uri("avares://RustyPainter/")) { Source = new Uri("avares://IconPacks.Avalonia.PhosphorIcons/PhosphorIcons.axaml") });
 

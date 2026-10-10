@@ -180,19 +180,17 @@
                                 <TextBox Text="{Binding Text}" PlaceholderText="Type something" AcceptsReturn="True"
                                          TextWrapping="Wrap" MinHeight="70" MaxHeight="140"/>
                                 <TextBlock Text="Letters" Classes="fieldLabel"/>
-                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
-                                    <Border Width="28" Height="28" CornerRadius="6" Background="{Binding TextColorBrush}"
-                                            BorderBrush="{DynamicResource BorderColor}" BorderThickness="1"/>
-                                    <TextBox Grid.Column="1" Text="{Binding TextColorHex}" MaxLength="7" PlaceholderText="#FFFFFF"/>
-                                </Grid>
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <ColorPicker IsAlphaEnabled="False" IsAlphaVisible="False" Color="{Binding TextColorValue}"/>
+                                    <TextBlock Text="{Binding TextColorHex}" VerticalAlignment="Center" FontSize="12"/>
+                                </StackPanel>
                                 <ItemsControl Classes="chips" ItemsSource="{Binding TextWeightChoices.Choices}"/>
                                 <TextBlock Text="Background" Classes="fieldLabel"/>
                                 <ItemsControl Classes="chips" ItemsSource="{Binding TextBackgroundChoices.Choices}"/>
-                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" IsVisible="{Binding IsTextBackgroundSolid}">
-                                    <Border Width="28" Height="28" CornerRadius="6" Background="{Binding TextBackgroundBrush}"
-                                            BorderBrush="{DynamicResource BorderColor}" BorderThickness="1"/>
-                                    <TextBox Grid.Column="1" Text="{Binding TextBackgroundHex}" MaxLength="7" PlaceholderText="#000000"/>
-                                </Grid>
+                                <StackPanel Orientation="Horizontal" Spacing="10" IsVisible="{Binding IsTextBackgroundSolid}">
+                                    <ColorPicker IsAlphaEnabled="False" IsAlphaVisible="False" Color="{Binding TextBackgroundValue}"/>
+                                    <TextBlock Text="{Binding TextBackgroundHex}" VerticalAlignment="Center" FontSize="12"/>
+                                </StackPanel>
                                 <TextBlock Text="A clear background leaves that part of the sign unpainted."
                                            Classes="muted" FontSize="11" TextWrapping="Wrap" IsVisible="{Binding !IsTextBackgroundSolid}"/>
                             </StackPanel>

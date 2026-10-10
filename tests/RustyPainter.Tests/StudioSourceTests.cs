@@ -306,6 +306,18 @@ public class StudioSourceTests : IDisposable
     }
 
     [AvaloniaFact]
+    public void The_color_pickers_and_the_hex_values_stay_in_step()
+    {
+        StudioViewModel studio = new(new SurfaceService());
+
+        studio.TextColorValue = Avalonia.Media.Color.FromRgb(255, 128, 0);
+        Assert.Equal("#FF8000", studio.TextColorHex);
+
+        studio.TextBackgroundHex = "#102030";
+        Assert.Equal(Avalonia.Media.Color.FromRgb(16, 32, 48), studio.TextBackgroundValue);
+    }
+
+    [AvaloniaFact]
     public void The_solid_background_color_is_used()
     {
         StudioViewModel studio = new(new SurfaceService());

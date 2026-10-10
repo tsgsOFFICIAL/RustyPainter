@@ -10,6 +10,7 @@
 
     <Application.Styles>
         <FluentTheme />
+        <StyleInclude Source="avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml"/>
         <StyleInclude Source="avares://RustyPainter/Styles/AppStyles.axaml"/>
         <StyleInclude Source="avares://IconPacks.Avalonia.PhosphorIcons/PhosphorIcons.axaml" />
         <StyleInclude Source="avares://IconPacks.Avalonia.SimpleIcons/SimpleIcons.axaml" />

@@ -651,7 +651,7 @@ public sealed class StudioViewModel : ViewModelBase
         {
             if (SetProperty(ref _textColorHex, value ?? ""))
             {
-                OnPropertyChanged(nameof(TextColorBrush));
+                OnPropertyChanged(nameof(TextColorValue));
                 RenderText();
             }
         }
@@ -665,14 +665,29 @@ public sealed class StudioViewModel : ViewModelBase
         {
             if (SetProperty(ref _textBackgroundHex, value ?? ""))
             {
-                OnPropertyChanged(nameof(TextBackgroundBrush));
+                OnPropertyChanged(nameof(TextBackgroundValue));
                 RenderText();
             }
         }
     }
 
-    public IBrush TextColorBrush => BrushOf(TextColorHex);
-    public IBrush TextBackgroundBrush => BrushOf(TextBackgroundHex);
+    /// <summary>The letter color for a color picker. Setting it updates <see cref="TextColorHex"/>.</summary>
+    public Avalonia.Media.Color TextColorValue
+    {
+        get => ColorOf(TextColorHex);
+        set => TextColorHex = new Rgb(value.R, value.G, value.B).Hex;
+    }
+
+    /// <summary>The background color for a color picker. Setting it updates <see cref="TextBackgroundHex"/>.</summary>
+    public Avalonia.Media.Color TextBackgroundValue
+    {
+        get => ColorOf(TextBackgroundHex);
+        set => TextBackgroundHex = new Rgb(value.R, value.G, value.B).Hex;
+    }
+
+    private static Avalonia.Media.Color ColorOf(string hex)
+        => Rgb.TryParse(hex, out Rgb color) ? Avalonia.Media.Color.FromRgb(color.R, color.G, color.B) : Colors.Black;
+
 
     /// <summary>The font used for text pictures. The view hands in the app font.</summary>
     public FontFamily? TextFont
