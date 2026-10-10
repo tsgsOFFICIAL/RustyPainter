@@ -281,7 +281,7 @@ public sealed partial class StudioViewModel
             new AdjustmentSettings(Brightness / 100, Contrast / 100, Saturation / 100, EffectiveFilter),
             EffectiveMode,
             (int)MaxColors,
-            DitheringChoices.Selected,
+            EffectiveDithering,
             FillBackground && Rgb.TryParse(BackgroundHex, out Rgb background) ? background : null);
 
         List<(byte[]? Picture, FrameSettings Settings, StudioSettings Studio)> jobs = work.Select(item => (item.Picture, item.Settings, Shared(item.Settings))).ToList();

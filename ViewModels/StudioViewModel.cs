@@ -414,6 +414,12 @@ public sealed partial class StudioViewModel : ViewModelBase
     private ColorMode EffectiveMode => IsFixedPalette ? ColorMode.Swatches : ColorModeChoices.Selected;
 
     /// <summary>
+    /// How color differences are spread around. On a surface with only grays every speck of dithering becomes a small hole
+    /// in the pumpkin, so it is left out there unless a pattern was asked for.
+    /// </summary>
+    private Dithering EffectiveDithering => IsFixedPalette && DitheringChoices.Selected == Dithering.Smooth ? Dithering.None : DitheringChoices.Selected;
+
+    /// <summary>
     /// The filter that is used. A surface with only grays is carved by how light the picture is, so a picture with colors is
     /// turned to black and white unless a filter was chosen.
     /// </summary>
@@ -1074,7 +1080,7 @@ public sealed partial class StudioViewModel : ViewModelBase
             new AdjustmentSettings(Brightness / 100, Contrast / 100, Saturation / 100, EffectiveFilter),
             EffectiveMode,
             (int)MaxColors,
-            DitheringChoices.Selected,
+            EffectiveDithering,
             FillBackground && Rgb.TryParse(BackgroundHex, out Rgb background) ? background : null);
 
         List<Rgb> swatches = _surfaces.Catalog.Layouts[surface.Layout].Swatches.ColorGrid!.Colors.Select(Rgb.Parse).ToList();

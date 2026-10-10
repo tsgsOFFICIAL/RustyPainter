@@ -110,6 +110,34 @@ public class PumpkinTests
     }
 
     [AvaloniaFact]
+    public void The_pumpkin_is_cut_without_dithering_so_no_cell_is_a_stray_speck()
+    {
+        string path = Path.Combine(Path.GetTempPath(), $"rp-pumpkin-{Guid.NewGuid():N}.png");
+        TestImages.SavePng(TestImages.Rainbow(), path);
+
+        PaintPlan Run(string surfaceId)
+        {
+            StudioViewModel studio = new(Surfaces) { ReprocessDelay = TimeSpan.Zero };
+            studio.SelectedSurface = studio.AllSurfaces.Single(option => option.Surface.Id == surfaceId);
+            Assert.True(studio.TryLoad(path));
+            studio.ProcessNow();
+            return studio.Plan!;
+        }
+
+        PaintPlan pumpkin = Run("pumpkin");
+        File.Delete(path);
+
+        // With the gray palette and no dithering, neighbouring cells of a smooth picture mostly share their gray.
+        int same = 0, total = 0;
+        for (int y = 0; y < pumpkin.Height; y++)
+            for (int x = 1; x < pumpkin.Width; x++, total++)
+                if (pumpkin.Cells[y * pumpkin.Width + x] == pumpkin.Cells[y * pumpkin.Width + x - 1])
+                    same++;
+
+        Assert.True(same > total * 0.5, $"{same} of {total} neighbours share a gray");
+    }
+
+    [AvaloniaFact]
     public void Another_surface_keeps_its_colors_and_its_choice()
     {
         StudioViewModel studio = new(Surfaces);
