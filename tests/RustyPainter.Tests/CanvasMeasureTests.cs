@@ -109,6 +109,50 @@ public class CanvasMeasureTests
     }
 
     [Fact]
+    public void A_few_stray_pixels_far_away_do_not_stretch_the_painted_area()
+    {
+        PixelBuffer before = Canvas(400, 200);
+        PixelBuffer after = Canvas(400, 200);
+        for (int y = 30; y < 170; y++)
+            for (int x = 40; x < 260; x++)
+                after.Set(x, y, 0, 0, 0);
+
+        // Something else on screen changed too, well away from the canvas.
+        for (int i = 0; i < 6; i++)
+            after.Set(330 + i, 20 + i, 0, 0, 0);
+
+        bool[] changed = CanvasMeasure.Changed(before, after);
+
+        // The plain bounding box is fooled by it ...
+        Assert.Equal(335, CanvasMeasure.Bounds(changed, 400)!.Value.X2);
+
+        // ... the solid one is not.
+        PixelBox area = CanvasMeasure.SolidBounds(changed, 400)!.Value;
+        Assert.Equal((40, 30, 259, 169), (area.X1, area.Y1, area.X2, area.Y2));
+    }
+
+    [Fact]
+    public void A_painted_area_with_a_seam_through_it_is_still_one_area()
+    {
+        PixelBuffer before = Canvas(300, 200);
+        PixelBuffer after = Canvas(300, 200);
+        for (int y = 30; y < 170; y++)
+            for (int x = 40; x < 260; x++)
+                if (y != 100 && y != 101)
+                    after.Set(x, y, 0, 0, 0);
+
+        PixelBox area = CanvasMeasure.SolidBounds(CanvasMeasure.Changed(before, after), 300)!.Value;
+
+        Assert.Equal((40, 30, 259, 169), (area.X1, area.Y1, area.X2, area.Y2));
+    }
+
+    [Fact]
+    public void Nothing_painted_gives_no_solid_area()
+    {
+        Assert.Null(CanvasMeasure.SolidBounds(new bool[100], 10));
+    }
+
+    [Fact]
     public void The_area_a_big_fill_covers_is_the_canvas()
     {
         PixelBuffer before = Canvas(300, 200);

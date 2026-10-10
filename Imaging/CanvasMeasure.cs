@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System;
 
 namespace RustyPainter.Imaging;
@@ -66,6 +67,61 @@ public static class CanvasMeasure
         }
 
         return count == 0 ? null : new PixelBox(minX, minY, maxX, maxY, count);
+    }
+
+    /// <summary>
+    /// The rectangle a big painted area covers, without being fooled by a few marked pixels far away from it, such as
+    /// something else on screen that changed during the test. A column or row counts as part of the area when at least
+    /// <paramref name="share"/> of the usual number of marked pixels in the columns or rows is marked in it.
+    /// </summary>
+    /// <param name="mask">The marked pixels.</param>
+    /// <param name="width">The width of the picture the mask is for.</param>
+    /// <param name="share">How much of the usual count a column or row needs, from 0 to 1.</param>
+    public static PixelBox? SolidBounds(bool[] mask, int width, double share = 0.3)
+    {
+        int height = mask.Length / width;
+        int[] columns = new int[width], rows = new int[height];
+        int total = 0;
+
+        for (int i = 0; i < mask.Length; i++)
+        {
+            if (!mask[i])
+                continue;
+
+            columns[i % width]++;
+            rows[i / width]++;
+            total++;
+        }
+
+        if (total == 0)
+            return null;
+
+        (int first, int last)? columnSpan = Span(columns, share);
+        (int first, int last)? rowSpan = Span(rows, share);
+        if (columnSpan is null || rowSpan is null)
+            return null;
+
+        int count = 0;
+        for (int y = rowSpan.Value.first; y <= rowSpan.Value.last; y++)
+            for (int x = columnSpan.Value.first; x <= columnSpan.Value.last; x++)
+                if (mask[y * width + x])
+                    count++;
+
+        return new PixelBox(columnSpan.Value.first, rowSpan.Value.first, columnSpan.Value.last, rowSpan.Value.last, count);
+    }
+
+    private static (int First, int Last)? Span(int[] counts, double share)
+    {
+        // The usual count is the median of the columns or rows that have anything in them at all.
+        int[] used = counts.Where(count => count > 0).OrderBy(count => count).ToArray();
+        if (used.Length == 0)
+            return null;
+
+        double needed = used[used.Length / 2] * share;
+        int first = Array.FindIndex(counts, count => count >= needed && count > 0);
+        int last = Array.FindLastIndex(counts, count => count >= needed && count > 0);
+
+        return first < 0 ? null : (first, last);
     }
 
     /// <summary>The smallest rectangle that holds every marked pixel within a distance of a point, or <see langword="null"/> when there are none.</summary>

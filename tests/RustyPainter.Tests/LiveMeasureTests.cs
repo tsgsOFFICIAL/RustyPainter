@@ -190,7 +190,7 @@ public class LiveMeasureTests
         await Run(fill);
         PixelBuffer filled = await Look();
 
-        PixelBox? area = CanvasMeasure.Bounds(CanvasMeasure.Changed(empty, filled), empty.Width);
+        PixelBox? area = CanvasMeasure.SolidBounds(CanvasMeasure.Changed(empty, filled), empty.Width);
         Assert.NotNull(area);
 
         double left = region.X1 + area.Value.X1, top = region.Y1 + area.Value.Y1;
@@ -230,6 +230,24 @@ public class LiveMeasureTests
             Write($"{label}: {N(100.0 * (total - missed) / total)} percent changed; of the {missed} unchanged pixels {N(100.0 * dark / Math.Max(1, missed))} percent were dark (seams), {N(100.0 * light / Math.Max(1, missed))} percent light wood");
             Write($"  unchanged share per tenth, top to bottom: {string.Join(" ", rowMissed.Select(m => N(100.0 * m / (total / bandRows))))}");
             Write($"  unchanged share per tenth, left to right: {string.Join(" ", colMissed.Select(m => N(100.0 * m / (total / bandRows))))}");
+        }
+
+        // How many pixels changed in each 20 pixel wide column, so a few stray pixels far off cannot pass for canvas.
+        {
+            bool[] mask = CanvasMeasure.Changed(empty, filled);
+            List<string> columns = [];
+            for (int x0 = 0; x0 < empty.Width; x0 += 20)
+            {
+                int count = 0;
+                for (int y = 0; y < empty.Height; y++)
+                    for (int x = x0; x < Math.Min(empty.Width, x0 + 20); x++)
+                        if (mask[y * empty.Width + x])
+                            count++;
+
+                columns.Add($"{region.X1 + x0:0}:{count}");
+            }
+
+            Write($"changed pixels per 20 pixel column (screen x): {string.Join(" ", columns)}");
         }
 
         Explain("default pace", filled);
