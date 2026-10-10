@@ -343,8 +343,15 @@
                         <TextBlock Text="{Binding ScrollHint}" IsVisible="{Binding HasScrollHint}"
                                    Foreground="{DynamicResource AccentColor}" FontSize="12"/>
                     </StackPanel>
-                    <ItemsControl Grid.Column="1" Classes="chips" ItemsSource="{Binding PreviewChoices.Choices}"
-                                  IsVisible="{Binding HasImage}" VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center" IsVisible="{Binding HasImage}">
+                        <ItemsControl Classes="chips" ItemsSource="{Binding PreviewChoices.Choices}" VerticalAlignment="Center"/>
+                        <Button Classes="accentButton" Command="{Binding PaintCommand}" VerticalAlignment="Center" Padding="14,7">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <iconPacks:PackIconPhosphorIcons Kind="PaintBrush" Width="16" Height="16"/>
+                                <TextBlock Text="Paint"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
                 </Grid>
             </Border>
 
@@ -438,6 +445,10 @@
                     <TextBlock Classes="muted" FontSize="12" IsVisible="{Binding HasPlan}">
                         <Run Text="Uses"/>
                         <Run Text="{Binding ColorsText}" Foreground="{DynamicResource TextColor}"/>
+                    </TextBlock>
+                    <TextBlock Classes="muted" FontSize="12" Margin="18,0,0,0" IsVisible="{Binding HasPlan}">
+                        <Run Text="Time"/>
+                        <Run Text="{Binding TimeText}" Foreground="{DynamicResource TextColor}"/>
                     </TextBlock>
                 </WrapPanel>
             </Border>

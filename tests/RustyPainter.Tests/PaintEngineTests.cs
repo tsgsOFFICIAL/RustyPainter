@@ -7,51 +7,6 @@ namespace RustyPainter.Tests;
 
 public class PaintEngineTests
 {
-    /// <summary>Records everything the painter does and plays the part of the machine, so no real input is ever sent.</summary>
-    private sealed class FakeMachine : IPaintInput, IPaintSensors
-    {
-        public List<string> Log { get; } = [];
-        public bool GameInFront { get; set; } = true;
-        public ScreenPoint Cursor { get; set; }
-        public bool ButtonDown { get; private set; }
-        public Rgb? ToggleColor { get; set; } = new Rgb(120, 120, 120);
-
-        /// <summary>Runs before each recorded action, so a test can interfere at an exact moment.</summary>
-        public Action<string>? Before { get; set; }
-
-        public ScreenPoint CursorPosition => Cursor;
-        public bool IsGameInFront() => GameInFront;
-        public Rgb? ReadColor(ScreenPoint point) => ToggleColor;
-
-        private void Record(string what)
-        {
-            Before?.Invoke(what);
-            Log.Add(what);
-        }
-
-        public void MoveTo(ScreenPoint point)
-        {
-            Record($"move {point.X:0},{point.Y:0}");
-            Cursor = point;
-        }
-
-        public void LeftDown()
-        {
-            Record("down");
-            ButtonDown = true;
-        }
-
-        public void LeftUp()
-        {
-            Record("up");
-            ButtonDown = false;
-        }
-
-        public void Scroll(int notches) => Record($"scroll {notches}");
-
-        public void PressKey(char key) => Record($"key {key}");
-    }
-
     private static readonly Rgb[] Palette = [new Rgb(255, 0, 0), new Rgb(0, 0, 255)];
 
     private static PaintEngine Engine(FakeMachine machine) => new(machine, machine, new PaintTiming(), (_, token) =>

@@ -52,6 +52,10 @@
         <Setter Property="CornerRadius" Value="8" />
     </Style>
 
+    <Style Selector="Button.accentButton:disabled, Button.dangerButton:disabled">
+        <Setter Property="Opacity" Value="0.45" />
+    </Style>
+
     <Style Selector="Button.dangerButton">
         <Setter Property="Background" Value="{DynamicResource DangerColor}" />
         <Setter Property="Foreground" Value="{DynamicResource WhiteColor}" />

@@ -6,6 +6,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using RustyPainter.Interface;
 using RustyPainter.Imaging;
+using RustyPainter.Painting;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -159,6 +160,7 @@ public sealed class StudioViewModel : ViewModelBase
         PreviewChoices.Changed += () => { OnPropertyChanged(nameof(ShowOriginal)); OnPropertyChanged(nameof(ShowResult)); OnPropertyChanged(nameof(ShowSplit)); };
 
         ClearImageCommand = new RelayCommand(ClearImage, () => HasImage);
+        PaintCommand = new RelayCommand(RequestPaint, () => CanPaint);
         RotateCommand = new RelayCommand(() => { _quarterTurns = (_quarterTurns + 1) % 4; Changed(); });
         FlipHorizontalCommand = new RelayCommand(() => { _flipX = !_flipX; Changed(); });
         FlipVerticalCommand = new RelayCommand(() => { _flipY = !_flipY; Changed(); });
@@ -499,6 +501,9 @@ public sealed class StudioViewModel : ViewModelBase
             OnPropertyChanged(nameof(StrokesText));
             OnPropertyChanged(nameof(ColorsText));
             OnPropertyChanged(nameof(UsedColors));
+            OnPropertyChanged(nameof(TimeText));
+            OnPropertyChanged(nameof(CanPaint));
+            PaintCommand.RaiseCanExecuteChanged();
         }
     }
 
@@ -532,7 +537,34 @@ public sealed class StudioViewModel : ViewModelBase
     public TimeSpan ReprocessDelay { get; set; } = TimeSpan.FromMilliseconds(80);
 
     /// <summary>Whether the preview is being updated.</summary>
-    public bool IsBusy { get => _isBusy; private set => SetProperty(ref _isBusy, value); }
+    public bool IsBusy
+    {
+        get => _isBusy;
+        private set
+        {
+            if (!SetProperty(ref _isBusy, value))
+                return;
+
+            OnPropertyChanged(nameof(CanPaint));
+            PaintCommand.RaiseCanExecuteChanged();
+        }
+    }
+
+    /// <summary>Raised when the user chooses to paint what is shown.</summary>
+    public event Action<PaintRequest>? PaintRequested;
+
+    public RelayCommand PaintCommand { get; }
+
+    /// <summary>Whether there is a finished plan to paint, which is not the case while it is still being worked out.</summary>
+    public bool CanPaint => Plan is { PaintedCells: > 0 } && !IsBusy;
+
+    private void RequestPaint()
+    {
+        if (Plan is not { } plan || !CanPaint)
+            return;
+
+        PaintRequested?.Invoke(new PaintRequest(plan, SelectedSurface.Surface, ColorModeChoices.Selected, BlockSize, ImageName));
+    }
 
     /// <summary>The cells across and down for the selected surface and brush size.</summary>
     public string GridText
@@ -550,6 +582,14 @@ public sealed class StudioViewModel : ViewModelBase
     public string StrokesText => Plan is { } plan ? $"{plan.StrokeCount:N0} strokes" : "";
 
     public string ColorsText => Plan is { } plan ? $"{plan.ColorsUsed} colors" : "";
+
+    /// <summary>A rough time for painting at the pace chosen in the get-ready page, or the default pace before that.</summary>
+    public string TimeText => Plan is { } plan
+        ? PaintTimeEstimator.Describe(PaintTimeEstimator.Estimate(plan.Strokes, PaintTiming.FromSpeed(PaintSpeed), ColorModeChoices.Selected, SelectedSurface.Surface.ScrollOut))
+        : "";
+
+    /// <summary>The pace the estimate is made for, from 1 to 100.</summary>
+    public int PaintSpeed { get; set; } = 60;
 
     /// <summary>The colors the picture ends up using, most used first.</summary>
     public IReadOnlyList<ColorChip> UsedColors => Plan?.UsedColors.Select(color => new ColorChip(color.Hex)).ToList() ?? [];

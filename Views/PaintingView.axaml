@@ -1,0 +1,78 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia"
+             xmlns:vm="using:RustyPainter.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="700"
+             x:Class="RustyPainter.Views.PaintingView"
+             x:DataType="vm:PaintingViewModel">
+
+    <UserControl.Resources>
+        <StaticResource x:Key="ProgressBarForeground" ResourceKey="AccentColor"/>
+        <SolidColorBrush x:Key="ProgressBarBackground" Color="#2E3340"/>
+    </UserControl.Resources>
+
+    <ScrollViewer>
+        <StackPanel MaxWidth="680" Margin="32,28" Spacing="16" HorizontalAlignment="Stretch" VerticalAlignment="Center">
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="{Binding StatusText}" FontSize="26" FontWeight="Bold"/>
+                <TextBlock Classes="muted" FontSize="13" TextWrapping="Wrap">
+                    <Run Text="{Binding PictureName}"/>
+                    <Run Text="on the"/>
+                    <Run Text="{Binding SurfaceName}"/>
+                </TextBlock>
+            </StackPanel>
+
+            <Border Classes="card">
+                <StackPanel Spacing="14">
+                    <ProgressBar Minimum="0" Maximum="1" Value="{Binding Fraction}" Height="10" CornerRadius="5"/>
+
+                    <Grid ColumnDefinitions="1.3*,*,*">
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="STROKES" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextMutedColor}"/>
+                            <TextBlock Text="{Binding ProgressText}" FontSize="14" FontWeight="SemiBold"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Spacing="2">
+                            <TextBlock Text="PAINTING FOR" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextMutedColor}"/>
+                            <TextBlock Text="{Binding ElapsedText}" FontSize="14" FontWeight="SemiBold"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Spacing="2" IsVisible="{Binding !IsOver}">
+                            <TextBlock Text="ABOUT LEFT" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextMutedColor}"/>
+                            <TextBlock Text="{Binding RemainingText}" FontSize="14" FontWeight="SemiBold"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock Text="{Binding Detail}" IsVisible="{Binding HasDetail}" FontSize="13" TextWrapping="Wrap"
+                               Foreground="{DynamicResource AccentColor}"/>
+                    <TextBlock Text="{Binding Hint}" Classes="muted" FontSize="12" TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <Button Classes="accentButton" Command="{Binding PauseResumeCommand}" IsVisible="{Binding !IsOver}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <iconPacks:PackIconPhosphorIcons Kind="Pause" Width="16" Height="16" IsVisible="{Binding IsRunning}"/>
+                        <iconPacks:PackIconPhosphorIcons Kind="Play" Width="16" Height="16" IsVisible="{Binding IsPaused}"/>
+                        <TextBlock Text="{Binding PauseResumeText}"/>
+                    </StackPanel>
+                </Button>
+                <Button Classes="dangerButton" Command="{Binding AbortCommand}" IsVisible="{Binding !IsOver}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <iconPacks:PackIconPhosphorIcons Kind="Stop" Width="16" Height="16"/>
+                        <TextBlock Text="Stop"/>
+                    </StackPanel>
+                </Button>
+                <Button Classes="accentButton" Command="{Binding DoneCommand}" IsVisible="{Binding IsOver}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <iconPacks:PackIconPhosphorIcons Kind="ArrowLeft" Width="16" Height="16"/>
+                        <TextBlock Text="Back to Studio"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+
+        </StackPanel>
+    </ScrollViewer>
+
+</UserControl>

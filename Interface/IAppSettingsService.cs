@@ -25,6 +25,18 @@ public sealed class AppSettings
     /// Info and above. Turned on when diagnosing a problem for someone.
     /// </summary>
     public bool VerboseLogging { get; set; }
+
+    /// <summary>How fast painting is, from 1 (slowest, most reliable) to 100 (fastest).</summary>
+    public int PaintSpeed { get; set; } = 60;
+
+    /// <summary>Whether the canvas is cleared before a picture is painted.</summary>
+    public bool ClearBeforePainting { get; set; } = true;
+
+    /// <summary>The key that starts, pauses and resumes painting, such as "F8" or "Ctrl+F8". It works while Rust is in front.</summary>
+    public string StartPauseHotkey { get; set; } = "F8";
+
+    /// <summary>The key that stops painting for good.</summary>
+    public string AbortHotkey { get; set; } = "F9";
 }
 
 /// <summary>

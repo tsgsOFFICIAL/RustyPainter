@@ -1,0 +1,142 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia"
+             xmlns:vm="using:RustyPainter.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="700"
+             x:Class="RustyPainter.Views.GetReadyView"
+             x:DataType="vm:GetReadyViewModel">
+
+    <UserControl.Resources>
+        <!-- Sliders in the app accent instead of the Windows accent. -->
+        <StaticResource x:Key="SliderTrackValueFill" ResourceKey="AccentColor"/>
+        <StaticResource x:Key="SliderTrackValueFillPointerOver" ResourceKey="AccentColorHover"/>
+        <StaticResource x:Key="SliderTrackValueFillPressed" ResourceKey="AccentColorHover"/>
+        <StaticResource x:Key="SliderThumbBackground" ResourceKey="AccentColor"/>
+        <StaticResource x:Key="SliderThumbBackgroundPointerOver" ResourceKey="AccentColorHover"/>
+        <StaticResource x:Key="SliderThumbBackgroundPressed" ResourceKey="AccentColorHover"/>
+    </UserControl.Resources>
+
+    <ScrollViewer>
+        <StackPanel MaxWidth="680" Margin="32,28" Spacing="16" HorizontalAlignment="Center">
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Get ready to paint" FontSize="22" FontWeight="Bold"/>
+                <TextBlock Classes="muted" FontSize="13" TextWrapping="Wrap">
+                    <Run Text="{Binding PictureName}"/>
+                    <Run Text="on the"/>
+                    <Run Text="{Binding SurfaceName}"/>
+                </TextBlock>
+            </StackPanel>
+
+            <!-- What will be painted -->
+            <Border Classes="card">
+                <Grid ColumnDefinitions="*,*,*">
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="STROKES" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextMutedColor}"/>
+                        <TextBlock Text="{Binding StrokesText}" FontSize="15" FontWeight="SemiBold"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Spacing="2">
+                        <TextBlock Text="COLORS" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextMutedColor}"/>
+                        <TextBlock Text="{Binding ColorsText}" FontSize="15" FontWeight="SemiBold"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Spacing="2">
+                        <TextBlock Text="TIME" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextMutedColor}"/>
+                        <TextBlock Text="{Binding TimeText}" FontSize="15" FontWeight="SemiBold"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Checklist -->
+            <Border Classes="card">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="BEFORE YOU START" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextMutedColor}"/>
+
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <iconPacks:PackIconPhosphorIcons Kind="CheckCircleFill" Width="18" Height="18"
+                                                         Foreground="{DynamicResource SuccessColor}" IsVisible="{Binding IsRustRunning}"/>
+                        <iconPacks:PackIconPhosphorIcons Kind="XCircleFill" Width="18" Height="18"
+                                                         Foreground="{DynamicResource DangerColor}" IsVisible="{Binding !IsRustRunning}"/>
+                        <TextBlock Text="{Binding RustText}" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <iconPacks:PackIconPhosphorIcons Kind="ArrowCircleRight" Width="18" Height="18"
+                                                         Foreground="{DynamicResource AccentColor}"/>
+                        <TextBlock Text="{Binding SetupText}" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <iconPacks:PackIconPhosphorIcons Kind="Keyboard" Width="18" Height="18"
+                                                         Foreground="{DynamicResource AccentColor}"/>
+                        <TextBlock VerticalAlignment="Center" TextWrapping="Wrap">
+                            <Run Text="Press"/>
+                            <Run Text="{Binding StartKeyText}" FontWeight="Bold"/>
+                            <Run Text="in Rust to start. Press"/>
+                            <Run Text="{Binding AbortKeyText}" FontWeight="Bold"/>
+                            <Run Text="to stop at any time. Moving the mouse also pauses."/>
+                        </TextBlock>
+                    </StackPanel>
+
+                    <TextBlock Text="{Binding HotkeyProblem}" IsVisible="{Binding HasHotkeyProblem}"
+                               Foreground="{DynamicResource DangerColor}" FontSize="12" TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Options -->
+            <Border Classes="card">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="OPTIONS" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextMutedColor}"/>
+
+                    <CheckBox Content="Clear the canvas first" IsChecked="{Binding ClearFirst}"/>
+
+                    <StackPanel Spacing="0">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="Speed" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextMutedColor}"/>
+                            <TextBlock Grid.Column="1" Text="{Binding SpeedText}" FontSize="12"/>
+                        </Grid>
+                        <Slider Minimum="1" Maximum="100" Value="{Binding Speed}"/>
+                        <TextBlock Text="Slower is more reliable. If the game misses clicks or letters, lower the speed."
+                                   Classes="muted" FontSize="11" TextWrapping="Wrap"/>
+                    </StackPanel>
+
+                    <StackPanel Spacing="0">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="Move sideways" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextMutedColor}"/>
+                            <TextBlock Grid.Column="1" Text="{Binding NudgeXText}" FontSize="12"/>
+                        </Grid>
+                        <Slider Minimum="-30" Maximum="30" Value="{Binding NudgeX}"/>
+                    </StackPanel>
+
+                    <StackPanel Spacing="0">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="Move up or down" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextMutedColor}"/>
+                            <TextBlock Grid.Column="1" Text="{Binding NudgeYText}" FontSize="12"/>
+                        </Grid>
+                        <Slider Minimum="-30" Maximum="30" Value="{Binding NudgeY}"/>
+                        <TextBlock Text="Only needed if the painting sits a few pixels off the edge of the canvas."
+                                   Classes="muted" FontSize="11" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <Button Classes="secondaryButton" Command="{Binding BackCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <iconPacks:PackIconPhosphorIcons Kind="ArrowLeft" Width="16" Height="16"/>
+                        <TextBlock Text="Back to Studio"/>
+                    </StackPanel>
+                </Button>
+                <Button Classes="accentButton" Command="{Binding StartCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <iconPacks:PackIconPhosphorIcons Kind="Play" Width="16" Height="16"/>
+                        <TextBlock Text="Start painting"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+
+        </StackPanel>
+    </ScrollViewer>
+
+</UserControl>

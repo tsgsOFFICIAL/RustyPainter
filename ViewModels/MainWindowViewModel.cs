@@ -2,7 +2,11 @@ using RustyPainter.ViewModels.Mvvm;
 using RustyPainter.Service.Logging;
 using RustyPainter.Interface;
 using RustyPainter.Controls;
+using RustyPainter.Painting;
 using RustyPainter.Service;
+using Avalonia.Threading;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using System;
 
@@ -18,18 +22,28 @@ public sealed class MainWindowViewModel : ViewModelBase
     private readonly IUpdateService _updates;
     private readonly IDialogService _dialogs;
     private readonly ISurfaceService _surfaces;
+    private readonly IGameWindowService _game;
+    private readonly IHotkeyService _hotkeys;
+    private readonly IPaintEngineFactory _engines;
 
     private HomeViewModel? _home;
     private StudioViewModel? _studio;
     private SettingsViewModel? _settingsPage;
     private ComingSoonViewModel? _comingSoon;
+    private GetReadyViewModel? _ready;
+    private PaintingViewModel? _painting;
 
     private ViewModelBase? _currentPage;
 
     /// <summary>Creates the shell, its sidebar, and the initial Home page.</summary>
-    public MainWindowViewModel(IUpdateService updates, IDialogService dialogs, IAppSettingsService settings, ISurfaceService surfaces)
+    public MainWindowViewModel(IUpdateService updates, IDialogService dialogs, IAppSettingsService settings, ISurfaceService surfaces,
+        IGameWindowService game, IHotkeyService hotkeys, IPaintEngineFactory engines)
     {
         _settings = settings;
+        _game = game;
+        _hotkeys = hotkeys;
+        _engines = engines;
+        _hotkeys.Pressed += action => Dispatcher.UIThread.Post(() => RouteHotkey(action));
         _updates = updates;
         _dialogs = dialogs;
         _surfaces = surfaces;
@@ -125,13 +139,100 @@ public sealed class MainWindowViewModel : ViewModelBase
     /// <summary>Swaps <see cref="CurrentPage"/> to match the sidebar selection.</summary>
     private void Navigate(SidebarPage page)
     {
+        // Painting is not interrupted by clicking around. The page stays until painting is over or stopped.
+        if (_painting is { IsOver: false })
+        {
+            CurrentPage = _painting;
+            Sidebar.Highlight(SidebarPage.Studio);
+            return;
+        }
+
+        CloseSession();
+
         CurrentPage = page switch
         {
             SidebarPage.Home => _home ??= new HomeViewModel(Sidebar),
-            SidebarPage.Studio => _studio ??= new StudioViewModel(_surfaces),
+            SidebarPage.Studio => GetStudio(),
             SidebarPage.Settings => _settingsPage ??= new SettingsViewModel(_settings, _updates, _dialogs),
             _ => ShowComingSoon(page)
         };
+    }
+
+    // ---- painting ----
+
+    private StudioViewModel GetStudio()
+    {
+        if (_studio is not null)
+            return _studio;
+
+        _studio = new StudioViewModel(_surfaces) { PaintSpeed = _settings.Current.PaintSpeed };
+        _studio.PaintRequested += OpenGetReady;
+        return _studio;
+    }
+
+    /// <summary>Shows the get-ready page for what Studio prepared and switches the hotkeys on.</summary>
+    private void OpenGetReady(PaintRequest request)
+    {
+        CloseSession();
+
+        IReadOnlyDictionary<HotkeyAction, Hotkey> keys = HotkeyDefaults.FromSettings(_settings.Current.StartPauseHotkey, _settings.Current.AbortHotkey);
+        GetReadyViewModel ready = new(request, _game, _settings, keys[HotkeyAction.StartPause], keys[HotkeyAction.Abort]);
+        ready.BackRequested += () => Navigate(SidebarPage.Studio);
+        ready.StartRequested += StartPainting;
+
+        _ready = ready;
+        CurrentPage = ready;
+        StartHotkeys(keys, ready);
+    }
+
+    private void StartPainting(PaintSession session)
+    {
+        IReadOnlyDictionary<HotkeyAction, Hotkey> keys = HotkeyDefaults.FromSettings(_settings.Current.StartPauseHotkey, _settings.Current.AbortHotkey);
+
+        _ready?.Dispose();
+        _ready = null;
+
+        PaintingViewModel painting = new(session, _game, _surfaces, _engines, keys[HotkeyAction.StartPause].Display, keys[HotkeyAction.Abort].Display);
+        painting.DoneRequested += () =>
+        {
+            CloseSession();
+            CurrentPage = GetStudio();
+        };
+
+        _painting = painting;
+        CurrentPage = painting;
+        _ = painting.StartAsync();
+    }
+
+    private void StartHotkeys(IReadOnlyDictionary<HotkeyAction, Hotkey> keys, GetReadyViewModel ready)
+    {
+        IReadOnlyList<HotkeyAction> failed = _hotkeys.Start(keys);
+
+        if (failed.Count > 0)
+        {
+            ready.HotkeyProblem = $"{string.Join(" and ", failed.Select(action => keys[action].Display))} could not be used because another program already has it. "
+                + "You can still start and stop with the buttons.";
+        }
+    }
+
+    /// <summary>Ends the get-ready or painting page, gives the hotkeys back and stops any painting that is still going.</summary>
+    private void CloseSession()
+    {
+        _hotkeys.Stop();
+
+        _ready?.Dispose();
+        _ready = null;
+
+        _painting?.Dispose();
+        _painting = null;
+    }
+
+    private void RouteHotkey(HotkeyAction action)
+    {
+        if (_painting is { } painting)
+            painting.OnHotkey(action);
+        else
+            _ready?.OnHotkey(action);
     }
 
     /// <summary>Returns the shared "coming soon" placeholder, retitled for the given page.</summary>

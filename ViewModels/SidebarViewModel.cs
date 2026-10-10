@@ -29,6 +29,9 @@ public sealed class SidebarViewModel : ViewModelBase
         private set => SetProperty(ref _activePage, value);
     }
 
+    /// <summary>Marks a page as the selected one without navigating, for when a page change was refused.</summary>
+    public void Highlight(SidebarPage page) => ActivePage = page;
+
     /// <summary>
     /// Programmatically selects a page, the same way clicking its nav button would - used by
     /// in-page links that jump elsewhere without going through the nav rail itself.
