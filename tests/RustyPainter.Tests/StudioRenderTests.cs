@@ -313,7 +313,7 @@ public class StudioRenderTests : IDisposable
     /// <summary>Looks for the orange accent in the top right corner of the preview stage, where the spinner sits.</summary>
     private static bool HasAccent(WriteableBitmap frame)
     {
-        for (int y = 70; y < 120; y++)
+        for (int y = 130; y < 180; y++)
             for (int x = 840; x < 1010; x++)
             {
                 (byte r, byte g, byte b) = PixelAt(frame, x, y);
