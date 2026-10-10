@@ -1,6 +1,7 @@
 using RustyPainter.Interface;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace RustyPainter.Imaging;
 
@@ -20,12 +21,14 @@ public enum ColorMode
 /// <param name="Mode">Swatch colors or free colors.</param>
 /// <param name="MaxColors">In free mode, how many colors the picture is reduced to.</param>
 /// <param name="Dithering">How color differences are spread around.</param>
+/// <param name="Background">A color painted under the whole picture, so no cell is left unpainted. Null leaves empty areas as they are.</param>
 public sealed record StudioSettings(
     PlacementSettings Placement,
     AdjustmentSettings Adjustments,
     ColorMode Mode = ColorMode.Swatches,
     int MaxColors = 16,
-    Dithering Dithering = Dithering.Smooth);
+    Dithering Dithering = Dithering.Smooth,
+    Rgb? Background = null);
 
 /// <summary>How big the grid of cells is for a surface and a brush size.</summary>
 public static class StudioGeometry
@@ -79,9 +82,17 @@ public static class StudioPipeline
         PixelBuffer cells = PlacementEngine.Resample(oriented, settings.Placement, gridWidth, gridHeight);
         cells = Adjustments.Apply(cells, settings.Adjustments);
 
+        // The background goes under the picture after the adjustments, so a filter never changes the color that was chosen.
+        if (settings.Background is { } background)
+            cells = Underlay(cells, background);
+
         IReadOnlyList<Rgb> palette = settings.Mode == ColorMode.Swatches
             ? swatches
             : MedianCut.BuildPalette(cells, settings.MaxColors);
+
+        // The background should come out exactly as chosen, not as a near miss.
+        if (settings.Background is { } exact && settings.Mode == ColorMode.Free)
+            palette = WithExact(palette, exact);
 
         int[] indices = Quantizer.Map(cells, palette, settings.Dithering);
         PaintPlan plan = new(gridWidth, gridHeight, palette, indices, PlaceOriginal(oriented, settings.Placement, gridWidth, gridHeight));
@@ -89,6 +100,48 @@ public static class StudioPipeline
         // Group the cells into strokes here, on the worker thread, so asking for the count later is instant.
         _ = plan.Strokes;
         return plan;
+    }
+
+    /// <summary>Lays the picture over a solid color, so every pixel ends up fully opaque.</summary>
+    public static PixelBuffer Underlay(PixelBuffer picture, Rgb background)
+    {
+        PixelBuffer result = new(picture.Width, picture.Height);
+
+        for (int i = 0; i < picture.Data.Length; i += 4)
+        {
+            int alpha = picture.Data[i + 3];
+            result.Data[i] = (byte)((picture.Data[i] * alpha + background.R * (255 - alpha) + 127) / 255);
+            result.Data[i + 1] = (byte)((picture.Data[i + 1] * alpha + background.G * (255 - alpha) + 127) / 255);
+            result.Data[i + 2] = (byte)((picture.Data[i + 2] * alpha + background.B * (255 - alpha) + 127) / 255);
+            result.Data[i + 3] = 255;
+        }
+
+        return result;
+    }
+
+    /// <summary>Makes sure the palette holds <paramref name="color"/> itself, by turning its nearest entry into it.</summary>
+    private static IReadOnlyList<Rgb> WithExact(IReadOnlyList<Rgb> palette, Rgb color)
+    {
+        if (palette.Contains(color))
+            return palette;
+
+        Lab target = ColorMath.ToLab(color.R, color.G, color.B);
+        int nearest = 0;
+        double best = double.MaxValue;
+
+        for (int i = 0; i < palette.Count; i++)
+        {
+            double distance = target.DistanceSquaredTo(ColorMath.ToLab(palette[i].R, palette[i].G, palette[i].B));
+            if (distance < best)
+            {
+                best = distance;
+                nearest = i;
+            }
+        }
+
+        List<Rgb> result = [.. palette];
+        result[nearest] = color;
+        return result;
     }
 
     /// <summary>

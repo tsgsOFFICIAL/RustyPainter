@@ -273,6 +273,12 @@
                                            Classes="muted" FontSize="11" TextWrapping="Wrap"/>
                             </StackPanel>
 
+                            <CheckBox Content="Fill empty areas with a background color" IsChecked="{Binding FillBackground}" FontSize="12"/>
+                            <StackPanel Orientation="Horizontal" Spacing="10" IsVisible="{Binding FillBackground}">
+                                <ColorPicker IsAlphaEnabled="False" IsAlphaVisible="False" Color="{Binding BackgroundValue}"/>
+                                <TextBlock Text="{Binding BackgroundHex}" VerticalAlignment="Center" FontSize="12"/>
+                            </StackPanel>
+
                             <TextBlock Text="Dithering" Classes="fieldLabel"/>
                             <ItemsControl Classes="chips" ItemsSource="{Binding DitheringChoices.Choices}"/>
 

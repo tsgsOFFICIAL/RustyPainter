@@ -72,6 +72,81 @@ public class LiveGameTests
         Write($"finished with {engine.State} after {clock.Elapsed.TotalSeconds:0.0} s, {engine.Progress.StrokesDone} strokes, step {engine.CurrentStep}. {engine.FailureMessage}");
     }
 
+    /// <summary>
+    /// Clears the small wooden sign and paints single dots of known brush sizes and three lines of known spacing, so a
+    /// screenshot shows how big a brush unit is on screen. Same safety as the other painting test.
+    /// </summary>
+    [Fact]
+    public async Task Paint_calibration_dots_on_the_small_wooden_sign()
+    {
+        Assert.SkipUnless(Mode == "calibrate", "Set RUSTYPAINTER_LIVE=calibrate to run this. It clears the sign and sends real input to the game.");
+
+        GameWindowService game = new();
+        Win32PaintSensors sensors = new(game);
+
+        for (int i = 0; i < 90 && !sensors.IsGameInFront(); i++)
+            await Task.Delay(500, TestContext.Current.CancellationToken);
+
+        Assert.True(sensors.IsGameInFront(), "Rust did not come to the front in time.");
+        Write("rust in front, starting in 3 seconds");
+        await Task.Delay(3000, TestContext.Current.CancellationToken);
+
+        GameWindow window = game.Find()!;
+        SurfaceService surfaces = new();
+        Surface sign = surfaces.Catalog.Surfaces.Single(surface => surface.Id == "sign-small");
+        ResolvedLayout layout = surfaces.Resolve(sign, window);
+        PaintLayout controls = layout.Swatches;
+        ScreenRect canvas = layout.Canvas;
+        Rgb color = Rgb.Parse(controls.ColorGrid!.Colors[0]);
+        Write($"canvas {canvas.X1:0.0},{canvas.Y1:0.0} to {canvas.X2:0.0},{canvas.Y2:0.0}, color {color.Hex}");
+
+        ScreenPoint At(double fx, double fy) => new(canvas.X1 + fx * canvas.Width, canvas.Y1 + fy * canvas.Height);
+        Stroke dot = new(0, 0, 1, Vertical: false);
+
+        List<PaintStep> steps =
+        [
+            new ResetCameraStep(controls.ResetCamera.Center),
+            new EnsureColorModeStep(ColorMode.Swatches, controls.ColorModeToggle.Center),
+            new ClickControlStep("Brush", controls.ToolBrush.Center),
+            new ClickControlStep("Clear", controls.Clear.Center),
+            new ClickControlStep("Brush shape", controls.BrushShapes[PaintOptions.SquareShape].Center),
+            new SetBrushValueStep("Opacity", controls.Opacity!.Value.Center, "1"),
+            new SetBrushValueStep("Spacing", controls.Spacing!.Value.Center, "0.1"),
+            new SelectSwatchStep(0, color, controls.ColorGrid!.CellCenter(0))
+        ];
+
+        // One dot for each brush size, left to right.
+        (int size, double x)[] dots = [(2, 0.08), (4, 0.18), (8, 0.30), (16, 0.46), (32, 0.72)];
+        foreach ((int size, double x) in dots)
+        {
+            ScreenPoint point = At(x, 0.30);
+            steps.Add(new SetBrushValueStep("Size", controls.Size!.Value.Center, size.ToString()));
+            steps.Add(new PaintStrokeStep(dot, point, point));
+            Write($"dot size {size} at {point.X:0.0},{point.Y:0.0}");
+        }
+
+        // Three lines with the same size and different spacing.
+        steps.Add(new SetBrushValueStep("Size", controls.Size!.Value.Center, "8"));
+        foreach ((string spacing, double y) in new[] { ("1", 0.62), ("0.5", 0.74), ("0.1", 0.86) })
+        {
+            ScreenPoint from = At(0.08, y), to = At(0.60, y);
+            steps.Add(new SetBrushValueStep("Spacing", controls.Spacing!.Value.Center, spacing));
+            steps.Add(new PaintStrokeStep(new Stroke(0, 0, 2, Vertical: false), from, to));
+            Write($"line spacing {spacing} from {from.X:0.0},{from.Y:0.0} to {to.X:0.0},{to.Y:0.0}");
+        }
+
+        PaintEngine engine = new(new Win32PaintInput(), sensors);
+        engine.StateChanged += state =>
+        {
+            Write($"state: {state} {engine.PauseReason}");
+            if (state == PaintState.Paused)
+                engine.Abort();
+        };
+
+        await engine.RunAsync(new PaintScript(steps), cancellation: TestContext.Current.CancellationToken);
+        Write($"finished with {engine.State}, step {engine.CurrentStep} of {steps.Count}. {engine.FailureMessage}");
+    }
+
     [Fact]
     public void Look_at_the_game_without_touching_it()
     {

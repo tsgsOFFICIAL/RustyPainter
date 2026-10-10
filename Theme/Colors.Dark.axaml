@@ -30,4 +30,13 @@
     <SolidColorBrush x:Key="TextControlPlaceholderForeground"      Color="#8B92A5"/>
     <SolidColorBrush x:Key="TextControlPlaceholderForegroundPointerOver" Color="#8B92A5"/>
     <SolidColorBrush x:Key="TextControlPlaceholderForegroundFocused" Color="#8B92A5"/>
+
+    <!-- Check boxes in the app accent. -->
+    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillChecked"            Color="#F97316"/>
+    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillCheckedPointerOver" Color="#FB923C"/>
+    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillCheckedPressed"     Color="#FB923C"/>
+    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeChecked"          Color="#F97316"/>
+    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeCheckedPointerOver" Color="#FB923C"/>
+    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeCheckedPressed"   Color="#FB923C"/>
+    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeUnchecked"        Color="#8B92A5"/>
 </ResourceDictionary>

@@ -635,10 +635,10 @@ public class StudioGeometryTests
     [Fact]
     public void Other_surfaces_are_estimated_from_their_canvas_on_screen()
     {
-        Surface small = Find("sign-small");
+        Surface large = Find("sign-large");
 
-        Assert.False(StudioGeometry.IsTextureKnown(small));
-        Assert.Equal((371, 197), StudioGeometry.Texture(small));
+        Assert.False(StudioGeometry.IsTextureKnown(large));
+        Assert.Equal((559, 279), StudioGeometry.Texture(large));
     }
 
     [Fact]
@@ -671,6 +671,77 @@ public class StudioPipelineTests
         Assert.Equal(red, plan.UsedColors[0]);
         Assert.Equal(2, plan.StrokeCount);
         Assert.Equal(64, plan.Palette.Count);
+    }
+
+    private static StudioSettings WithBackground(Rgb background, ColorMode mode = ColorMode.Swatches, FitMode fit = FitMode.Fit)
+        => new(new PlacementSettings(fit), new AdjustmentSettings(), mode, 16, Dithering.None, background);
+
+    /// <summary>A 2 x 1 picture that is wider than a 2 x 2 grid, so fitting it leaves empty rows above and below.</summary>
+    private static PixelBuffer WideRed() => PixelBuffer.Solid(4, 1, 255, 51, 51);
+
+    [Fact]
+    public void Without_a_background_the_empty_part_of_the_canvas_stays_unpainted()
+    {
+        PaintPlan plan = StudioPipeline.Run(WideRed(), Settings(fit: FitMode.Fit), 4, 4, Swatches);
+
+        Assert.True(plan.PaintedCells < 16);
+    }
+
+    [Fact]
+    public void A_background_paints_every_cell()
+    {
+        PaintPlan plan = StudioPipeline.Run(WideRed(), WithBackground(new Rgb(0, 0, 0)), 4, 4, Swatches);
+
+        Assert.Equal(16, plan.PaintedCells);
+    }
+
+    [Fact]
+    public void The_background_color_is_exact_in_free_mode()
+    {
+        Rgb background = new(12, 34, 56);
+
+        PaintPlan plan = StudioPipeline.Run(WideRed(), WithBackground(background, ColorMode.Free), 4, 4, Swatches);
+
+        Assert.Contains(background, plan.UsedColors);
+        Assert.Equal(16, plan.PaintedCells);
+    }
+
+    [Fact]
+    public void In_swatch_mode_the_background_takes_the_nearest_swatch()
+    {
+        Rgb swatch = Swatches[10];
+
+        PaintPlan plan = StudioPipeline.Run(WideRed(), WithBackground(swatch), 4, 4, Swatches);
+
+        Assert.Contains(swatch, plan.UsedColors);
+    }
+
+    [Fact]
+    public void A_filter_does_not_change_the_background_color()
+    {
+        Rgb background = new(255, 51, 51);
+        StudioSettings settings = new(new PlacementSettings(FitMode.Fit), new AdjustmentSettings(Filter: ImageFilter.Invert), ColorMode.Free, 16, Dithering.None, background);
+
+        PaintPlan plan = StudioPipeline.Run(WideRed(), settings, 4, 4, Swatches);
+
+        // The picture is inverted but the empty rows keep the chosen color.
+        Assert.Equal(background, plan.Palette[plan.Cells[0]]);
+    }
+
+    [Fact]
+    public void Underlaying_blends_partly_transparent_pixels_and_fills_transparent_ones()
+    {
+        PixelBuffer picture = new(3, 1);
+        picture.Set(0, 0, 200, 100, 50);
+        picture.Set(1, 0, 200, 100, 50, 0);
+        picture.Set(2, 0, 200, 100, 50, 128);
+
+        PixelBuffer result = StudioPipeline.Underlay(picture, new Rgb(0, 0, 0));
+
+        Assert.Equal((200, 100, 50, 255), (result.Data[0], result.Data[1], result.Data[2], result.Data[3]));
+        Assert.Equal((0, 0, 0, 255), (result.Data[4], result.Data[5], result.Data[6], result.Data[7]));
+        Assert.InRange(result.Data[8], 99, 101);
+        Assert.Equal(255, result.Data[11]);
     }
 
     [Fact]

@@ -43,14 +43,14 @@ public class StudioProcessingTests : IDisposable
     {
         StudioViewModel studio = Loaded(TestImages.Rainbow());
 
-        // The small sign's texture is estimated at 371 x 197 units; the default brush is 4 units.
+        // The small sign's texture was measured in the game at 256 x 128 units; the default brush is 4 units.
         PaintPlan plan = studio.ProcessNow()!;
-        Assert.Equal((93, 50), (plan.Width, plan.Height));
-        Assert.Equal("93 x 50 cells", studio.GridText);
+        Assert.Equal((64, 32), (plan.Width, plan.Height));
+        Assert.Equal("64 x 32 cells", studio.GridText);
 
         studio.QualityChoices.Select(8);
         plan = studio.ProcessNow()!;
-        Assert.Equal((47, 25), (plan.Width, plan.Height));
+        Assert.Equal((32, 16), (plan.Width, plan.Height));
 
         // The medium sign's texture is known to be 512 x 256.
         studio.SelectedSurface = studio.AllSurfaces.Single(option => option.Surface.Id == "sign-medium");
@@ -63,6 +63,7 @@ public class StudioProcessingTests : IDisposable
     public void Says_when_the_texture_size_is_only_an_estimate()
     {
         StudioViewModel studio = Loaded(TestImages.Rainbow());
+        studio.SelectedSurface = studio.AllSurfaces.Single(option => option.Surface.Id == "sign-large");
 
         Assert.True(studio.IsTextureEstimated);
 
@@ -133,6 +134,37 @@ public class StudioProcessingTests : IDisposable
             studio.RotateCommand.Execute(null);
 
         Assert.Equal(start, studio.ProcessNow()!.Cells);
+    }
+
+    [AvaloniaFact]
+    public void A_background_fills_what_fitting_leaves_empty()
+    {
+        StudioViewModel studio = Loaded(TestImages.RedAndGreen(2, 2));
+        studio.PlacementChoices.Select(FitMode.Fit);
+        Assert.True(studio.ProcessNow()!.PaintedCells < studio.Plan!.Width * studio.Plan.Height);
+        Assert.False(studio.FillBackground);
+
+        studio.FillBackground = true;
+        PaintPlan plan = studio.ProcessNow()!;
+
+        Assert.Equal(plan.Width * plan.Height, plan.PaintedCells);
+    }
+
+    [AvaloniaFact]
+    public void The_background_color_picker_and_hex_stay_in_step()
+    {
+        StudioViewModel studio = Loaded(TestImages.RedAndGreen(2, 2));
+
+        studio.BackgroundValue = Avalonia.Media.Color.FromRgb(10, 20, 30);
+
+        Assert.Equal("#0A141E", studio.BackgroundHex);
+
+        studio.FillBackground = true;
+        studio.ColorModeChoices.Select(ColorMode.Free);
+        studio.PlacementChoices.Select(FitMode.Fit);
+        PaintPlan plan = studio.ProcessNow()!;
+
+        Assert.Contains(new Rgb(10, 20, 30), plan.UsedColors);
     }
 
     [AvaloniaFact]
@@ -433,7 +465,7 @@ public class StudioProcessingTests : IDisposable
         }
 
         Assert.NotSame(first, studio.Plan);
-        Assert.Equal(24, studio.Plan!.Width);
+        Assert.Equal(16, studio.Plan!.Width);
     }
 }
 

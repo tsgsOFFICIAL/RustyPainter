@@ -100,6 +100,8 @@ public sealed class StudioViewModel : ViewModelBase
     private double _zoom = 1, _offsetX, _offsetY;
     private double _brightness, _contrast, _saturation;
     private double _maxColors = 16;
+    private bool _fillBackground;
+    private string _backgroundHex = "#000000";
 
     private CancellationTokenSource? _pending;
     private PaintPlan? _plan;
@@ -369,6 +371,39 @@ public sealed class StudioViewModel : ViewModelBase
     }
 
     public string MaxColorsText => $"{MaxColors:0}";
+
+    /// <summary>Whether empty areas get a background color, so the whole canvas is painted.</summary>
+    public bool FillBackground
+    {
+        get => _fillBackground;
+        set
+        {
+            if (SetProperty(ref _fillBackground, value))
+                Changed();
+        }
+    }
+
+    /// <summary>The background color as "#RRGGBB".</summary>
+    public string BackgroundHex
+    {
+        get => _backgroundHex;
+        set
+        {
+            if (SetProperty(ref _backgroundHex, value ?? ""))
+            {
+                OnPropertyChanged(nameof(BackgroundValue));
+                if (FillBackground)
+                    Changed();
+            }
+        }
+    }
+
+    /// <summary>The background color for a color picker. Setting it updates <see cref="BackgroundHex"/>.</summary>
+    public Avalonia.Media.Color BackgroundValue
+    {
+        get => ColorOf(BackgroundHex);
+        set => BackgroundHex = new Rgb(value.R, value.G, value.B).Hex;
+    }
 
     public double Brightness
     {
@@ -891,7 +926,8 @@ public sealed class StudioViewModel : ViewModelBase
             new AdjustmentSettings(Brightness / 100, Contrast / 100, Saturation / 100, FilterChoices.Selected),
             ColorModeChoices.Selected,
             (int)MaxColors,
-            DitheringChoices.Selected);
+            DitheringChoices.Selected,
+            FillBackground && Rgb.TryParse(BackgroundHex, out Rgb background) ? background : null);
 
         List<Rgb> swatches = _surfaces.Catalog.Layouts[surface.Layout].Swatches.ColorGrid!.Colors.Select(Rgb.Parse).ToList();
 
