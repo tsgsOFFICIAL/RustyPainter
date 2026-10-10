@@ -175,15 +175,18 @@ public class LiveMeasureTests
         Write($"pixels per unit: {N(ppuX)} across, {N(ppuY)} down");
 
         // 3. One big fill with the biggest brush, which shows where the canvas really ends.
+        // The mouse has to stay over the sign for paint to land, and the edges of a sign are ragged, so the strokes keep well
+        // inside it. A brush of 100 units reaches far enough from there to cover the edges.
         double footprint = 100 * ppuY;
         double step = 0.8 * footprint;
+        double insetX = 0.3 * 100 * ppuX, insetY = 0.3 * footprint;
         List<PaintStep> fill = [new SetBrushValueStep("Size", controls.Size!.Value.Center, "100")];
-        for (double y = canvas.Y1 + 2; ; y += step)
+        for (double y = canvas.Y1 + insetY; ; y += step)
         {
-            double row = Math.Min(y, canvas.Y2 - 2);
-            fill.Add(new PaintStrokeStep(new Stroke(0, 0, 2, Vertical: false), new ScreenPoint(canvas.X1 + 2, row), new ScreenPoint(canvas.X2 - 2, row)));
+            double row = Math.Min(y, canvas.Y2 - insetY);
+            fill.Add(new PaintStrokeStep(new Stroke(0, 0, 2, Vertical: false), new ScreenPoint(canvas.X1 + insetX, row), new ScreenPoint(canvas.X2 - insetX, row)));
 
-            if (row >= canvas.Y2 - 2)
+            if (row >= canvas.Y2 - insetY)
                 break;
         }
 
