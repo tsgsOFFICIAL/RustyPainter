@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System;
 
 namespace RustyPainter.Imaging;
 
@@ -9,21 +10,22 @@ namespace RustyPainter.Imaging;
 /// </summary>
 public sealed class PaintPlan
 {
+    private readonly Lazy<StrokePlan> _strokes;
+
     public PaintPlan(int width, int height, IReadOnlyList<Rgb> palette, int[] cells, PixelBuffer? reference = null)
     {
         Width = width;
         Height = height;
         Palette = palette;
         Cells = cells;
+        _strokes = new Lazy<StrokePlan>(() => StrokePlanner.Plan(this));
         Reference = reference;
 
-        int painted = 0, strokes = 0;
+        int painted = 0;
         int[] counts = new int[palette.Count];
 
         for (int y = 0; y < height; y++)
         {
-            int previous = Quantizer.Unpainted;
-
             for (int x = 0; x < width; x++)
             {
                 int index = cells[y * width + x];
@@ -32,18 +34,11 @@ public sealed class PaintPlan
                 {
                     painted++;
                     counts[index]++;
-
-                    // A run of the same color along a row is painted with one drag.
-                    if (index != previous)
-                        strokes++;
                 }
-
-                previous = index;
             }
         }
 
         PaintedCells = painted;
-        StrokeCount = strokes;
         UsedColors = Enumerable.Range(0, palette.Count)
             .Where(i => counts[i] > 0)
             .OrderByDescending(i => counts[i])
@@ -69,8 +64,11 @@ public sealed class PaintPlan
     /// <summary>How many cells get paint.</summary>
     public int PaintedCells { get; }
 
-    /// <summary>How many separate drags painting row by row needs.</summary>
-    public int StrokeCount { get; }
+    /// <summary>The cells grouped into drags and clicks, in painting order. Worked out the first time it is asked for.</summary>
+    public StrokePlan Strokes => _strokes.Value;
+
+    /// <summary>How many drags and clicks painting needs.</summary>
+    public int StrokeCount => Strokes.StrokeCount;
 
     /// <summary>The colors that are really used, most used first.</summary>
     public IReadOnlyList<Rgb> UsedColors { get; }

@@ -84,7 +84,11 @@ public static class StudioPipeline
             : MedianCut.BuildPalette(cells, settings.MaxColors);
 
         int[] indices = Quantizer.Map(cells, palette, settings.Dithering);
-        return new PaintPlan(gridWidth, gridHeight, palette, indices, PlaceOriginal(oriented, settings.Placement, gridWidth, gridHeight));
+        PaintPlan plan = new(gridWidth, gridHeight, palette, indices, PlaceOriginal(oriented, settings.Placement, gridWidth, gridHeight));
+
+        // Group the cells into strokes here, on the worker thread, so asking for the count later is instant.
+        _ = plan.Strokes;
+        return plan;
     }
 
     /// <summary>
