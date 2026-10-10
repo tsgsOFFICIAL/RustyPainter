@@ -1,3 +1,5 @@
+using Avalonia.Headless.XUnit;
+using RustyPainter.ViewModels;
 using RustyPainter.Imaging;
 using RustyPainter.Interface;
 using RustyPainter.Painting;
@@ -192,6 +194,81 @@ public class AnimatedSignTests
         PaintRequest single = new(one, surface, ColorMode.Swatches, 1, "frames");
         Assert.Equal([one], single.Plans);
         Assert.Equal(one.StrokeCount, single.StrokeCount);
+    }
+
+
+    private static GetReadyViewModel GetReady(PaintRequest request, FakeHologram hologram)
+        => new(request, new FakeGame(FakeGame.Rust()), Surfaces, TestSettings.Create(), hologram, new Hotkey(0, 0x77), new Hotkey(0, 0x78));
+
+    [AvaloniaFact]
+    public void The_picture_over_the_game_goes_through_the_frames_of_an_animation()
+    {
+        Surface surface = Find("animated-neon-large");
+        PaintPlan one = Plan(0, 0, 0), two = Plan(1, 1, 1), three = Plan(2, 2, 2);
+        FakeHologram hologram = new();
+        using GetReadyViewModel page = GetReady(new PaintRequest(one, surface, ColorMode.Swatches, 1, "frames", [one, two, three]), hologram);
+
+        Assert.True(page.IsAnimation);
+        Assert.Equal(1, page.ShownFrame);
+        PixelBuffer first = hologram.Picture!;
+
+        page.AdvanceFrame();
+        Assert.Equal(2, page.ShownFrame);
+        Assert.NotSame(first, hologram.Picture);
+        Assert.NotEqual(first.Data, hologram.Picture!.Data);
+
+        page.AdvanceFrame();
+        page.AdvanceFrame();
+        Assert.Equal(1, page.ShownFrame);
+        Assert.Equal(first.Data, hologram.Picture!.Data);
+    }
+
+    [AvaloniaFact]
+    public void A_picture_that_does_not_animate_stays_as_it_is_and_has_no_speed_to_choose()
+    {
+        Surface surface = Find("neon-large");
+        PaintPlan one = Plan(0, 1);
+        FakeHologram hologram = new();
+        using GetReadyViewModel page = GetReady(new PaintRequest(one, surface, ColorMode.Swatches, 1, "single"), hologram);
+
+        Assert.False(page.IsAnimation);
+        PixelBuffer shown = hologram.Picture!;
+        page.AdvanceFrame();
+        Assert.Equal(1, page.ShownFrame);
+        Assert.Equal(shown.Data, hologram.Picture!.Data);
+    }
+
+    [AvaloniaFact]
+    public void The_speed_chosen_in_studio_is_the_speed_over_the_game()
+    {
+        Surface surface = Find("animated-neon-large");
+        PaintPlan one = Plan(0), two = Plan(1);
+
+        using GetReadyViewModel fast = GetReady(new PaintRequest(one, surface, ColorMode.Swatches, 1, "x", [one, two], 0.5), new FakeHologram());
+        using GetReadyViewModel normal = GetReady(new PaintRequest(one, surface, ColorMode.Swatches, 1, "x", [one, two]), new FakeHologram());
+
+        Assert.Equal(0.5, fast.FrameSpeedChoices.Selected);
+        Assert.Equal(1.0, normal.FrameSpeedChoices.Selected);
+
+        normal.FrameSpeedChoices.Choices[0].SelectCommand.Execute(null);
+        Assert.Equal(2.0, normal.FrameSpeedChoices.Selected);
+    }
+
+    [AvaloniaFact]
+    public void Starting_to_paint_takes_the_picture_off_the_game()
+    {
+        Surface surface = Find("animated-neon-large");
+        PaintPlan one = Plan(0), two = Plan(1);
+        FakeHologram hologram = new();
+        using GetReadyViewModel page = GetReady(new PaintRequest(one, surface, ColorMode.Swatches, 1, "x", [one, two]), hologram);
+        PaintSession? started = null;
+        page.StartRequested += session => started = session;
+
+        page.StartCommand.Execute(null);
+
+        Assert.NotNull(started);
+        Assert.False(hologram.IsShown);
+        Assert.Equal(2, started.Request.Plans.Count);
     }
 
     [Fact]

@@ -343,5 +343,6 @@
   "FramesSlow": "Langsom",
   "FramesMedium": "Mellem",
   "FramesFast": "Hurtig",
-  "EngineFrameFailed": "Frame {0} på skiltet ville ikke åbne. Åbn det manuelt, og prøv igen."
+  "EngineFrameFailed": "Frame {0} på skiltet ville ikke åbne. Åbn det manuelt, og prøv igen.",
+  "GetReadyFrameSpeed": "Hastighed for frames over spillet"
 }

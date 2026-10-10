@@ -629,7 +629,7 @@ public sealed partial class StudioViewModel : ViewModelBase
         try
         {
             IReadOnlyList<PaintPlan> plans = await PreparePlansAsync();
-            PaintRequested?.Invoke(new PaintRequest(plans[0], SelectedSurface.Surface, ColorModeChoices.Selected, BlockSize, ImageName, plans));
+            PaintRequested?.Invoke(new PaintRequest(plans[0], SelectedSurface.Surface, ColorModeChoices.Selected, BlockSize, ImageName, plans, SpeedChoices.Selected));
         }
         catch (Exception ex)
         {

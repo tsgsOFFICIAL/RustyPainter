@@ -12,7 +12,8 @@ namespace RustyPainter.Painting;
 /// <param name="BlockSize">The brush size in game units, which is also the size of one cell.</param>
 /// <param name="PictureName">The name of the picture, for showing to the user.</param>
 /// <param name="FramePlans">The picture of every frame, first to last, for an animated sign. The first one is <paramref name="Plan"/>.</param>
-public sealed record PaintRequest(PaintPlan Plan, Surface Surface, ColorMode Mode, int BlockSize, string PictureName, IReadOnlyList<PaintPlan>? FramePlans = null)
+/// <param name="FrameSeconds">How long each frame is shown while the frames play over the game, as the preview in Studio does.</param>
+public sealed record PaintRequest(PaintPlan Plan, Surface Surface, ColorMode Mode, int BlockSize, string PictureName, IReadOnlyList<PaintPlan>? FramePlans = null, double FrameSeconds = 1.0)
 {
     /// <summary>The picture of each frame. One picture unless the surface animates.</summary>
     public IReadOnlyList<PaintPlan> Plans => FramePlans is { Count: > 0 } ? FramePlans : [Plan];

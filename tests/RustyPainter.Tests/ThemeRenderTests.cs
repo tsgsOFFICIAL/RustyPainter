@@ -9,7 +9,9 @@ using Avalonia.Platform;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using RustyPainter.Controls;
+using RustyPainter.Imaging;
 using RustyPainter.Interface;
+using RustyPainter.Painting;
 using RustyPainter.Localization;
 using RustyPainter.Service;
 using RustyPainter.ViewModels;
@@ -127,6 +129,11 @@ public class ThemeRenderTests
             animated.AddFrame();
             animated.AddFrame();
             ExpectLook(Draw(new StudioView { DataContext = animated }, new Sidebar { ViewModel = shell.Sidebar }, variant, $"studio-animated-{tag}"), variant);
+            Surface sign = new SurfaceService().Catalog.Surfaces.Single(s => s.Id == "animated-neon-large");
+            PaintPlan planA = new(2, 1, new SurfaceService().Resolve(sign, 2560, 1440).Swatches.ColorGrid!.Colors.Select(RustyPainter.Imaging.Rgb.Parse).ToList(), [0, 1]);
+            PaintPlan planB = new(2, 1, planA.Palette, [2, 3]);
+            using GetReadyViewModel ready = new(new PaintRequest(planA, sign, ColorMode.Swatches, 1, "frames", [planA, planB]), new FakeGame(FakeGame.Rust()), new SurfaceService(), settings, new FakeHologram(), new RustyPainter.Painting.Hotkey(0, 0x20), new RustyPainter.Painting.Hotkey(0, 0x1B));
+            ExpectLook(Draw(new GetReadyView { DataContext = ready }, new Sidebar { ViewModel = shell.Sidebar }, variant, $"getready-animated-{tag}"), variant);
             ExpectLook(Draw(new LibraryView { DataContext = new LibraryViewModel(TestLibrary.Create(), new SurfaceService()) }, new Sidebar { ViewModel = shell.Sidebar }, variant, $"library-{tag}"), variant);
         }
         finally

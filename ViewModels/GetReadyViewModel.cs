@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using RustyPainter.ViewModels.Mvvm;
 using RustyPainter.Imaging;
@@ -33,7 +34,9 @@ public sealed class GetReadyViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
     private readonly IAppSettingsService _settings;
     private readonly IHologramService _hologram;
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromSeconds(1) };
-    private readonly PixelBuffer _picture;
+    private readonly IReadOnlyList<PixelBuffer> _pictures;
+    private readonly DispatcherTimer _cycle = new();
+    private int _frame;
 
     private readonly Hotkey _startKey, _abortKey;
     private GameWindow? _window;
@@ -52,13 +55,21 @@ public sealed class GetReadyViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
         _surfaces = surfaces;
         _settings = settings;
         _hologram = hologram;
-        _picture = request.Plan.Render();
+        _pictures = [.. request.Plans.Select(plan => plan.Render())];
         _startKey = startKey;
         _abortKey = abortKey;
 
         _speed = Math.Clamp(settings.Current.PaintSpeed, 1, 100);
         _showHologram = settings.Current.ShowHologram;
         _hologramOpacity = Math.Clamp(settings.Current.HologramStrength, 10, 90);
+
+        // An animation shows its frames one after the other, at the speed chosen in Studio.
+        FrameSpeedChoices = new([("FramesSlow", 2.0), ("FramesMedium", 1.0), ("FramesFast", 0.5)], request.FrameSeconds);
+        FrameSpeedChoices.Changed += () => _cycle.Interval = TimeSpan.FromSeconds(FrameSpeedChoices.Selected);
+        _cycle.Interval = TimeSpan.FromSeconds(FrameSpeedChoices.Selected);
+        _cycle.Tick += (_, _) => AdvanceFrame();
+        if (IsAnimation)
+            _cycle.Start();
 
         StartCommand = new RelayCommand(Start, () => IsRustRunning);
         BackCommand = new RelayCommand(() => BackRequested?.Invoke());
@@ -132,6 +143,23 @@ public sealed class GetReadyViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
 
     // ---- the picture over the game ----
 
+    /// <summary>Whether there are several frames, which the picture over the game then shows one after the other.</summary>
+    public bool IsAnimation => _pictures.Count > 1;
+
+    /// <summary>How fast the frames follow each other over the game.</summary>
+    public ChoiceGroup<double> FrameSpeedChoices { get; }
+
+    /// <summary>Which frame is over the game now, counted from 1.</summary>
+    public int ShownFrame => _frame + 1;
+
+    /// <summary>Shows the next frame over the game. The timer calls this, and so can a test.</summary>
+    public void AdvanceFrame()
+    {
+        _frame = (_frame + 1) % _pictures.Count;
+        OnPropertyChanged(nameof(ShownFrame));
+        UpdateHologram();
+    }
+
     /// <summary>Whether the picture is shown over the game where it will be painted.</summary>
     public bool ShowHologram
     {
@@ -181,7 +209,7 @@ public sealed class GetReadyViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
     private void UpdateHologram()
     {
         if (ShowHologram && PaintArea is { } area)
-            _hologram.Show(_picture, area, HologramOpacity / 100);
+            _hologram.Show(_pictures[_frame], area, HologramOpacity / 100);
         else
             _hologram.Hide();
     }
@@ -274,6 +302,7 @@ public sealed class GetReadyViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
     private void Start()
     {
         // The picture must be gone before the first stroke, or it would be painted over.
+        _cycle.Stop();
         _hologram.Hide();
 
         // Neon signs have no size to type. The number Studio hands over is which of their fixed brushes to use.
@@ -285,6 +314,7 @@ public sealed class GetReadyViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
     public void Dispose()
     {
         _timer.Stop();
+        _cycle.Stop();
         _hologram.Hide();
     }
 }

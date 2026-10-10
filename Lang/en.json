@@ -343,5 +343,6 @@
   "FramesSlow": "Slow",
   "FramesMedium": "Medium",
   "FramesFast": "Fast",
-  "EngineFrameFailed": "Frame {0} of the sign would not open. Open it by hand and try again."
+  "EngineFrameFailed": "Frame {0} of the sign would not open. Open it by hand and try again.",
+  "GetReadyFrameSpeed": "Speed of the frames over the game"
 }
