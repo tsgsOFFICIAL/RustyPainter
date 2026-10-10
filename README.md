@@ -14,7 +14,7 @@ Load a picture by dragging it in, pasting a link or typing some text, pick a sur
 
 ## Features
 
-- Paint pictures, links and typed text onto 13 surfaces: wooden signs, artist canvases, a picture frame and neon signs.
+- Paint pictures, links and typed text onto 16 surfaces: wooden signs, artist canvases, a picture frame, neon signs and animated neon signs with up to five frames.
 - Studio with a live preview, a split view against the original, filters, up to 256 colors and a choice between the game's swatches and any color.
 - A hologram of the picture over the game, and a small progress box, so the app does not have to be in view while it paints.
 - Hotkeys that only work while Rust is in front: Space starts, pauses and resumes, Esc stops. Both can be changed.

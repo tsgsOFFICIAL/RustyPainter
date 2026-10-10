@@ -357,6 +357,61 @@ public class StudioFramesTests : IDisposable
         Assert.Equal(1, again.FrameCount);
     }
 
+
+    [AvaloniaFact]
+    public void Frames_of_typed_text_keep_their_own_text()
+    {
+        StudioViewModel studio = Studio();
+        studio.SourceChoices.Select(SourceKind.Text);
+        studio.Text = "A";
+        studio.ProcessNow();
+        studio.AddFrame();
+        studio.Text = "B";
+        studio.ProcessNow();
+        studio.AddFrame();
+        studio.Text = "C";
+        studio.ProcessNow();
+
+        studio.SelectFrame(0);
+        Assert.Equal("A", studio.Text);
+        Assert.Equal("Text", studio.ImageName);
+
+        studio.SelectFrame(2);
+        Assert.Equal("C", studio.Text);
+
+        studio.SelectFrame(1);
+        Assert.Equal("B", studio.Text);
+
+        // Typing in a frame leaves the others as they were.
+        studio.Text = "BB";
+        studio.SelectFrame(0);
+        Assert.Equal("A", studio.Text);
+        studio.SelectFrame(1);
+        Assert.Equal("BB", studio.Text);
+    }
+
+    [AvaloniaFact]
+    public async Task A_picture_frame_and_a_text_frame_can_be_mixed()
+    {
+        StudioViewModel studio = Studio();
+        Load(studio, Solid(255, 0, 0), "red.png");
+        studio.AddFrame();
+        studio.SourceChoices.Select(SourceKind.Text);
+        studio.Text = "Hi";
+        studio.ProcessNow();
+
+        studio.SelectFrame(0);
+        Assert.EndsWith("red.png", studio.ImageName);
+        Assert.True(studio.IsPictureSource);
+
+        studio.SelectFrame(1);
+        Assert.Equal("Text", studio.ImageName);
+        Assert.True(studio.IsTextSource);
+
+        IReadOnlyList<PaintPlan> plans = await studio.PreparePlansAsync();
+        Assert.All(plans, plan => Assert.True(plan.PaintedCells > 0));
+    }
+
     [Fact]
     public void Copying_a_project_copies_its_frames()
     {
