@@ -26,15 +26,16 @@ public class PaintScriptTests
         ResolvedLayout layout = Layout("sign-medium");
         PaintScript script = PaintScriptBuilder.Build(SmallPlan(SwatchPalette("sign-medium")), layout, new PaintOptions(ColorMode.Swatches, 4));
 
-        Assert.IsType<EnsureColorModeStep>(script.Steps[0]);
-        Assert.Equal("Brush", Assert.IsType<ClickControlStep>(script.Steps[1]).Control);
-        Assert.Equal("Clear", Assert.IsType<ClickControlStep>(script.Steps[2]).Control);
-        Assert.Equal("Brush shape", Assert.IsType<ClickControlStep>(script.Steps[3]).Control);
+        Assert.IsType<ResetCameraStep>(script.Steps[0]);
+        Assert.IsType<EnsureColorModeStep>(script.Steps[1]);
+        Assert.Equal("Brush", Assert.IsType<ClickControlStep>(script.Steps[2]).Control);
+        Assert.Equal("Clear", Assert.IsType<ClickControlStep>(script.Steps[3]).Control);
+        Assert.Equal("Brush shape", Assert.IsType<ClickControlStep>(script.Steps[4]).Control);
 
         // Brush values, then a color and its strokes, repeated for each color.
         Assert.Equal(["Size", "Spacing", "Opacity"], script.Steps.OfType<SetBrushValueStep>().Select(step => step.Field));
-        Assert.IsType<SelectSwatchStep>(script.Steps[7]);
-        Assert.IsType<PaintStrokeStep>(script.Steps[8]);
+        Assert.IsType<SelectSwatchStep>(script.Steps[8]);
+        Assert.IsType<PaintStrokeStep>(script.Steps[9]);
         Assert.IsType<PaintStrokeStep>(script.Steps[^1]);
     }
 
@@ -106,7 +107,7 @@ public class PaintScriptTests
         // The panel sits lower in free mode, so the controls are not where the swatch layout has them.
         Assert.NotEqual(layout.Swatches.Size!.Value.Center, script.Steps.OfType<SetBrushValueStep>().First().At);
         Assert.Equal(layout.Free.Size!.Value.Center, script.Steps.OfType<SetBrushValueStep>().First().At);
-        Assert.Equal(ColorMode.Free, ((EnsureColorModeStep)script.Steps[0]).Mode);
+        Assert.Equal(ColorMode.Free, script.Steps.OfType<EnsureColorModeStep>().Single().Mode);
     }
 
     [Fact]
@@ -125,10 +126,10 @@ public class PaintScriptTests
     public void Canvases_that_open_cropped_start_with_the_scroll_out()
     {
         PaintScript script = PaintScriptBuilder.Build(SmallPlan(SwatchPalette("canvas-xxl")), Layout("canvas-xxl"), new PaintOptions(ColorMode.Swatches, 4));
-        Assert.Equal(new ScrollOutStep(11), script.Steps[0]);
+        Assert.Equal(new ScrollOutStep(11), script.Steps[1]);
 
         PaintScript sign = PaintScriptBuilder.Build(SmallPlan(SwatchPalette("sign-medium")), Layout("sign-medium"), new PaintOptions(ColorMode.Swatches, 4));
-        Assert.IsNotType<ScrollOutStep>(sign.Steps[0]);
+        Assert.DoesNotContain(sign.Steps, step => step is ScrollOutStep);
     }
 
     [Fact]

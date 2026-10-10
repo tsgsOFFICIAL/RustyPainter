@@ -8,6 +8,9 @@ namespace RustyPainter.Painting;
 /// <summary>One thing to do in the game. The painter turns each step into mouse and keyboard input.</summary>
 public abstract record PaintStep;
 
+/// <summary>Clicks the camera reset button and waits for the view to settle, so the canvas is where it was measured.</summary>
+public sealed record ResetCameraStep(ScreenPoint At) : PaintStep;
+
 /// <summary>Scrolls the mouse wheel out, for canvases that open zoomed in.</summary>
 public sealed record ScrollOutStep(int Count) : PaintStep;
 
@@ -78,6 +81,8 @@ public static class PaintScriptBuilder
         PaintLayout controls = options.Mode == ColorMode.Swatches ? layout.Swatches : layout.Free;
         ScreenRect canvas = layout.Canvas.Offset(options.NudgeX, options.NudgeY);
         List<PaintStep> steps = [];
+
+        steps.Add(new ResetCameraStep(controls.ResetCamera.Center));
 
         if (layout.Surface.ScrollOut > 0)
             steps.Add(new ScrollOutStep(layout.Surface.ScrollOut));
