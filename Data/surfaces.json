@@ -152,7 +152,7 @@
     { "id": "canvas-standing", "name": "Artist Canvas Standing", "layout": "standard", "texture": { "width": 256, "height": 640 }, "canvas": { "x1": 811, "y1": 268, "x2": 1173, "y2": 1172 } },
     { "id": "canvas-small", "name": "Artist Canvas Small", "layout": "standard", "scrollOut": 6, "canvas": { "x1": 550, "y1": 132, "x2": 1434, "y2": 1308 } },
     { "id": "canvas-xxl", "name": "Artist Canvas XXL", "layout": "standard", "scrollOut": 11, "canvas": { "x1": 137, "y1": 292, "x2": 1850, "y2": 1149 } },
-    { "id": "frame-portrait", "name": "Portrait Picture Frame", "layout": "standard", "canvas": { "x1": 781, "y1": 485, "x2": 1198, "y2": 1006 } },
+    { "id": "frame-portrait", "name": "Portrait Picture Frame", "layout": "standard", "texture": { "width": 205, "height": 256 }, "canvas": { "x1": 780, "y1": 485, "x2": 1198, "y2": 1006 } },
     { "id": "neon-large", "name": "Large Neon Sign", "layout": "neon", "canvas": { "x1": 545, "y1": 237, "x2": 1434, "y2": 1125 } },
     { "id": "neon-medium", "name": "Medium Neon Sign", "layout": "neon", "canvas": { "x1": 545, "y1": 364, "x2": 1439, "y2": 879 } },
     { "id": "neon-small", "name": "Small Neon Sign", "layout": "neon", "canvas": { "x1": 730, "y1": 361, "x2": 1252, "y2": 882 } }
