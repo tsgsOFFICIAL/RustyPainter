@@ -2,6 +2,7 @@ using RustyPainter.ViewModels.Mvvm;
 using RustyPainter.Service.Logging;
 using RustyPainter.Interface;
 using RustyPainter.Controls;
+using RustyPainter.Library;
 using RustyPainter.Painting;
 using RustyPainter.Service;
 using Avalonia.Threading;
@@ -27,6 +28,8 @@ public sealed class MainWindowViewModel : ViewModelBase
     private readonly IPaintEngineFactory _engines;
     private readonly IHologramService _hologram;
     private readonly IStatusOverlayService _overlay;
+    private readonly IProjectStore _projects;
+    private LibraryViewModel? _library;
     private readonly DispatcherTimer _rustTimer = new() { Interval = TimeSpan.FromSeconds(2) };
     private bool _isRustRunning;
     private string _rustStatusText = "Rust is not running";
@@ -43,7 +46,7 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     /// <summary>Creates the shell, its sidebar, and the initial Home page.</summary>
     public MainWindowViewModel(IUpdateService updates, IDialogService dialogs, IAppSettingsService settings, ISurfaceService surfaces,
-        IGameWindowService game, IHotkeyService hotkeys, IPaintEngineFactory engines, IHologramService hologram, IStatusOverlayService overlay)
+        IGameWindowService game, IHotkeyService hotkeys, IPaintEngineFactory engines, IHologramService hologram, IStatusOverlayService overlay, IProjectStore projects)
     {
         _settings = settings;
         _game = game;
@@ -51,6 +54,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         _engines = engines;
         _hologram = hologram;
         _overlay = overlay;
+        _projects = projects;
         _hotkeys.Pressed += action => Dispatcher.UIThread.Post(() => RouteHotkey(action));
         _updates = updates;
         _dialogs = dialogs;
@@ -161,9 +165,46 @@ public sealed class MainWindowViewModel : ViewModelBase
         {
             SidebarPage.Home => _home ??= new HomeViewModel(Sidebar),
             SidebarPage.Studio => GetStudio(),
+            SidebarPage.Library => GetLibrary(),
             SidebarPage.Settings => _settingsPage ??= new SettingsViewModel(_settings, _updates, _dialogs),
             _ => ShowComingSoon(page)
         };
+    }
+
+    // ---- the Library ----
+
+    private LibraryViewModel GetLibrary()
+    {
+        if (_library is null)
+        {
+            _library = new LibraryViewModel(_projects, _surfaces);
+            _library.OpenRequested += OpenProject;
+        }
+        else
+        {
+            // Projects may have been saved or removed since it was last shown.
+            _library.Refresh();
+        }
+
+        return _library;
+    }
+
+    /// <summary>Opens a saved project in Studio.</summary>
+    public void OpenProject(string id)
+    {
+        StudioViewModel studio = GetStudio();
+
+        if (studio.OpenProject(id))
+        {
+            Sidebar.NavigateTo(SidebarPage.Studio);
+            return;
+        }
+
+        // It could not be opened, so say so where the user is looking.
+        if (_library is not null)
+            _library.Message = "That project could not be opened. It may be damaged or removed.";
+
+        _library?.Refresh();
     }
 
     // ---- painting ----
@@ -173,8 +214,9 @@ public sealed class MainWindowViewModel : ViewModelBase
         if (_studio is not null)
             return _studio;
 
-        _studio = new StudioViewModel(_surfaces) { PaintSpeed = _settings.Current.PaintSpeed };
+        _studio = new StudioViewModel(_surfaces, projects: _projects) { PaintSpeed = _settings.Current.PaintSpeed };
         _studio.PaintRequested += OpenGetReady;
+        _studio.ProjectSaved += () => _library?.Refresh();
         return _studio;
     }
 

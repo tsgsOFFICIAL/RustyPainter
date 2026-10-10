@@ -43,3 +43,10 @@ public class SettingsFileTests
         Assert.DoesNotContain("\"AbortHotkey\": \"Ctrl+Shift+F8\"", text);
     }
 }
+
+/// <summary>A Library in a folder of its own, so a test can never touch the real saved projects.</summary>
+internal static class TestLibrary
+{
+    public static RustyPainter.Library.ProjectStore Create()
+        => new(Path.Combine(Path.GetTempPath(), $"rustypainter-test-library-{Guid.NewGuid():N}"));
+}

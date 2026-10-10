@@ -607,7 +607,7 @@ public class PaintingNavigationTests
     private static MainWindowViewModel Shell(FakeGame game, FakeHotkeys hotkeys, FakeMachine machine, FakeHologram? hologram = null, FakeOverlay? overlay = null)
     {
         AppSettingsService settings = TestSettings.Create();
-        return new MainWindowViewModel(new UpdateService(), new DialogService(), settings, new SurfaceService(), game, hotkeys, new FakeEngines(machine), hologram ?? new FakeHologram(), overlay ?? new FakeOverlay());
+        return new MainWindowViewModel(new UpdateService(), new DialogService(), settings, new SurfaceService(), game, hotkeys, new FakeEngines(machine), hologram ?? new FakeHologram(), overlay ?? new FakeOverlay(), TestLibrary.Create());
     }
 
     private static StudioViewModel PreparedStudio(MainWindowViewModel shell)

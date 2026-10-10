@@ -13,7 +13,7 @@ public class StatusOverlayTests
 {
     private static MainWindowViewModel Shell(FakeGame game, FakeMachine machine, FakeOverlay overlay, FakeHotkeys? hotkeys = null)
         => new(new UpdateService(), new DialogService(), TestSettings.Create(), new SurfaceService(), game, hotkeys ?? new FakeHotkeys(),
-            new FakeEngines(machine), new FakeHologram(), overlay) { OverlayLinger = TimeSpan.FromMilliseconds(60) };
+            new FakeEngines(machine), new FakeHologram(), overlay, TestLibrary.Create()) { OverlayLinger = TimeSpan.FromMilliseconds(60) };
 
     private static void Open(MainWindowViewModel shell)
     {

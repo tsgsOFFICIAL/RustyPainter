@@ -1,0 +1,115 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia"
+             xmlns:vm="using:RustyPainter.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="700"
+             x:Class="RustyPainter.Views.LibraryView"
+             x:DataType="vm:LibraryViewModel">
+
+    <ScrollViewer>
+        <StackPanel Margin="24" Spacing="18">
+
+            <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Library" FontSize="26" FontWeight="Bold" Foreground="{DynamicResource TextColor}"/>
+                    <TextBlock Text="{Binding CountText}" Classes="muted"/>
+                </StackPanel>
+                <TextBox Grid.Column="1" Width="260" VerticalAlignment="Center" PlaceholderText="Search by name or surface"
+                         Text="{Binding Search}" IsVisible="{Binding HasProjects}"/>
+            </Grid>
+
+            <TextBlock Text="{Binding Message}" IsVisible="{Binding HasMessage}" Foreground="{DynamicResource DangerColor}"
+                       TextWrapping="Wrap"/>
+
+            <!-- Nothing saved yet -->
+            <Border Classes="card" IsVisible="{Binding IsEmpty}">
+                <StackPanel Spacing="8" HorizontalAlignment="Center" Margin="0,24">
+                    <iconPacks:PackIconPhosphorIcons Kind="Books" Width="36" Height="36" HorizontalAlignment="Center"
+                                                     Foreground="{DynamicResource TextMutedColor}"/>
+                    <TextBlock Text="Nothing saved yet" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Set up a picture in Studio and press Save. It comes back here with everything as you left it."
+                               Classes="muted" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="420"/>
+                </StackPanel>
+            </Border>
+
+            <TextBlock Text="No project matches that search." Classes="muted" IsVisible="{Binding NothingFound}"/>
+
+            <ItemsControl ItemsSource="{Binding Cards}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ProjectCard">
+                        <Border Classes="card" Width="236" Margin="0,0,14,14" Padding="10">
+                            <StackPanel Spacing="8">
+
+                                <Button Padding="0" Background="Transparent" BorderThickness="0" HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Stretch" Command="{Binding OpenCommand}" ToolTip.Tip="Open in Studio">
+                                    <Border Height="140" CornerRadius="8" ClipToBounds="True" Background="#0C0E12">
+                                        <Grid>
+                                            <Image Source="{Binding Thumbnail}" Stretch="Uniform" IsVisible="{Binding HasThumbnail}"
+                                                   RenderOptions.BitmapInterpolationMode="None"/>
+                                            <iconPacks:PackIconPhosphorIcons Kind="Image" Width="28" Height="28" Foreground="{DynamicResource TextMutedColor}"
+                                                                             HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                             IsVisible="{Binding !HasThumbnail}"/>
+                                        </Grid>
+                                    </Border>
+                                </Button>
+
+                                <StackPanel Spacing="2" IsVisible="{Binding IsNotRenaming}">
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Classes="muted" FontSize="11" TextTrimming="CharacterEllipsis">
+                                        <Run Text="{Binding SurfaceName}"/>
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding ModifiedText}" Classes="muted" FontSize="11"/>
+                                </StackPanel>
+
+                                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6" IsVisible="{Binding IsRenaming}">
+                                    <TextBox Text="{Binding EditName}" MaxLength="80" KeyDown="OnRenameKeyDown"/>
+                                    <Button Grid.Column="1" Classes="secondaryButton" Padding="8,6" Command="{Binding CommitRenameCommand}" ToolTip.Tip="Save the name">
+                                        <iconPacks:PackIconPhosphorIcons Kind="Check" Width="14" Height="14"/>
+                                    </Button>
+                                    <Button Grid.Column="2" Classes="secondaryButton" Padding="8,6" Command="{Binding CancelRenameCommand}" ToolTip.Tip="Cancel">
+                                        <iconPacks:PackIconPhosphorIcons Kind="X" Width="14" Height="14"/>
+                                    </Button>
+                                </Grid>
+
+                                <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsNotConfirmingDelete}">
+                                    <Button Classes="accentButton" Padding="12,6" FontSize="12" Command="{Binding OpenCommand}">
+                                        <TextBlock Text="Open"/>
+                                    </Button>
+                                    <Button Classes="secondaryButton" Padding="8,6" Command="{Binding BeginRenameCommand}" ToolTip.Tip="Rename">
+                                        <iconPacks:PackIconPhosphorIcons Kind="PencilSimple" Width="14" Height="14"/>
+                                    </Button>
+                                    <Button Classes="secondaryButton" Padding="8,6" Command="{Binding DuplicateCommand}" ToolTip.Tip="Make a copy">
+                                        <iconPacks:PackIconPhosphorIcons Kind="Copy" Width="14" Height="14"/>
+                                    </Button>
+                                    <Button Classes="secondaryButton" Padding="8,6" Command="{Binding AskDeleteCommand}" ToolTip.Tip="Delete">
+                                        <iconPacks:PackIconPhosphorIcons Kind="Trash" Width="14" Height="14"/>
+                                    </Button>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsConfirmingDelete}">
+                                    <TextBlock Text="Delete it?" VerticalAlignment="Center" FontSize="12"/>
+                                    <Button Classes="dangerButton" Padding="12,6" FontSize="12" Command="{Binding ConfirmDeleteCommand}">
+                                        <TextBlock Text="Delete"/>
+                                    </Button>
+                                    <Button Classes="secondaryButton" Padding="12,6" FontSize="12" Command="{Binding CancelDeleteCommand}">
+                                        <TextBlock Text="Keep"/>
+                                    </Button>
+                                </StackPanel>
+
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+        </StackPanel>
+    </ScrollViewer>
+
+</UserControl>

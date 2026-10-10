@@ -3,6 +3,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using RustyPainter.Service.Logging;
 using RustyPainter.ViewModels;
 using RustyPainter.Interface;
+using RustyPainter.Library;
 using RustyPainter.Painting;
 using Avalonia.Markup.Xaml;
 using Avalonia.Controls;
@@ -38,6 +39,7 @@ namespace RustyPainter
             IPaintEngineFactory engines = services.GetRequiredService<IPaintEngineFactory>();
             IHologramService hologram = services.GetRequiredService<IHologramService>();
             IStatusOverlayService overlay = services.GetRequiredService<IStatusOverlayService>();
+            IProjectStore projects = services.GetRequiredService<IProjectStore>();
             IDialogService dialogs = services.GetRequiredService<IDialogService>();
             ISurfaceService surfaces = services.GetRequiredService<ISurfaceService>();
 
@@ -48,7 +50,7 @@ namespace RustyPainter
             AppLog.ApplyRetention(settings.Current.LogRetentionDays);
             AppLog.ApplyVerbose(settings.Current.VerboseLogging);
 
-            MainWindowViewModel viewModel = new(updates, dialogs, settings, surfaces, game, hotkeys, engines, hologram, overlay);
+            MainWindowViewModel viewModel = new(updates, dialogs, settings, surfaces, game, hotkeys, engines, hologram, overlay, projects);
 
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
                 desktop.MainWindow = new MainWindow(viewModel);

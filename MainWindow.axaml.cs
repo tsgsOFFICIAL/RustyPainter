@@ -1,3 +1,4 @@
+using RustyPainter.Library;
 using RustyPainter.ViewModels;
 using RustyPainter.Service;
 using Avalonia.Controls;
@@ -22,7 +23,7 @@ namespace RustyPainter
             settings.Initialize();
 
             GameWindowService game = new();
-            return new MainWindowViewModel(new UpdateService(), new DialogService(), settings, new SurfaceService(), game, new GlobalHotkeyService(game), new PaintEngineFactory(game), new HologramService(), new StatusOverlayService());
+            return new MainWindowViewModel(new UpdateService(), new DialogService(), settings, new SurfaceService(), game, new GlobalHotkeyService(game), new PaintEngineFactory(game), new HologramService(), new StatusOverlayService(), new ProjectStore());
         }
 
         /// <summary>Creates the window bound to the given view model and wires up the startup update check.</summary>

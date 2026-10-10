@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using RustyPainter.Service.Logging;
 using RustyPainter.Interface;
+using RustyPainter.Library;
 using RustyPainter.Painting;
 using RustyPainter.Service;
 using Avalonia;
@@ -35,6 +36,7 @@ namespace RustyPainter
                     .AddSingleton<IPaintEngineFactory, PaintEngineFactory>()
                     .AddSingleton<IHologramService, HologramService>()
                     .AddSingleton<IStatusOverlayService, StatusOverlayService>()
+                    .AddSingleton<IProjectStore, ProjectStore>()
                     .BuildServiceProvider();
 
                 BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
