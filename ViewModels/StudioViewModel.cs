@@ -1095,6 +1095,7 @@ public sealed partial class StudioViewModel : ViewModelBase
             "canvas" => "Canvases",
             "frame" => "Frames",
             "neon" => "Neon",
+            "animated" => "Animated",
             _ => "Other"
         };
     }

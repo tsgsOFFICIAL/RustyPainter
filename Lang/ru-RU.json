@@ -328,5 +328,9 @@
   "Surface_frame-portrait": "Портретная рамка",
   "Surface_neon-large": "Большая неоновая вывеска",
   "Surface_neon-medium": "Средняя неоновая вывеска",
-  "Surface_neon-small": "Маленькая неоновая вывеска"
+  "Surface_neon-small": "Маленькая неоновая вывеска",
+  "Category_Animated": "Анимация",
+  "Surface_animated-neon-large": "Большая анимированная неоновая вывеска",
+  "Surface_animated-neon-medium": "Средняя анимированная неоновая вывеска",
+  "Surface_animated-neon-small": "Маленькая анимированная неоновая вывеска"
 }

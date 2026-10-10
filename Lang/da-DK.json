@@ -328,5 +328,9 @@
   "Surface_frame-portrait": "Portrætramme",
   "Surface_neon-large": "Stort neonskilt",
   "Surface_neon-medium": "Mellem neonskilt",
-  "Surface_neon-small": "Lille neonskilt"
+  "Surface_neon-small": "Lille neonskilt",
+  "Category_Animated": "Animerede",
+  "Surface_animated-neon-large": "Stort animeret neonskilt",
+  "Surface_animated-neon-medium": "Mellem animeret neonskilt",
+  "Surface_animated-neon-small": "Lille animeret neonskilt"
 }

@@ -328,5 +328,9 @@
   "Surface_frame-portrait": "Portrait Picture Frame",
   "Surface_neon-large": "Large Neon Sign",
   "Surface_neon-medium": "Medium Neon Sign",
-  "Surface_neon-small": "Small Neon Sign"
+  "Surface_neon-small": "Small Neon Sign",
+  "Category_Animated": "Animated",
+  "Surface_animated-neon-large": "Large Animated Neon Sign",
+  "Surface_animated-neon-medium": "Medium Animated Neon Sign",
+  "Surface_animated-neon-small": "Small Animated Neon Sign"
 }

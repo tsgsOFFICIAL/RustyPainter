@@ -34,7 +34,7 @@ public class NeonPresetTests
     [Fact]
     public void The_surfaces_with_a_brush_size_have_no_presets()
     {
-        Assert.All(Surfaces.Catalog.Surfaces.Where(s => !s.Id.StartsWith("neon")), s => Assert.False(StudioGeometry.HasPresets(s), s.Id));
+        Assert.All(Surfaces.Catalog.Surfaces.Where(s => !s.Id.StartsWith("neon") && !s.IsAnimated), s => Assert.False(StudioGeometry.HasPresets(s), s.Id));
     }
 
     [Fact]

@@ -28,9 +28,10 @@ public class SurfaceServiceTests
     {
         Assert.Equal(2560, Catalog.ReferenceWidth);
         Assert.Equal(1440, Catalog.ReferenceHeight);
-        Assert.Equal(13, Catalog.Surfaces.Length);
+        Assert.Equal(16, Catalog.Surfaces.Length);
         Assert.Contains("standard", Catalog.Layouts.Keys);
         Assert.Contains("neon", Catalog.Layouts.Keys);
+        Assert.Contains("animated", Catalog.Layouts.Keys);
     }
 
     [Fact]

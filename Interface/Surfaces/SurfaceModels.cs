@@ -70,6 +70,19 @@ public sealed record FreeColorControls(ScreenRect ColorHex, ScreenRect ColorArea
     }
 }
 
+/// <summary>The controls of the frames panel on the paint screen of an animated sign.</summary>
+/// <param name="Buttons">The numbered frame buttons, first to last.</param>
+/// <param name="CopyPrevious">The button that copies the previous frame into the open one.</param>
+public sealed record FrameControls(ScreenRect[] Buttons, ScreenRect CopyPrevious)
+{
+    /// <summary>Scales every rectangle, then moves it by the given offset.</summary>
+    public FrameControls Place(double sx, double sy, double dx, double dy)
+    {
+        ScreenRect Move(ScreenRect rect) => rect.Scale(sx, sy).Offset(dx, dy);
+        return new(Buttons.Select(Move).ToArray(), Move(CopyPrevious));
+    }
+}
+
 /// <summary>
 /// Where the clickable parts of Rust's paint screen are, for one color mode of one family of surfaces.
 /// Switching color mode changes the height of the right hand panel, so every item in it moves.
@@ -90,6 +103,7 @@ public sealed record FreeColorControls(ScreenRect ColorHex, ScreenRect ColorArea
 /// <param name="Opacity">The brush opacity value. Absent on surfaces with fixed brush presets.</param>
 /// <param name="ColorGrid">The swatch grid, present in swatch mode only.</param>
 /// <param name="FreeColor">The free color controls, present in free color mode only.</param>
+/// <param name="Frames">The frames panel, present on the paint screens of animated signs only.</param>
 public sealed record PaintLayout(
     ScreenRect Clear,
     ScreenRect ResetCamera,
@@ -106,7 +120,8 @@ public sealed record PaintLayout(
     ScreenRect? Spacing = null,
     ScreenRect? Opacity = null,
     ColorGrid? ColorGrid = null,
-    FreeColorControls? FreeColor = null)
+    FreeColorControls? FreeColor = null,
+    FrameControls? Frames = null)
 {
     /// <summary>Every plain rectangle in the layout, for checks that apply to all of them.</summary>
     public ScreenRect[] AllRects()
@@ -132,6 +147,9 @@ public sealed record PaintLayout(
         if (FreeColor is not null)
             all.AddRange([FreeColor.ColorHex, FreeColor.ColorArea, FreeColor.HueBar, .. FreeColor.SavedColors, FreeColor.AddColor]);
 
+        if (Frames is not null)
+            all.AddRange([.. Frames.Buttons, Frames.CopyPrevious]);
+
         return [.. all];
     }
 
@@ -149,7 +167,8 @@ public sealed record PaintLayout(
             Spacing is { } spacing ? Move(spacing) : null,
             Opacity is { } opacity ? Move(opacity) : null,
             ColorGrid?.Place(sx, sy, dx, dy),
-            FreeColor?.Place(sx, sy, dx, dy));
+            FreeColor?.Place(sx, sy, dx, dy),
+            Frames?.Place(sx, sy, dx, dy));
     }
 }
 
@@ -186,7 +205,12 @@ public sealed record BrushPreset(double Width, double Height);
 /// <param name="BrushPresets">
 /// The fixed brush presets, left to right, for surfaces that have no brush size to type. One brush stamp is one cell then.
 /// </param>
-public sealed record Surface(string Id, string Name, string Layout, ScreenRect Canvas, int ScrollOut = 0, TextureSize? Texture = null, BrushPreset[]? BrushPresets = null);
+/// <param name="Frames">How many frames the surface can show one after the other. One for everything that does not animate.</param>
+public sealed record Surface(string Id, string Name, string Layout, ScreenRect Canvas, int ScrollOut = 0, TextureSize? Texture = null, BrushPreset[]? BrushPresets = null, int Frames = 1)
+{
+    /// <summary>Whether the surface is an animated sign that shows several pictures one after the other.</summary>
+    public bool IsAnimated => Frames > 1;
+}
 
 /// <summary>
 /// Everything known about Rust's paint screen, recorded once at a reference resolution and loaded from

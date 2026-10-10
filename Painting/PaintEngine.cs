@@ -407,6 +407,10 @@ public sealed class PaintEngine
                 await WaitAsync(_timing.AfterField, token);
                 break;
 
+            case SelectFrameStep frame:
+                await SelectFrameAsync(frame, token);
+                break;
+
             case SelectSwatchStep swatch:
                 await ClickAsync(swatch.At, _timing.AfterClick, token);
                 break;
@@ -439,6 +443,23 @@ public sealed class PaintEngine
 
         await ReleaseAsync(token);
         await WaitAsync(_timing.AfterStroke, token);
+    }
+
+    private async Task SelectFrameAsync(SelectFrameStep step, CancellationToken token)
+    {
+        // The open frame is drawn in a green circle. A click that was lost is tried again before painting goes on into the wrong frame.
+        for (int attempt = 1; attempt <= 3; attempt++)
+        {
+            await ClickAsync(step.At, _timing.AfterClick + 120, token);
+            await CheckpointAsync(token, inStep: true);
+
+            if (_sensors.ReadColor(step.Probe) is { } color && color.G - Math.Max(color.R, color.B) >= 25)
+                return;
+
+            AppLog.Debug("PaintEngine", $"Frame {step.Index + 1} did not show as open after click {attempt}.");
+        }
+
+        AppLog.Warn("PaintEngine", $"Could not confirm that frame {step.Index + 1} is open.");
     }
 
     private async Task EnsureColorModeAsync(EnsureColorModeStep step, CancellationToken token)

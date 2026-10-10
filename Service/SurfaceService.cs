@@ -139,6 +139,17 @@ public sealed class SurfaceService : ISurfaceService
                 throw new InvalidDataException($"'{surface.Id}' has no brush size field, so it needs its brush presets measured.");
             }
 
+            if (surface.Frames < 1)
+                throw new InvalidDataException($"The frame count of '{surface.Id}' must be at least 1.");
+
+            if (surface.IsAnimated)
+            {
+                LayoutFamily animated = catalog.Layouts[surface.Layout];
+                if (animated.Swatches.Frames is not { } swatchFrames || animated.Free.Frames is not { } freeFrames
+                    || swatchFrames.Buttons.Length < surface.Frames || freeFrames.Buttons.Length < surface.Frames)
+                    throw new InvalidDataException($"'{surface.Id}' has {surface.Frames} frames but its paint screen does not list that many frame buttons.");
+            }
+
             if (surface.ScrollOut is < 0 or > 40)
                 throw new InvalidDataException($"The scroll count of '{surface.Id}' must be between 0 and 40, got {surface.ScrollOut}.");
 

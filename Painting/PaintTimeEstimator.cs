@@ -1,5 +1,6 @@
 using RustyPainter.Imaging;
 using RustyPainter.Localization;
+using System.Collections.Generic;
 using System;
 
 namespace RustyPainter.Painting;
@@ -12,6 +13,20 @@ public static class PaintTimeEstimator
     /// Counting that in is the difference between an estimate that is close and one that is far too hopeful.
     /// </summary>
     public const double TimerStep = 15.625;
+
+    /// <summary>Roughly how long painting several frames takes: each is set up and painted in turn.</summary>
+    public static TimeSpan Estimate(IReadOnlyList<StrokePlan> frames, PaintTiming timing, ColorMode mode, int scrollOut = 0, bool clearFirst = true)
+    {
+        TimeSpan total = TimeSpan.Zero;
+        for (int i = 0; i < frames.Count; i++)
+        {
+            // The camera and the wheel only happen once, and so does the color mode.
+            TimeSpan one = Estimate(frames[i], timing, mode, i == 0 ? scrollOut : 0, clearFirst);
+            total += i == 0 ? one : one - TimeSpan.FromMilliseconds(Click(timing, timing.CameraReset));
+        }
+
+        return total;
+    }
 
     /// <summary>Roughly how long painting takes. It does not include the time to open the paint screen.</summary>
     /// <param name="strokes">The strokes to paint.</param>

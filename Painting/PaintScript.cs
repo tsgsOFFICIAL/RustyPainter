@@ -24,6 +24,12 @@ public sealed record ClickControlStep(string Control, ScreenPoint At) : PaintSte
 /// <summary>Types a value into a brush setting: clicks the number, types the text, and leaves the field.</summary>
 public sealed record SetBrushValueStep(string Field, ScreenPoint At, string Text) : PaintStep;
 
+/// <summary>Opens a frame of an animated sign by clicking its number.</summary>
+/// <param name="Index">The frame, counted from 0.</param>
+/// <param name="At">The number to click.</param>
+/// <param name="Probe">A point that is green while the frame is the open one, to check the click did its work.</param>
+public sealed record SelectFrameStep(int Index, ScreenPoint At, ScreenPoint Probe) : PaintStep;
+
 /// <summary>Picks a color from the swatch grid.</summary>
 public sealed record SelectSwatchStep(int Index, Rgb Color, ScreenPoint At) : PaintStep;
 
@@ -78,57 +84,108 @@ public static class PaintScriptBuilder
     /// <param name="layout">The surface and its controls for the game's resolution.</param>
     /// <param name="options">How to paint.</param>
     public static PaintScript Build(PaintPlan plan, ResolvedLayout layout, PaintOptions options)
+        => Build([plan], layout, options);
+
+    /// <summary>
+    /// Turns the pictures of an animated sign into the steps that paint them, frame by frame. A surface that does not
+    /// animate takes one plan.
+    /// </summary>
+    /// <param name="plans">The picture of each frame, first to last.</param>
+    /// <param name="layout">The surface and its controls for the game's resolution.</param>
+    /// <param name="options">How to paint.</param>
+    public static PaintScript Build(IReadOnlyList<PaintPlan> plans, ResolvedLayout layout, PaintOptions options)
     {
+        if (plans.Count == 0)
+            throw new System.ArgumentException("There is nothing to paint.", nameof(plans));
+
+        Surface surface = layout.Surface;
+        if (plans.Count > surface.Frames)
+            throw new System.ArgumentException($"The surface '{surface.Id}' has {surface.Frames} frame(s), but {plans.Count} pictures were given.", nameof(plans));
+
         PaintLayout controls = options.Mode == ColorMode.Swatches ? layout.Swatches : layout.Free;
         ScreenRect canvas = layout.Canvas.Offset(options.NudgeX, options.NudgeY);
+        FrameControls? frames = surface.IsAnimated ? controls.Frames ?? throw new System.InvalidOperationException("The paint screen has no frame buttons.") : null;
         List<PaintStep> steps = [];
 
         steps.Add(new ResetCameraStep(controls.ResetCamera.Center));
 
-        if (layout.Surface.ScrollOut > 0)
-            steps.Add(new ScrollOutStep(layout.Surface.ScrollOut));
+        if (surface.ScrollOut > 0)
+            steps.Add(new ScrollOutStep(surface.ScrollOut));
 
         ScreenRect freeToggle = layout.Free.ColorModeToggle;
         steps.Add(new EnsureColorModeStep(options.Mode, layout.Swatches.ColorModeToggle.Center, freeToggle.Center,
             new ScreenPoint(freeToggle.X1 + 0.12 * freeToggle.Width, freeToggle.Y1 + 0.5 * freeToggle.Height)));
         steps.Add(new ClickControlStep("Brush", controls.ToolBrush.Center));
 
+        // Whether clearing wipes one frame or all of them is not something to rely on, so every frame is cleared before any is painted.
         if (options.ClearFirst)
-            steps.Add(new ClickControlStep("Clear", controls.Clear.Center));
-
-        int shape = options.ShapeIndex ?? (controls.Size is null ? 0 : PaintOptions.SquareShape);
-        steps.Add(new ClickControlStep("Brush shape", controls.BrushShapes[System.Math.Clamp(shape, 0, controls.BrushShapes.Length - 1)].Center));
-
-        // Neon signs have fixed brush presets and no numbers to type.
-        if (controls.Size is { } size && controls.Spacing is { } spacing && controls.Opacity is { } opacity)
         {
-            steps.Add(new SetBrushValueStep("Size", size.Center, options.BlockSize.ToString(System.Globalization.CultureInfo.InvariantCulture)));
-            steps.Add(new SetBrushValueStep("Spacing", spacing.Center, options.Spacing.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)));
-            steps.Add(new SetBrushValueStep("Opacity", opacity.Center, options.Opacity.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)));
-        }
-
-        double cellWidth = canvas.Width / plan.Width;
-        double cellHeight = canvas.Height / plan.Height;
-
-        ScreenPoint CenterOf(int x, int y) => new(canvas.X1 + (x + 0.5) * cellWidth, canvas.Y1 + (y + 0.5) * cellHeight);
-
-        foreach (ColorPass pass in plan.Strokes.Passes)
-        {
-            if (options.Mode == ColorMode.Swatches)
+            if (frames is null)
             {
-                ColorGrid grid = controls.ColorGrid ?? throw new System.InvalidOperationException("The swatch layout has no color grid.");
-                steps.Add(new SelectSwatchStep(pass.PaletteIndex, pass.Color, grid.CellCenter(pass.PaletteIndex)));
+                steps.Add(new ClickControlStep("Clear", controls.Clear.Center));
             }
             else
             {
-                FreeColorControls free = controls.FreeColor ?? throw new System.InvalidOperationException("The free color layout has no color controls.");
-                steps.Add(new TypeColorStep(pass.Color, free.ColorHex.Center));
+                for (int frame = 0; frame < plans.Count; frame++)
+                {
+                    steps.Add(SelectFrame(frames, frame));
+                    steps.Add(new ClickControlStep("Clear", controls.Clear.Center));
+                }
+            }
+        }
+
+        for (int frame = 0; frame < plans.Count; frame++)
+        {
+            PaintPlan plan = plans[frame];
+
+            if (frames is not null)
+            {
+                steps.Add(SelectFrame(frames, frame));
+                steps.Add(new ClickControlStep("Brush", controls.ToolBrush.Center));
             }
 
-            foreach (Stroke stroke in pass.Strokes)
-                steps.Add(new PaintStrokeStep(stroke, CenterOf(stroke.X, stroke.Y), CenterOf(stroke.EndX, stroke.EndY)));
+            int shape = options.ShapeIndex ?? (controls.Size is null ? 0 : PaintOptions.SquareShape);
+            steps.Add(new ClickControlStep("Brush shape", controls.BrushShapes[System.Math.Clamp(shape, 0, controls.BrushShapes.Length - 1)].Center));
+
+            // Neon signs have fixed brush presets and no numbers to type.
+            if (controls.Size is { } size && controls.Spacing is { } spacing && controls.Opacity is { } opacity)
+            {
+                steps.Add(new SetBrushValueStep("Size", size.Center, options.BlockSize.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+                steps.Add(new SetBrushValueStep("Spacing", spacing.Center, options.Spacing.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)));
+                steps.Add(new SetBrushValueStep("Opacity", opacity.Center, options.Opacity.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)));
+            }
+
+            double cellWidth = canvas.Width / plan.Width;
+            double cellHeight = canvas.Height / plan.Height;
+
+            ScreenPoint CenterOf(int x, int y) => new(canvas.X1 + (x + 0.5) * cellWidth, canvas.Y1 + (y + 0.5) * cellHeight);
+
+            foreach (ColorPass pass in plan.Strokes.Passes)
+            {
+                if (options.Mode == ColorMode.Swatches)
+                {
+                    ColorGrid grid = controls.ColorGrid ?? throw new System.InvalidOperationException("The swatch layout has no color grid.");
+                    steps.Add(new SelectSwatchStep(pass.PaletteIndex, pass.Color, grid.CellCenter(pass.PaletteIndex)));
+                }
+                else
+                {
+                    FreeColorControls free = controls.FreeColor ?? throw new System.InvalidOperationException("The free color layout has no color controls.");
+                    steps.Add(new TypeColorStep(pass.Color, free.ColorHex.Center));
+                }
+
+                foreach (Stroke stroke in pass.Strokes)
+                    steps.Add(new PaintStrokeStep(stroke, CenterOf(stroke.X, stroke.Y), CenterOf(stroke.EndX, stroke.EndY)));
+            }
         }
 
         return new PaintScript(steps);
+    }
+
+    private static SelectFrameStep SelectFrame(FrameControls frames, int index)
+    {
+        ScreenRect button = frames.Buttons[index];
+
+        // The open frame is the one in a green circle, so a point inside the top of that circle is green when the frame is open.
+        return new SelectFrameStep(index, button.Center, new ScreenPoint(button.Center.X, button.Y1 + 0.18 * button.Height));
     }
 }

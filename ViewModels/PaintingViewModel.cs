@@ -1,3 +1,4 @@
+using System.Linq;
 using RustyPainter.ViewModels.Mvvm;
 using RustyPainter.Localization;
 using RustyPainter.Service.Logging;
@@ -41,10 +42,10 @@ public sealed class PaintingViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
         _startKey = startKey;
         _abortKey = abortKey;
 
-        _estimate = PaintTimeEstimator.Estimate(session.Request.Plan.Strokes, session.Timing, session.Request.Mode,
+        _estimate = PaintTimeEstimator.Estimate(session.Request.Plans.Select(plan => plan.Strokes).ToList(), session.Timing, session.Request.Mode,
             session.Request.Surface.ScrollOut, session.Options.ClearFirst);
 
-        _progress = new PaintProgress(0, 0, 0, session.Request.Plan.StrokeCount);
+        _progress = new PaintProgress(0, 0, 0, session.Request.StrokeCount);
 
         PauseResumeCommand = new RelayCommand(OnPauseResume, () => State is PaintState.Running or PaintState.Paused);
         AbortCommand = new RelayCommand(Abort, () => State is PaintState.Running or PaintState.Paused);
@@ -228,7 +229,7 @@ public sealed class PaintingViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
         try
         {
             ResolvedLayout layout = _surfaces.Resolve(_session.Request.Surface, window);
-            script = PaintScriptBuilder.Build(_session.Request.Plan, layout, _session.Options);
+            script = PaintScriptBuilder.Build(_session.Request.Plans, layout, _session.Options);
         }
         catch (Exception ex)
         {

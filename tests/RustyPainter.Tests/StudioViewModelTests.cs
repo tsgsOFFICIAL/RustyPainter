@@ -28,7 +28,7 @@ public class StudioViewModelTests
     {
         StudioViewModel studio = Create();
 
-        Assert.Equal(13, studio.AllSurfaces.Count);
+        Assert.Equal(16, studio.AllSurfaces.Count);
         Assert.Equal(studio.AllSurfaces[0], studio.SelectedSurface);
         Assert.Equal(studio.AllSurfaces.Count, studio.VisibleSurfaces.Count);
     }
@@ -38,7 +38,7 @@ public class StudioViewModelTests
     {
         StudioViewModel studio = Create();
 
-        Assert.Equal(["All", "Signs", "Canvases", "Frames", "Neon"], studio.Categories.Select(chip => chip.Name));
+        Assert.Equal(["All", "Signs", "Canvases", "Frames", "Neon", "Animated"], studio.Categories.Select(chip => chip.Name));
         Assert.Equal(["All"], studio.Categories.Where(chip => chip.IsSelected).Select(chip => chip.Name));
     }
 

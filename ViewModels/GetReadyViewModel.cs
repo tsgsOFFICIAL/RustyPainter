@@ -1,3 +1,4 @@
+using System.Linq;
 using RustyPainter.ViewModels.Mvvm;
 using RustyPainter.Imaging;
 using RustyPainter.Interface;
@@ -90,14 +91,14 @@ public sealed class GetReadyViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
     /// <summary>What the keys do, in one sentence.</summary>
     public string KeysLine => Loc.Format("GetReadyKeysLine", StartKeyText, AbortKeyText);
 
-    public string StrokesText => Loc.Count("StudioStrokes", Request.Plan.StrokeCount);
+    public string StrokesText => Loc.Count("StudioStrokes", Request.StrokeCount);
     public string ColorsText => Request.Mode == ColorMode.Swatches
-        ? Loc.Count("GetReadySwatches", Request.Plan.ColorsUsed)
-        : Loc.Count("GetReadyTypedColors", Request.Plan.ColorsUsed);
+        ? Loc.Count("GetReadySwatches", Request.ColorsUsed)
+        : Loc.Count("GetReadyTypedColors", Request.ColorsUsed);
 
     /// <summary>A rough time for the whole painting at the chosen pace.</summary>
     public string TimeText => PaintTimeEstimator.Describe(
-        PaintTimeEstimator.Estimate(Request.Plan.Strokes, PaintTiming.FromSpeed((int)Speed), Request.Mode, Request.Surface.ScrollOut, ClearFirst));
+        PaintTimeEstimator.Estimate(Request.Plans.Select(plan => plan.Strokes).ToList(), PaintTiming.FromSpeed((int)Speed), Request.Mode, Request.Surface.ScrollOut, ClearFirst));
 
     /// <summary>How the game has to be set up before the start key is pressed.</summary>
     public string SetupText => Request.Surface.ScrollOut > 0
