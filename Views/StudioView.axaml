@@ -369,7 +369,7 @@
                                 <Image Source="{Binding Image}" Stretch="Uniform" IsVisible="{Binding ShowOriginal}"/>
 
                                 <!-- Split view: the placed picture over the left of the divider, so both sides line up. -->
-                                <Border Width="{Binding SplitWidth}" HorizontalAlignment="Left" ClipToBounds="True"
+                                <Border Width="{Binding SplitWidth}" HorizontalAlignment="Left" ClipToBounds="True" Background="{DynamicResource BorderColor}"
                                         IsVisible="{Binding ShowSplit}" IsHitTestVisible="False">
                                     <Image x:Name="ReferenceImage" Source="{Binding Reference}" Width="{Binding CanvasWidth}"
                                            HorizontalAlignment="Left" Stretch="Fill"/>

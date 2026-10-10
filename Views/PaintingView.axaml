@@ -47,6 +47,8 @@
                     <TextBlock Text="{Binding Detail}" IsVisible="{Binding HasDetail}" FontSize="13" TextWrapping="Wrap"
                                Foreground="{DynamicResource AccentColor}"/>
                     <TextBlock Text="{Binding Hint}" Classes="muted" FontSize="12" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding HotkeyNotice}" IsVisible="{Binding HasHotkeyNotice}" FontSize="12" TextWrapping="Wrap"
+                               Foreground="{DynamicResource DangerColor}"/>
                 </StackPanel>
             </Border>
 

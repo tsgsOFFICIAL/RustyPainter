@@ -28,6 +28,7 @@ public sealed class PaintingViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
     private PaintState _state = PaintState.Idle;
     private PaintProgress _progress;
     private string _detail = "";
+    private string _hotkeyNotice = "";
 
     public PaintingViewModel(PaintSession session, IGameWindowService game, ISurfaceService surfaces, IPaintEngineFactory factory, string startKey, string abortKey)
     {
@@ -113,6 +114,19 @@ public sealed class PaintingViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
     }
 
     public bool HasDetail => Detail.Length > 0;
+
+    /// <summary>Says the hotkeys could not be set up, when that is so.</summary>
+    public string HotkeyNotice
+    {
+        get => _hotkeyNotice;
+        set
+        {
+            if (SetProperty(ref _hotkeyNotice, value))
+                OnPropertyChanged(nameof(HasHotkeyNotice));
+        }
+    }
+
+    public bool HasHotkeyNotice => HotkeyNotice.Length > 0;
 
     /// <summary>What to do next, for the current state.</summary>
     public string Hint => State switch

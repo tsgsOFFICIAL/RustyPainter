@@ -32,11 +32,11 @@ public sealed class AppSettings
     /// <summary>Whether the canvas is cleared before a picture is painted.</summary>
     public bool ClearBeforePainting { get; set; } = true;
 
-    /// <summary>The key that starts, pauses and resumes painting, such as "F8" or "Ctrl+F8". It works while Rust is in front.</summary>
-    public string StartPauseHotkey { get; set; } = "F8";
+    /// <summary>The key that starts, pauses and resumes painting, such as "Space" or "Ctrl+F8". It works while Rust is in front.</summary>
+    public string StartPauseHotkey { get; set; } = "Space";
 
     /// <summary>The key that stops painting for good.</summary>
-    public string AbortHotkey { get; set; } = "F9";
+    public string AbortHotkey { get; set; } = "Esc";
 }
 
 /// <summary>

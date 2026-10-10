@@ -182,7 +182,8 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         _ready = ready;
         CurrentPage = ready;
-        StartHotkeys(keys, ready);
+        // Only the start key is taken while waiting, so Escape and the others still work in the game's own screens.
+        ready.HotkeyProblem = HotkeyProblem(_hotkeys.Start(new Dictionary<HotkeyAction, Hotkey> { [HotkeyAction.StartPause] = keys[HotkeyAction.StartPause] }), keys);
     }
 
     private void StartPainting(PaintSession session)
@@ -201,19 +202,22 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         _painting = painting;
         CurrentPage = painting;
+
+        // Painting uses both keys. They are given back the moment painting is over, so Escape works in the game again.
+        painting.HotkeyNotice = HotkeyProblem(_hotkeys.Start(keys), keys);
+        painting.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(PaintingViewModel.IsOver) && painting.IsOver)
+                _hotkeys.Stop();
+        };
+
         _ = painting.StartAsync();
     }
 
-    private void StartHotkeys(IReadOnlyDictionary<HotkeyAction, Hotkey> keys, GetReadyViewModel ready)
-    {
-        IReadOnlyList<HotkeyAction> failed = _hotkeys.Start(keys);
-
-        if (failed.Count > 0)
-        {
-            ready.HotkeyProblem = $"{string.Join(" and ", failed.Select(action => keys[action].Display))} could not be used because another program already has it. "
-                + "You can still start and stop with the buttons.";
-        }
-    }
+    private static string HotkeyProblem(IReadOnlyList<HotkeyAction> failed, IReadOnlyDictionary<HotkeyAction, Hotkey> keys)
+        => failed.Count == 0
+            ? ""
+            : $"{string.Join(" and ", failed.Select(action => keys[action].Display))} could not be set up. You can still start, pause and stop with the buttons.";
 
     /// <summary>Ends the get-ready or painting page, gives the hotkeys back and stops any painting that is still going.</summary>
     private void CloseSession()

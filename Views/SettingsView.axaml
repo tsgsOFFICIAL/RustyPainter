@@ -42,7 +42,7 @@
 
             <StackPanel Spacing="4">
                 <TextBlock Text="Settings" FontSize="26" FontWeight="Bold" Foreground="{DynamicResource TextColor}"/>
-                <TextBlock Text="Updates and diagnostics." Classes="muted"/>
+                <TextBlock Text="Updates, painting keys and diagnostics." Classes="muted"/>
             </StackPanel>
 
             <!-- Updates -->
@@ -92,6 +92,59 @@
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <iconPacks:PackIconPhosphorIcons Kind="ArrowsClockwise" Width="16" Height="16"/>
                                     <TextBlock Text="Check for updates"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <!-- Painting -->
+            <Border Classes="card">
+                <StackPanel Spacing="0">
+                    <StackPanel Spacing="0" Margin="0,0,0,4">
+                        <TextBlock Text="Painting keys" Classes="sectionTitle"/>
+                        <TextBlock Text="These keys only work while Rust is the window in front. Every other program keeps its keys." Classes="sectionSubtitle"/>
+                    </StackPanel>
+
+                    <Border Classes="settingRow" Margin="0,10,0,0">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Center">
+                                <TextBlock Text="Start, pause and resume" Classes="settingLabel"/>
+                                <TextBlock Text="Click the key, then press the one you want. Letters, numbers, function keys, Space and Esc work." Classes="settingDescription"/>
+                            </StackPanel>
+                            <Button Grid.Column="1" VerticalAlignment="Center" Classes="secondaryButton" MinWidth="120"
+                                    Command="{Binding CaptureStartPauseCommand}" LostFocus="OnCaptureLostFocus">
+                                <TextBlock Text="{Binding StartPauseButtonText}" HorizontalAlignment="Center"/>
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <Border Classes="settingRow">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Center">
+                                <TextBlock Text="Stop" Classes="settingLabel"/>
+                                <TextBlock Text="Ends the painting for good. What is already painted stays on the canvas." Classes="settingDescription"/>
+                            </StackPanel>
+                            <Button Grid.Column="1" VerticalAlignment="Center" Classes="secondaryButton" MinWidth="120"
+                                    Command="{Binding CaptureAbortCommand}" LostFocus="OnCaptureLostFocus">
+                                <TextBlock Text="{Binding AbortButtonText}" HorizontalAlignment="Center"/>
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <Border Classes="settingRow">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0" Margin="0,0,16,0" VerticalAlignment="Center">
+                                <TextBlock Text="Back to the defaults" Classes="settingLabel"/>
+                                <TextBlock Text="{Binding HotkeyMessage}" IsVisible="{Binding HasHotkeyMessage}"
+                                           Classes="settingDescription" Foreground="{DynamicResource DangerColor}"/>
+                            </StackPanel>
+                            <Button Grid.Column="1" VerticalAlignment="Center" Classes="secondaryButton"
+                                    Command="{Binding ResetHotkeysCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <iconPacks:PackIconPhosphorIcons Kind="ArrowCounterClockwise" Width="16" Height="16"/>
+                                    <TextBlock Text="Reset keys"/>
                                 </StackPanel>
                             </Button>
                         </Grid>

@@ -76,8 +76,26 @@ public readonly record struct Hotkey(uint Modifiers, uint VirtualKey)
         return true;
     }
 
+    private static readonly (string Name, uint Key)[] NamedKeys =
+    [
+        ("Space", 0x20), ("Esc", 0x1B), ("Enter", 0x0D), ("Tab", 0x09), ("Backspace", 0x08), ("Insert", 0x2D), ("Delete", 0x2E),
+        ("Home", 0x24), ("End", 0x23), ("PageUp", 0x21), ("PageDown", 0x22), ("Up", 0x26), ("Down", 0x28), ("Left", 0x25), ("Right", 0x27),
+        ("Pause", 0x13)
+    ];
+
+    /// <summary>Whether a Windows virtual key code is one of the keys that can be used.</summary>
+    public static bool IsUsableKey(uint virtualKey)
+        => virtualKey is >= 0x30 and <= 0x39 or >= 0x41 and <= 0x5A or >= 0x70 and <= 0x87 || NamedKeys.Any(named => named.Key == virtualKey);
+
     private static uint? ParseKey(string name)
     {
+        if (name.Equals("Escape", StringComparison.OrdinalIgnoreCase))
+            return 0x1B;
+
+        foreach ((string known, uint key) in NamedKeys)
+            if (known.Equals(name, StringComparison.OrdinalIgnoreCase))
+                return key;
+
         name = name.ToUpperInvariant();
 
         if (name.Length == 1 && name[0] is >= 'A' and <= 'Z')
@@ -93,7 +111,13 @@ public readonly record struct Hotkey(uint Modifiers, uint VirtualKey)
     }
 
     private static string KeyName(uint virtualKey)
-        => virtualKey is >= 0x70 and <= 0x87 ? $"F{virtualKey - 0x6F}" : ((char)virtualKey).ToString();
+    {
+        foreach ((string name, uint key) in NamedKeys)
+            if (key == virtualKey)
+                return name;
+
+        return virtualKey is >= 0x70 and <= 0x87 ? $"F{virtualKey - 0x6F}" : ((char)virtualKey).ToString();
+    }
 }
 
 /// <summary>Listens for hotkeys that work while another program, such as the game, is in front.</summary>
@@ -106,7 +130,8 @@ public interface IHotkeyService : IDisposable
     bool IsActive { get; }
 
     /// <summary>
-    /// Registers the hotkeys, replacing any registered before. While registered no other program gets the keys.
+    /// Starts listening for the hotkeys, replacing any set before. A hotkey is only taken while the game is in front, so no
+    /// other program loses a key.
     /// </summary>
     /// <returns>The actions whose key could not be registered, for example because another program already uses it.</returns>
     IReadOnlyList<HotkeyAction> Start(IReadOnlyDictionary<HotkeyAction, Hotkey> bindings);
@@ -117,13 +142,19 @@ public interface IHotkeyService : IDisposable
 
 public static class HotkeyDefaults
 {
-    public static Hotkey StartPause { get; } = new(0, 0x77);   // F8
+    /// <summary>Space. F8 and the other function keys are bound in the game itself.</summary>
+    public static Hotkey StartPause { get; } = new(0, 0x20);
 
-    public static Hotkey Abort { get; } = new(0, 0x78);        // F9
+    /// <summary>Escape.</summary>
+    public static Hotkey Abort { get; } = new(0, 0x1B);
 
     /// <summary>Reads the two keys from settings text, falling back to the defaults for anything that cannot be read or that clash.</summary>
     public static IReadOnlyDictionary<HotkeyAction, Hotkey> FromSettings(string? startPause, string? abort)
     {
+        // The first versions saved F8 and F9 as the defaults, and F8 is taken in the game, so that pair means "never changed".
+        if (startPause == "F8" && abort == "F9")
+            (startPause, abort) = (null, null);
+
         Hotkey first = Hotkey.TryParse(startPause, out Hotkey a) ? a : StartPause;
         Hotkey second = Hotkey.TryParse(abort, out Hotkey b) ? b : Abort;
 
@@ -132,5 +163,28 @@ public static class HotkeyDefaults
             (first, second) = (StartPause, Abort);
 
         return new Dictionary<HotkeyAction, Hotkey> { [HotkeyAction.StartPause] = first, [HotkeyAction.Abort] = second };
+    }
+}
+
+/// <summary>
+/// Decides what a key press means. Pure, so it can be tested without a keyboard: the hook only has to ask it.
+/// A key is taken only while the game is in front; anywhere else it goes on to the program it was meant for.
+/// </summary>
+public sealed class HotkeyMatcher(IReadOnlyDictionary<HotkeyAction, Hotkey> bindings)
+{
+    /// <summary>The action a key press stands for, or <see langword="null"/> if it is none of the hotkeys.</summary>
+    /// <param name="virtualKey">The key that went down.</param>
+    /// <param name="modifiers">The modifiers that are held, as <see cref="Hotkey.Alt"/>, <see cref="Hotkey.Ctrl"/> and <see cref="Hotkey.Shift"/>.</param>
+    /// <param name="gameInFront">Whether the game is the window in front.</param>
+    public HotkeyAction? Match(uint virtualKey, uint modifiers, bool gameInFront)
+    {
+        if (!gameInFront)
+            return null;
+
+        foreach ((HotkeyAction action, Hotkey key) in bindings)
+            if (key.VirtualKey == virtualKey && key.Modifiers == modifiers)
+                return action;
+
+        return null;
     }
 }

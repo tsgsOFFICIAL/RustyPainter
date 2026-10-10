@@ -73,9 +73,9 @@
                         <TextBlock VerticalAlignment="Center" TextWrapping="Wrap">
                             <Run Text="Press"/>
                             <Run Text="{Binding StartKeyText}" FontWeight="Bold"/>
-                            <Run Text="in Rust to start. Press"/>
+                            <Run Text="in Rust to start. While painting, the same key pauses and resumes and"/>
                             <Run Text="{Binding AbortKeyText}" FontWeight="Bold"/>
-                            <Run Text="to stop at any time. Moving the mouse also pauses."/>
+                            <Run Text="stops. Moving the mouse also pauses. You can change the keys in Settings."/>
                         </TextBlock>
                     </StackPanel>
 

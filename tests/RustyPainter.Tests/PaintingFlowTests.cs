@@ -32,7 +32,6 @@ public class HotkeyTests
     [InlineData("F25")]
     [InlineData("F0")]
     [InlineData("A+B")]
-    [InlineData("Enter")]
     [InlineData("Win+F8")]
     public void Rejects_text_that_is_not_a_hotkey(string? text) => Assert.False(Hotkey.TryParse(text, out _));
 
@@ -47,12 +46,52 @@ public class HotkeyTests
     }
 
     [Fact]
-    public void The_defaults_are_F8_and_F9()
+    public void The_defaults_are_space_and_escape()
     {
         IReadOnlyDictionary<HotkeyAction, Hotkey> keys = HotkeyDefaults.FromSettings(null, null);
 
-        Assert.Equal("F8", keys[HotkeyAction.StartPause].Display);
-        Assert.Equal("F9", keys[HotkeyAction.Abort].Display);
+        Assert.Equal("Space", keys[HotkeyAction.StartPause].Display);
+        Assert.Equal("Esc", keys[HotkeyAction.Abort].Display);
+        Assert.Equal(new Hotkey(0, 0x20), keys[HotkeyAction.StartPause]);
+        Assert.Equal(new Hotkey(0, 0x1B), keys[HotkeyAction.Abort]);
+    }
+
+    [Fact]
+    public void The_first_versions_defaults_of_F8_and_F9_move_to_the_new_ones()
+    {
+        IReadOnlyDictionary<HotkeyAction, Hotkey> keys = HotkeyDefaults.FromSettings("F8", "F9");
+
+        Assert.Equal("Space", keys[HotkeyAction.StartPause].Display);
+        Assert.Equal("Esc", keys[HotkeyAction.Abort].Display);
+
+        // One of them changed on purpose is kept.
+        Assert.Equal("F8", HotkeyDefaults.FromSettings("F8", "Esc")[HotkeyAction.StartPause].Display);
+    }
+
+    [Theory]
+    [InlineData("Space", 0x20u)]
+    [InlineData("space", 0x20u)]
+    [InlineData("Esc", 0x1Bu)]
+    [InlineData("Escape", 0x1Bu)]
+    [InlineData("PageUp", 0x21u)]
+    [InlineData("Ctrl+Space", 0x20u)]
+    public void Reads_the_names_of_the_common_keys(string text, uint key)
+    {
+        Assert.True(Hotkey.TryParse(text, out Hotkey hotkey));
+        Assert.Equal(key, hotkey.VirtualKey);
+    }
+
+    [Fact]
+    public void Only_sensible_keys_can_be_used()
+    {
+        Assert.True(Hotkey.IsUsableKey(0x20));
+        Assert.True(Hotkey.IsUsableKey(0x1B));
+        Assert.True(Hotkey.IsUsableKey('A'));
+        Assert.True(Hotkey.IsUsableKey('7'));
+        Assert.True(Hotkey.IsUsableKey(0x77));
+        Assert.False(Hotkey.IsUsableKey(0x5B));   // the Windows key
+        Assert.False(Hotkey.IsUsableKey(0x10));   // Shift on its own
+        Assert.False(Hotkey.IsUsableKey(0));
     }
 
     [Fact]
@@ -60,7 +99,7 @@ public class HotkeyTests
     {
         IReadOnlyDictionary<HotkeyAction, Hotkey> keys = HotkeyDefaults.FromSettings("nonsense", "Ctrl+F5");
 
-        Assert.Equal("F8", keys[HotkeyAction.StartPause].Display);
+        Assert.Equal("Space", keys[HotkeyAction.StartPause].Display);
         Assert.Equal("Ctrl+F5", keys[HotkeyAction.Abort].Display);
     }
 
@@ -69,40 +108,72 @@ public class HotkeyTests
     {
         IReadOnlyDictionary<HotkeyAction, Hotkey> keys = HotkeyDefaults.FromSettings("F5", "F5");
 
-        Assert.Equal("F8", keys[HotkeyAction.StartPause].Display);
-        Assert.Equal("F9", keys[HotkeyAction.Abort].Display);
+        Assert.Equal("Space", keys[HotkeyAction.StartPause].Display);
+        Assert.Equal("Esc", keys[HotkeyAction.Abort].Display);
+    }
+
+    private static readonly Dictionary<HotkeyAction, Hotkey> Bindings = new()
+    {
+        [HotkeyAction.StartPause] = HotkeyDefaults.StartPause,
+        [HotkeyAction.Abort] = HotkeyDefaults.Abort
+    };
+
+    [Fact]
+    public void A_key_is_only_taken_while_the_game_is_in_front()
+    {
+        HotkeyMatcher matcher = new(Bindings);
+
+        Assert.Equal(HotkeyAction.StartPause, matcher.Match(0x20, 0, gameInFront: true));
+        Assert.Equal(HotkeyAction.Abort, matcher.Match(0x1B, 0, gameInFront: true));
+
+        Assert.Null(matcher.Match(0x20, 0, gameInFront: false));
+        Assert.Null(matcher.Match(0x1B, 0, gameInFront: false));
+    }
+
+    [Fact]
+    public void Other_keys_and_other_modifiers_are_left_alone()
+    {
+        HotkeyMatcher matcher = new(Bindings);
+
+        Assert.Null(matcher.Match('A', 0, gameInFront: true));
+        Assert.Null(matcher.Match(0x20, Hotkey.Ctrl, gameInFront: true));
+        Assert.Null(matcher.Match(0x1B, Hotkey.Shift, gameInFront: true));
+    }
+
+    [Fact]
+    public void A_key_with_modifiers_needs_exactly_those_modifiers()
+    {
+        HotkeyMatcher matcher = new(new Dictionary<HotkeyAction, Hotkey> { [HotkeyAction.Abort] = new Hotkey(Hotkey.Ctrl | Hotkey.Shift, 'Q') });
+
+        Assert.Equal(HotkeyAction.Abort, matcher.Match('Q', Hotkey.Ctrl | Hotkey.Shift, gameInFront: true));
+        Assert.Null(matcher.Match('Q', Hotkey.Ctrl, gameInFront: true));
+        Assert.Null(matcher.Match('Q', 0, gameInFront: true));
     }
 
     /// <summary>
-    /// Registers a real system wide hotkey and lets go of it again. A key nobody uses is picked so nothing in
-    /// the game or anywhere else is disturbed, and no key press is simulated.
+    /// Installs the real keyboard hook and takes it away again. The game is never in front as far as the hook is told,
+    /// so no key is taken and no key press is simulated.
     /// </summary>
     [Fact]
-    public void The_real_service_registers_and_gives_the_key_back()
+    public void The_real_service_installs_the_hook_and_removes_it_again()
     {
-        using GlobalHotkeyService service = new();
-        Dictionary<HotkeyAction, Hotkey> keys = new()
-        {
-            [HotkeyAction.StartPause] = new Hotkey(Hotkey.Ctrl | Hotkey.Alt | Hotkey.Shift, 0x87),
-            [HotkeyAction.Abort] = new Hotkey(Hotkey.Ctrl | Hotkey.Alt | Hotkey.Shift, 0x86)
-        };
+        using GlobalHotkeyService service = new(() => false);
+        bool pressed = false;
+        service.Pressed += _ => pressed = true;
 
-        IReadOnlyList<HotkeyAction> failed = service.Start(keys);
-
-        Assert.Empty(failed);
+        Assert.Empty(service.Start(Bindings));
         Assert.True(service.IsActive);
 
-        // A second service cannot take a key that is already registered, which is how a clash shows up.
-        using GlobalHotkeyService other = new();
-        Assert.Equal(2, other.Start(keys).Count);
-        other.Stop();
+        // It can be started again with other keys, and stopped.
+        Assert.Empty(service.Start(Bindings));
+        Assert.True(service.IsActive);
 
         service.Stop();
         Assert.False(service.IsActive);
+        Assert.False(pressed);
 
-        // Once it was given back anyone can have it again.
-        using GlobalHotkeyService again = new();
-        Assert.Empty(again.Start(keys));
+        // Stopping twice is harmless.
+        service.Stop();
     }
 }
 
@@ -561,8 +632,11 @@ public class PaintingNavigationTests
 
         GetReadyViewModel ready = Assert.IsType<GetReadyViewModel>(shell.CurrentPage);
         Assert.True(hotkeys.IsActive);
-        Assert.Equal("F8", hotkeys.Bindings![HotkeyAction.StartPause].Display);
-        Assert.Equal("F9", hotkeys.Bindings[HotkeyAction.Abort].Display);
+
+        // Waiting only takes the start key, so Escape still works in the game's own screens.
+        KeyValuePair<HotkeyAction, Hotkey> only = Assert.Single(hotkeys.Bindings!);
+        Assert.Equal(HotkeyAction.StartPause, only.Key);
+        Assert.Equal("Space", only.Value.Display);
         Assert.Equal(studio.Plan, ready.Request.Plan);
     }
 
@@ -602,8 +676,8 @@ public class PaintingNavigationTests
         GetReadyViewModel ready = Assert.IsType<GetReadyViewModel>(shell.CurrentPage);
 
         Assert.True(ready.HasHotkeyProblem);
-        Assert.Contains("F8", ready.HotkeyProblem);
-        Assert.DoesNotContain("F9", ready.HotkeyProblem);
+        Assert.Contains("Space", ready.HotkeyProblem);
+        Assert.DoesNotContain("Esc", ready.HotkeyProblem);
     }
 
     [AvaloniaFact]
@@ -629,7 +703,10 @@ public class PaintingNavigationTests
         }
 
         Assert.Equal(PaintState.Finished, painting.State);
-        Assert.True(hotkeys.IsActive);
+
+        // Painting took both keys while it ran, and gave them back the moment it was over.
+        Assert.Equal(2, hotkeys.Bindings!.Count);
+        Assert.False(hotkeys.IsActive);
 
         // Back to studio once it is over.
         painting.DoneCommand.Execute(null);
@@ -674,4 +751,149 @@ public class PaintingNavigationTests
         Assert.IsType<HomeViewModel>(shell.CurrentPage);
         Assert.False(hotkeys.IsActive);
     }
+}
+
+public class PaintingKeySettingsTests
+{
+    private static SettingsViewModel Page(AppSettingsService? settings = null)
+        => new(settings ?? new AppSettingsService(), new UpdateService(), new DialogService());
+
+    [Fact]
+    public void Starts_with_space_and_escape()
+    {
+        SettingsViewModel page = Page();
+
+        Assert.Equal("Space", page.StartPauseKeyText);
+        Assert.Equal("Esc", page.AbortKeyText);
+        Assert.Equal("Space", page.StartPauseButtonText);
+        Assert.Null(page.CapturingAction);
+    }
+
+    [Fact]
+    public void Choosing_a_key_saves_it()
+    {
+        AppSettingsService settings = new();
+        SettingsViewModel page = Page(settings);
+
+        page.CaptureStartPauseCommand.Execute(null);
+        Assert.Equal(HotkeyAction.StartPause, page.CapturingAction);
+        Assert.Equal("Press a key...", page.StartPauseButtonText);
+
+        Assert.True(page.CaptureKey(0x50, 0));   // P
+
+        Assert.Equal("P", page.StartPauseKeyText);
+        Assert.Equal("P", settings.Current.StartPauseHotkey);
+        Assert.Null(page.CapturingAction);
+        Assert.Equal("P", page.StartPauseButtonText);
+    }
+
+    [Fact]
+    public void A_key_with_modifiers_can_be_chosen()
+    {
+        SettingsViewModel page = Page();
+        page.CaptureAbortCommand.Execute(null);
+
+        page.CaptureKey(0x77, Hotkey.Ctrl | Hotkey.Shift);
+
+        Assert.Equal("Ctrl+Shift+F8", page.AbortKeyText);
+    }
+
+    [Fact]
+    public void Keys_pressed_when_nothing_is_being_chosen_are_not_used_up()
+    {
+        SettingsViewModel page = Page();
+
+        Assert.False(page.CaptureKey(0x50, 0));
+        Assert.Equal("Space", page.StartPauseKeyText);
+    }
+
+    [Fact]
+    public void A_key_that_cannot_be_used_is_refused_and_it_keeps_waiting()
+    {
+        SettingsViewModel page = Page();
+        page.CaptureStartPauseCommand.Execute(null);
+
+        Assert.True(page.CaptureKey(0x5B, 0));   // the Windows key
+
+        Assert.True(page.HasHotkeyMessage);
+        Assert.Equal(HotkeyAction.StartPause, page.CapturingAction);
+        Assert.Equal("Space", page.StartPauseKeyText);
+
+        page.CaptureKey(0x4B, 0);
+        Assert.False(page.HasHotkeyMessage);
+        Assert.Equal("K", page.StartPauseKeyText);
+    }
+
+    [Fact]
+    public void The_same_key_cannot_do_both_jobs()
+    {
+        SettingsViewModel page = Page();
+        page.CaptureStartPauseCommand.Execute(null);
+
+        // Escape is the stop key.
+        page.CaptureKey(0x1B, 0);
+
+        Assert.Equal("Space", page.StartPauseKeyText);
+        Assert.Contains("Esc is already used for stopping", page.HotkeyMessage);
+        Assert.Equal(HotkeyAction.StartPause, page.CapturingAction);
+    }
+
+    [Fact]
+    public void Cancelling_leaves_the_key_alone()
+    {
+        SettingsViewModel page = Page();
+        page.CaptureAbortCommand.Execute(null);
+
+        page.CancelCapture();
+
+        Assert.Null(page.CapturingAction);
+        Assert.Equal("Esc", page.AbortKeyText);
+        Assert.Equal("Esc", page.AbortButtonText);
+    }
+
+    [Fact]
+    public void Resetting_brings_the_defaults_back()
+    {
+        AppSettingsService settings = new();
+        SettingsViewModel page = Page(settings);
+        page.CaptureStartPauseCommand.Execute(null);
+        page.CaptureKey(0x50, 0);
+        page.CaptureAbortCommand.Execute(null);
+        page.CaptureKey(0x51, 0);
+
+        page.ResetHotkeysCommand.Execute(null);
+
+        Assert.Equal("Space", page.StartPauseKeyText);
+        Assert.Equal("Esc", page.AbortKeyText);
+        Assert.Equal("Space", settings.Current.StartPauseHotkey);
+        Assert.Equal("Esc", settings.Current.AbortHotkey);
+    }
+
+    [Fact]
+    public void The_chosen_keys_are_what_painting_uses()
+    {
+        AppSettingsService settings = new();
+        SettingsViewModel page = Page(settings);
+        page.CaptureStartPauseCommand.Execute(null);
+        page.CaptureKey(0x50, 0);
+
+        IReadOnlyDictionary<HotkeyAction, Hotkey> keys = HotkeyDefaults.FromSettings(settings.Current.StartPauseHotkey, settings.Current.AbortHotkey);
+
+        Assert.Equal(new Hotkey(0, 0x50), keys[HotkeyAction.StartPause]);
+        Assert.Equal(HotkeyDefaults.Abort, keys[HotkeyAction.Abort]);
+    }
+
+    [Theory]
+    [InlineData(Avalonia.Input.Key.Space, 0x20u)]
+    [InlineData(Avalonia.Input.Key.Escape, 0x1Bu)]
+    [InlineData(Avalonia.Input.Key.A, (uint)'A')]
+    [InlineData(Avalonia.Input.Key.Z, (uint)'Z')]
+    [InlineData(Avalonia.Input.Key.D5, (uint)'5')]
+    [InlineData(Avalonia.Input.Key.F1, 0x70u)]
+    [InlineData(Avalonia.Input.Key.F8, 0x77u)]
+    [InlineData(Avalonia.Input.Key.F24, 0x87u)]
+    [InlineData(Avalonia.Input.Key.PageDown, 0x22u)]
+    [InlineData(Avalonia.Input.Key.LWin, 0u)]
+    public void Turns_pressed_keys_into_windows_keys(Avalonia.Input.Key key, uint expected)
+        => Assert.Equal(expected, RustyPainter.Views.SettingsView.ToVirtualKey(key));
 }

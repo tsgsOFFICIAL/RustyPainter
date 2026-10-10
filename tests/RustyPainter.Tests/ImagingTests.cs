@@ -717,6 +717,21 @@ public class StudioPipelineTests
     }
 
     [Fact]
+    public void The_original_in_the_split_view_is_solid_on_the_background_color()
+    {
+        Rgb background = new(200, 10, 10);
+
+        PaintPlan plan = StudioPipeline.Run(WideRed(), WithBackground(background), 4, 4, Swatches);
+
+        PixelBuffer reference = plan.Reference!;
+        for (int i = 3; i < reference.Data.Length; i += 4)
+            Assert.Equal(255, reference.Data[i]);
+
+        // The empty rows above the picture show the background, not a gap that the result could show through.
+        Assert.Equal((200, 10, 10), (reference.Data[0], reference.Data[1], reference.Data[2]));
+    }
+
+    [Fact]
     public void A_filter_does_not_change_the_background_color()
     {
         Rgb background = new(255, 51, 51);

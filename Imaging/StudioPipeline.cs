@@ -95,7 +95,7 @@ public static class StudioPipeline
             palette = WithExact(palette, exact);
 
         int[] indices = Quantizer.Map(cells, palette, settings.Dithering);
-        PaintPlan plan = new(gridWidth, gridHeight, palette, indices, PlaceOriginal(oriented, settings.Placement, gridWidth, gridHeight));
+        PaintPlan plan = new(gridWidth, gridHeight, palette, indices, PlaceOriginal(oriented, settings.Placement, gridWidth, gridHeight, settings.Background));
 
         // Group the cells into strokes here, on the worker thread, so asking for the count later is instant.
         _ = plan.Strokes;
@@ -149,12 +149,15 @@ public static class StudioPipeline
     /// colors matched and not reduced to the grid, so the brush size does not change how it looks. It has the same
     /// shape as the grid, so it lines up with the plan when both are stretched over the canvas.
     /// </summary>
-    private static PixelBuffer PlaceOriginal(PixelBuffer oriented, PlacementSettings placement, int gridWidth, int gridHeight)
+    private static PixelBuffer PlaceOriginal(PixelBuffer oriented, PlacementSettings placement, int gridWidth, int gridHeight, Rgb? background)
     {
         double scale = Math.Max(1, ReferenceDetail / (double)Math.Max(gridWidth, gridHeight));
         int width = Math.Max(1, (int)Math.Round(gridWidth * scale));
         int height = Math.Max(1, (int)Math.Round(gridHeight * scale));
 
-        return PlacementEngine.Resample(oriented, placement, width, height);
+        PixelBuffer placed = PlacementEngine.Resample(oriented, placement, width, height);
+
+        // With a background chosen the picture sits on it, as it will on the canvas.
+        return background is { } color ? Underlay(placed, color) : placed;
     }
 }
