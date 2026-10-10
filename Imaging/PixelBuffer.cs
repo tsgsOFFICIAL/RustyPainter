@@ -8,6 +8,24 @@ public readonly record struct Rgb(byte R, byte G, byte B)
     /// <summary>The color as "#RRGGBB".</summary>
     public string Hex => $"#{R:X2}{G:X2}{B:X2}";
 
+    /// <summary>Like <see cref="Parse"/>, but gives <see langword="false"/> instead of throwing.</summary>
+    public static bool TryParse(string? hex, out Rgb color)
+    {
+        color = default;
+        if (hex is null)
+            return false;
+
+        try
+        {
+            color = Parse(hex.Trim());
+            return true;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+    }
+
     /// <summary>Reads "#RRGGBB" (the leading # is optional).</summary>
     public static Rgb Parse(string hex)
     {

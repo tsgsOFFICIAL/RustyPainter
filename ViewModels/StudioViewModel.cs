@@ -1,5 +1,6 @@
 using RustyPainter.ViewModels.Mvvm;
 using RustyPainter.Service.Logging;
+using RustyPainter.Service;
 using Avalonia.Media.Imaging;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -13,6 +14,14 @@ using System.IO;
 using System;
 
 namespace RustyPainter.ViewModels;
+
+/// <summary>Where the picture comes from.</summary>
+public enum SourceKind
+{
+    Picture,
+    Link,
+    Text
+}
 
 /// <summary>One entry of the surface picker.</summary>
 /// <param name="Surface">The surface itself.</param>
@@ -54,6 +63,15 @@ public sealed class StudioViewModel : ViewModelBase
     public const string AllCategories = "All";
 
     private readonly ISurfaceService _surfaces;
+    private readonly IPictureDownloader _downloader;
+
+    private string _linkText = "";
+    private bool _isLoadingLink;
+    private CancellationTokenSource? _download;
+    private string _text = "";
+    private string _textColorHex = "#FFFFFF";
+    private string _textBackgroundHex = "#000000";
+    private FontFamily? _textFont;
 
     private SurfaceOption _selectedSurface;
     private string _selectedCategory = AllCategories;
@@ -75,9 +93,27 @@ public sealed class StudioViewModel : ViewModelBase
     private WriteableBitmap? _preview;
     private bool _isBusy;
 
-    public StudioViewModel(ISurfaceService surfaces)
+    public StudioViewModel(ISurfaceService surfaces, IPictureDownloader? downloader = null)
     {
         _surfaces = surfaces;
+        _downloader = downloader ?? new PictureDownloader();
+
+        SourceChoices = new([("Picture", SourceKind.Picture), ("Link", SourceKind.Link), ("Text", SourceKind.Text)], SourceKind.Picture);
+        TextBackgroundChoices = new([("Clear", false), ("Solid", true)], false);
+        TextWeightChoices = new([("Regular", false), ("Bold", true)], true);
+
+        SourceChoices.Changed += () =>
+        {
+            OnPropertyChanged(nameof(IsPictureSource));
+            OnPropertyChanged(nameof(IsLinkSource));
+            OnPropertyChanged(nameof(IsTextSource));
+            if (IsTextSource)
+                RenderText();
+        };
+        TextBackgroundChoices.Changed += () => { OnPropertyChanged(nameof(IsTextBackgroundSolid)); RenderText(); };
+        TextWeightChoices.Changed += RenderText;
+
+        LoadLinkCommand = new RelayCommand(() => _ = TryLoadLinkAsync(LinkText), () => !IsLoadingLink && LinkText.Trim().Length > 0);
 
         AllSurfaces = surfaces.Catalog.Surfaces.Select(surface => new SurfaceOption(surface, CategoryOf(surface))).ToList();
         _selectedSurface = AllSurfaces[0];
@@ -470,6 +506,222 @@ public sealed class StudioViewModel : ViewModelBase
     /// <summary>Tells the user that a drop or paste held nothing usable.</summary>
     public void ReportNothingToLoad() => ErrorText = "There was no picture to load. Drop a PNG, JPG, WebP or BMP file.";
 
+    // ---- picture from a link ----
+
+    /// <summary>The ways to bring in a picture: a file, a web link or typed text.</summary>
+    public ChoiceGroup<SourceKind> SourceChoices { get; }
+
+    public bool IsPictureSource => SourceChoices.Selected == SourceKind.Picture;
+    public bool IsLinkSource => SourceChoices.Selected == SourceKind.Link;
+    public bool IsTextSource => SourceChoices.Selected == SourceKind.Text;
+
+    /// <summary>The web link as typed.</summary>
+    public string LinkText
+    {
+        get => _linkText;
+        set
+        {
+            if (SetProperty(ref _linkText, value ?? ""))
+                LoadLinkCommand.RaiseCanExecuteChanged();
+        }
+    }
+
+    /// <summary>Whether a picture is being fetched from a link.</summary>
+    public bool IsLoadingLink
+    {
+        get => _isLoadingLink;
+        private set
+        {
+            if (SetProperty(ref _isLoadingLink, value))
+                LoadLinkCommand.RaiseCanExecuteChanged();
+        }
+    }
+
+    public RelayCommand LoadLinkCommand { get; }
+
+    /// <summary>
+    /// Fetches the picture a web link points to. On failure the current picture is kept and
+    /// <see cref="ErrorText"/> explains why.
+    /// </summary>
+    /// <returns><see langword="true"/> if the picture was loaded.</returns>
+    public async Task<bool> TryLoadLinkAsync(string link)
+    {
+        if (!TryReadLink(link, out Uri? address))
+        {
+            ErrorText = "That does not look like a web link. It should start with http:// or https://.";
+            return false;
+        }
+
+        _download?.Cancel();
+        CancellationTokenSource cts = new();
+        _download = cts;
+        IsLoadingLink = true;
+        ErrorText = "";
+
+        try
+        {
+            byte[] data = await _downloader.DownloadAsync(address, cts.Token);
+            if (cts.IsCancellationRequested)
+                return false;
+
+            switch (PictureFormatDetector.Detect(data))
+            {
+                case PictureFormat.Gif:
+                    ErrorText = "GIF pictures are not supported. Use a PNG, JPG, WebP or BMP link.";
+                    return false;
+                case PictureFormat.Unknown:
+                    ErrorText = "That link does not lead to a PNG, JPG, WebP or BMP picture.";
+                    return false;
+            }
+
+            using MemoryStream stream = new(data);
+            Show(new Bitmap(stream), NameFromLink(address));
+            return true;
+        }
+        catch (PictureDownloadException ex)
+        {
+            ErrorText = ex.Message;
+            return false;
+        }
+        catch (OperationCanceledException)
+        {
+            return false;
+        }
+        catch (Exception ex)
+        {
+            AppLog.Warn("StudioViewModel", $"Could not use the picture at '{address}'.", ex);
+            ErrorText = "The picture at that link could not be opened.";
+            return false;
+        }
+        finally
+        {
+            if (ReferenceEquals(_download, cts))
+                IsLoadingLink = false;
+        }
+    }
+
+    /// <summary>Accepts "https://...", and also a bare "example.com/picture.png".</summary>
+    private static bool TryReadLink(string text, out Uri address)
+    {
+        text = text.Trim();
+        address = null!;
+
+        if (text.Length == 0 || text.Contains(' '))
+            return false;
+
+        if (!text.Contains("://") && text.Contains('.'))
+            text = "https://" + text;
+
+        if (!Uri.TryCreate(text, UriKind.Absolute, out Uri? parsed) || parsed.Scheme is not ("http" or "https"))
+            return false;
+
+        address = parsed;
+        return true;
+    }
+
+    private static string NameFromLink(Uri address)
+    {
+        string name = Path.GetFileName(address.AbsolutePath);
+        return name.Length > 0 ? Uri.UnescapeDataString(name) : address.Host;
+    }
+
+    // ---- picture from text ----
+
+    public ChoiceGroup<bool> TextBackgroundChoices { get; }
+    public ChoiceGroup<bool> TextWeightChoices { get; }
+
+    public bool IsTextBackgroundSolid => TextBackgroundChoices.Selected;
+
+    /// <summary>The text to turn into a picture.</summary>
+    public string Text
+    {
+        get => _text;
+        set
+        {
+            if (SetProperty(ref _text, value ?? ""))
+                RenderText();
+        }
+    }
+
+    /// <summary>The color of the letters as "#RRGGBB". An unfinished value keeps the last good one in use.</summary>
+    public string TextColorHex
+    {
+        get => _textColorHex;
+        set
+        {
+            if (SetProperty(ref _textColorHex, value ?? ""))
+            {
+                OnPropertyChanged(nameof(TextColorBrush));
+                RenderText();
+            }
+        }
+    }
+
+    /// <summary>The color behind the letters as "#RRGGBB", used when the background is solid.</summary>
+    public string TextBackgroundHex
+    {
+        get => _textBackgroundHex;
+        set
+        {
+            if (SetProperty(ref _textBackgroundHex, value ?? ""))
+            {
+                OnPropertyChanged(nameof(TextBackgroundBrush));
+                RenderText();
+            }
+        }
+    }
+
+    public IBrush TextColorBrush => BrushOf(TextColorHex);
+    public IBrush TextBackgroundBrush => BrushOf(TextBackgroundHex);
+
+    /// <summary>The font used for text pictures. The view hands in the app font.</summary>
+    public FontFamily? TextFont
+    {
+        get => _textFont;
+        set
+        {
+            if (SetProperty(ref _textFont, value))
+                RenderText();
+        }
+    }
+
+    private static IBrush BrushOf(string hex)
+        => Rgb.TryParse(hex, out Rgb color) ? new SolidColorBrush(Avalonia.Media.Color.FromRgb(color.R, color.G, color.B)) : Brushes.Transparent;
+
+    /// <summary>Turns <see cref="Text"/> into the picture, keeping the placement the user has set up.</summary>
+    private void RenderText()
+    {
+        if (!IsTextSource || Text.Trim().Length == 0)
+            return;
+
+        if (!Rgb.TryParse(TextColorHex, out Rgb color))
+            return;
+
+        Rgb? background = null;
+        if (IsTextBackgroundSolid)
+        {
+            if (!Rgb.TryParse(TextBackgroundHex, out Rgb solid))
+                return;
+
+            background = solid;
+        }
+
+        try
+        {
+            // Keep the placement while the text is being edited. A fresh text picture starts fitted, so no letters are cropped.
+            bool editing = ImageName == "Text";
+            Show(TextPicture.Render(Text, new TextPictureSettings(color, background, TextWeightChoices.Selected), TextFont), "Text", keepPlacement: editing);
+
+            if (!editing)
+                PlacementChoices.Select(FitMode.Fit);
+        }
+        catch (Exception ex)
+        {
+            AppLog.Warn("StudioViewModel", "Could not draw the text.", ex);
+            ErrorText = "The text could not be turned into a picture.";
+        }
+    }
+
     // ---- processing ----
 
     /// <summary>
@@ -587,7 +839,7 @@ public sealed class StudioViewModel : ViewModelBase
 
     // ---- housekeeping ----
 
-    private void Show(Bitmap bitmap, string name)
+    private void Show(Bitmap bitmap, string name, bool keepPlacement = false)
     {
         PixelBuffer pixels = BitmapPixels.FromBitmap(bitmap);
 
@@ -598,11 +850,16 @@ public sealed class StudioViewModel : ViewModelBase
 
         _source = pixels;
         _oriented = null;
-        ResetPlacement();
+
+        if (keepPlacement)
+            Changed();
+        else
+            ResetPlacement();
     }
 
     private void ClearImage()
     {
+        _download?.Cancel();
         _pending?.Cancel();
         Image?.Dispose();
         Image = null;

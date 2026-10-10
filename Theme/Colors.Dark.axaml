@@ -16,4 +16,18 @@
          Button.navItem.active for why that combination flashes. Recompute this if
          AccentColor or this theme's BgColor ever change. -->
     <SolidColorBrush x:Key="AccentSurfaceColor"     Color="#342118"/>
+
+    <!-- Text boxes: the Fluent theme reads these, so they follow the app colors instead of the Windows accent. -->
+    <SolidColorBrush x:Key="TextControlBackground"                 Color="#111318"/>
+    <SolidColorBrush x:Key="TextControlBackgroundPointerOver"      Color="#111318"/>
+    <SolidColorBrush x:Key="TextControlBackgroundFocused"          Color="#111318"/>
+    <SolidColorBrush x:Key="TextControlBorderBrush"                Color="#2E3340"/>
+    <SolidColorBrush x:Key="TextControlBorderBrushPointerOver"     Color="#8B92A5"/>
+    <SolidColorBrush x:Key="TextControlBorderBrushFocused"         Color="#F97316"/>
+    <SolidColorBrush x:Key="TextControlForeground"                 Color="#F0F2F7"/>
+    <SolidColorBrush x:Key="TextControlForegroundPointerOver"      Color="#F0F2F7"/>
+    <SolidColorBrush x:Key="TextControlForegroundFocused"          Color="#F0F2F7"/>
+    <SolidColorBrush x:Key="TextControlPlaceholderForeground"      Color="#8B92A5"/>
+    <SolidColorBrush x:Key="TextControlPlaceholderForegroundPointerOver" Color="#8B92A5"/>
+    <SolidColorBrush x:Key="TextControlPlaceholderForegroundFocused" Color="#8B92A5"/>
 </ResourceDictionary>

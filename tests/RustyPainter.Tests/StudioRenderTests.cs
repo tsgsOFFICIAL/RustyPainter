@@ -115,6 +115,39 @@ public class StudioRenderTests : IDisposable
         Assert.False(HasAccent(done), "The spinner should be gone once the picture is ready.");
     }
 
+    [AvaloniaFact]
+    public void The_text_tab_shows_the_text_on_the_canvas()
+    {
+        StudioViewModel studio = new(new SurfaceService());
+        studio.SourceChoices.Select(SourceKind.Text);
+        studio.Text = "RUST\nPAINTER";
+        studio.ColorModeChoices.Select(ColorMode.Free);
+        studio.ProcessNow();
+
+        WriteableBitmap frame = Draw(studio, "studio-text");
+
+        // The letters are white on a clear background, so somewhere on the canvas there must be near white.
+        bool white = false;
+        for (int y = 250; y < 420 && !white; y += 2)
+            for (int x = 500; x < 840 && !white; x += 2)
+            {
+                (byte r, byte g, byte b) = PixelAt(frame, x, y);
+                white = r > 230 && g > 230 && b > 230;
+            }
+
+        Assert.True(white, "Expected white letters on the canvas.");
+    }
+
+    [AvaloniaFact]
+    public void The_link_tab_draws_without_trouble()
+    {
+        StudioViewModel studio = new(new SurfaceService());
+        studio.SourceChoices.Select(SourceKind.Link);
+        studio.LinkText = "https://example.com/picture.png";
+
+        Draw(studio, "studio-link");
+    }
+
     /// <summary>Looks for the orange accent in the top right corner of the preview stage, where the spinner sits.</summary>
     private static bool HasAccent(WriteableBitmap frame)
     {

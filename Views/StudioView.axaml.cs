@@ -3,6 +3,7 @@ using RustyPainter.ViewModels;
 using Avalonia.Interactivity;
 using Avalonia.Controls;
 using Avalonia.Media.Imaging;
+using Avalonia.Media;
 using Avalonia.Input;
 using System.Linq;
 using System;
@@ -34,6 +35,9 @@ public partial class StudioView : UserControl
         // Ctrl+V works anywhere on the page, so listen on the window rather than on a focused control.
         _topLevel = TopLevel.GetTopLevel(this);
         _topLevel?.AddHandler(KeyDownEvent, OnWindowKeyDown, RoutingStrategies.Tunnel);
+
+        if (ViewModel is { } viewModel && this.TryFindResource("Montserrat", out object? font) && font is FontFamily family)
+            viewModel.TextFont = family;
     }
 
     protected override void OnDetachedFromVisualTree(Avalonia.VisualTreeAttachmentEventArgs e)
@@ -69,6 +73,15 @@ public partial class StudioView : UserControl
             viewModel.ReportNothingToLoad();
     }
 
+    private void OnLinkKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter && ViewModel is { } viewModel && viewModel.LoadLinkCommand.CanExecute(null))
+        {
+            viewModel.LoadLinkCommand.Execute(null);
+            e.Handled = true;
+        }
+    }
+
     private void OnCategoryClick(object? sender, RoutedEventArgs e)
     {
         if (ViewModel is { } viewModel && sender is Button { Tag: string category })
@@ -77,7 +90,8 @@ public partial class StudioView : UserControl
 
     private void OnDragOver(object? sender, DragEventArgs e)
     {
-        e.DragEffects = e.DataTransfer.TryGetFiles() is { Length: > 0 } ? DragDropEffects.Copy : DragDropEffects.None;
+        bool usable = e.DataTransfer.TryGetFiles() is { Length: > 0 } || e.DataTransfer.TryGetText() is { Length: > 0 };
+        e.DragEffects = usable ? DragDropEffects.Copy : DragDropEffects.None;
         e.Handled = true;
     }
 
@@ -88,10 +102,12 @@ public partial class StudioView : UserControl
 
         string? path = e.DataTransfer.TryGetFiles()?.Select(file => file.TryGetLocalPath()).FirstOrDefault(p => p is not null);
 
-        if (path is null)
-            viewModel.ReportNothingToLoad();
-        else
+        if (path is not null)
             viewModel.TryLoad(path);
+        else if (e.DataTransfer.TryGetText() is { Length: > 0 } text)
+            _ = viewModel.TryLoadLinkAsync(text);
+        else
+            viewModel.ReportNothingToLoad();
 
         e.Handled = true;
     }
@@ -128,7 +144,13 @@ public partial class StudioView : UserControl
 
             Bitmap? bitmap = await data.TryGetBitmapAsync();
             if (bitmap is not null)
+            {
                 viewModel.Load(bitmap, "Pasted picture");
+                return;
+            }
+
+            if (await data.TryGetTextAsync() is { Length: > 0 } text)
+                await viewModel.TryLoadLinkAsync(text);
             else
                 viewModel.ReportNothingToLoad();
         }

@@ -17,6 +17,7 @@
         <StaticResource x:Key="SliderThumbBackground" ResourceKey="AccentColor"/>
         <StaticResource x:Key="SliderThumbBackgroundPointerOver" ResourceKey="AccentColorHover"/>
         <StaticResource x:Key="SliderThumbBackgroundPressed" ResourceKey="AccentColorHover"/>
+
     </UserControl.Resources>
 
     <UserControl.Styles>
@@ -112,27 +113,11 @@
                         <StackPanel Spacing="12">
                             <TextBlock Text="SOURCE" Classes="eyebrow"/>
 
-                            <Grid Height="130" IsVisible="{Binding NoImage}">
-                                <Rectangle Stroke="{DynamicResource AccentColor}" StrokeThickness="1.5"
-                                           StrokeDashArray="4,4" RadiusX="10" RadiusY="10" Opacity="0.6"/>
-                                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
-                                    <iconPacks:PackIconPhosphorIcons Kind="UploadSimple" Width="30" Height="30"
-                                                                     Foreground="{DynamicResource AccentColor}" HorizontalAlignment="Center"/>
-                                    <TextBlock Text="Drop a picture here" FontWeight="SemiBold" HorizontalAlignment="Center"/>
-                                    <Button Classes="secondaryButton" Click="OnBrowseClick" HorizontalAlignment="Center">
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <iconPacks:PackIconPhosphorIcons Kind="FolderOpen" Width="16" Height="16"/>
-                                            <TextBlock Text="Browse"/>
-                                        </StackPanel>
-                                    </Button>
-                                </StackPanel>
-                            </Grid>
-
                             <StackPanel Spacing="10" IsVisible="{Binding HasImage}">
                                 <Grid ColumnDefinitions="72,*">
-                                    <Border Width="72" Height="54" CornerRadius="8" ClipToBounds="True"
+                                    <Border Width="72" Height="54" CornerRadius="8" ClipToBounds="True" Background="#0C0E12"
                                             BorderBrush="{DynamicResource BorderColor}" BorderThickness="1">
-                                        <Image Source="{Binding Image}" Stretch="UniformToFill"/>
+                                        <Image Source="{Binding Image}" Stretch="Uniform"/>
                                     </Border>
                                     <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Spacing="2">
                                         <TextBlock Text="{Binding ImageName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
@@ -140,7 +125,7 @@
                                     </StackPanel>
                                 </Grid>
                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                    <Button Classes="secondaryButton small" Click="OnBrowseClick">
+                                    <Button Classes="secondaryButton small" Click="OnBrowseClick" IsVisible="{Binding !IsTextSource}">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <iconPacks:PackIconPhosphorIcons Kind="FolderOpen" Width="14" Height="14"/>
                                             <TextBlock Text="Replace"/>
@@ -155,8 +140,63 @@
                                 </StackPanel>
                             </StackPanel>
 
-                            <TextBlock Text="PNG, JPG, WebP or BMP. You can also paste with Ctrl+V."
-                                       Classes="muted" FontSize="11" TextWrapping="Wrap"/>
+                            <ItemsControl Classes="chips" ItemsSource="{Binding SourceChoices.Choices}"/>
+
+                            <!-- A file -->
+                            <StackPanel Spacing="8" IsVisible="{Binding IsPictureSource}">
+                                <Grid Height="130" IsVisible="{Binding NoImage}">
+                                    <Rectangle Stroke="{DynamicResource AccentColor}" StrokeThickness="1.5"
+                                               StrokeDashArray="4,4" RadiusX="10" RadiusY="10" Opacity="0.6"/>
+                                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8">
+                                        <iconPacks:PackIconPhosphorIcons Kind="UploadSimple" Width="30" Height="30"
+                                                                         Foreground="{DynamicResource AccentColor}" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="Drop a picture here" FontWeight="SemiBold" HorizontalAlignment="Center"/>
+                                        <Button Classes="secondaryButton" Click="OnBrowseClick" HorizontalAlignment="Center">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <iconPacks:PackIconPhosphorIcons Kind="FolderOpen" Width="16" Height="16"/>
+                                                <TextBlock Text="Browse"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                                <TextBlock Text="PNG, JPG, WebP or BMP. You can also paste with Ctrl+V."
+                                           Classes="muted" FontSize="11" TextWrapping="Wrap"/>
+                            </StackPanel>
+
+                            <!-- A web link -->
+                            <StackPanel Spacing="8" IsVisible="{Binding IsLinkSource}">
+                                <TextBox Text="{Binding LinkText}" PlaceholderText="Paste a link to a picture" KeyDown="OnLinkKeyDown"/>
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <Button Classes="accentButton small" Command="{Binding LoadLinkCommand}" Content="Load"/>
+                                    <TextBlock Text="Loading..." Classes="muted" FontSize="12" VerticalAlignment="Center"
+                                               IsVisible="{Binding IsLoadingLink}"/>
+                                </StackPanel>
+                                <TextBlock Text="A link straight to a PNG, JPG, WebP or BMP picture."
+                                           Classes="muted" FontSize="11" TextWrapping="Wrap"/>
+                            </StackPanel>
+
+                            <!-- Typed text -->
+                            <StackPanel Spacing="8" IsVisible="{Binding IsTextSource}">
+                                <TextBox Text="{Binding Text}" PlaceholderText="Type something" AcceptsReturn="True"
+                                         TextWrapping="Wrap" MinHeight="70" MaxHeight="140"/>
+                                <TextBlock Text="Letters" Classes="fieldLabel"/>
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8">
+                                    <Border Width="28" Height="28" CornerRadius="6" Background="{Binding TextColorBrush}"
+                                            BorderBrush="{DynamicResource BorderColor}" BorderThickness="1"/>
+                                    <TextBox Grid.Column="1" Text="{Binding TextColorHex}" MaxLength="7" PlaceholderText="#FFFFFF"/>
+                                </Grid>
+                                <ItemsControl Classes="chips" ItemsSource="{Binding TextWeightChoices.Choices}"/>
+                                <TextBlock Text="Background" Classes="fieldLabel"/>
+                                <ItemsControl Classes="chips" ItemsSource="{Binding TextBackgroundChoices.Choices}"/>
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" IsVisible="{Binding IsTextBackgroundSolid}">
+                                    <Border Width="28" Height="28" CornerRadius="6" Background="{Binding TextBackgroundBrush}"
+                                            BorderBrush="{DynamicResource BorderColor}" BorderThickness="1"/>
+                                    <TextBox Grid.Column="1" Text="{Binding TextBackgroundHex}" MaxLength="7" PlaceholderText="#000000"/>
+                                </Grid>
+                                <TextBlock Text="A clear background leaves that part of the sign unpainted."
+                                           Classes="muted" FontSize="11" TextWrapping="Wrap" IsVisible="{Binding !IsTextBackgroundSolid}"/>
+                            </StackPanel>
+
                             <TextBlock Text="{Binding ErrorText}" IsVisible="{Binding HasError}"
                                        Foreground="{DynamicResource DangerColor}" FontSize="12" TextWrapping="Wrap"/>
                         </StackPanel>
