@@ -166,7 +166,7 @@ public sealed class MainWindowViewModel : ViewModelBase
             SidebarPage.Home => _home ??= new HomeViewModel(Sidebar),
             SidebarPage.Studio => GetStudio(),
             SidebarPage.Library => GetLibrary(),
-            SidebarPage.Settings => _settingsPage ??= new SettingsViewModel(_settings, _updates, _dialogs),
+            SidebarPage.Settings => _settingsPage ??= new SettingsViewModel(_settings, _updates, _dialogs, _projects.Root),
             _ => ShowComingSoon(page)
         };
     }
@@ -315,7 +315,7 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     private void ShowOverlay(PaintingViewModel painting)
     {
-        if (_game.Find() is { IsMinimized: false } window)
+        if (_settings.Current.ShowStatusBox && _game.Find() is { IsMinimized: false } window)
             _overlay.Show(painting, OverlayArea(window));
     }
 

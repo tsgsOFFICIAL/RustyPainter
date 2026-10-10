@@ -31,6 +31,14 @@
     <SolidColorBrush x:Key="TextControlPlaceholderForegroundPointerOver" Color="#8B92A5"/>
     <SolidColorBrush x:Key="TextControlPlaceholderForegroundFocused" Color="#8B92A5"/>
 
+    <!-- Toggle switches in the app accent. -->
+    <SolidColorBrush x:Key="ToggleSwitchFillOn"                  Color="#F97316"/>
+    <SolidColorBrush x:Key="ToggleSwitchFillOnPointerOver"       Color="#FB923C"/>
+    <SolidColorBrush x:Key="ToggleSwitchFillOnPressed"           Color="#FB923C"/>
+    <SolidColorBrush x:Key="ToggleSwitchStrokeOn"                Color="#F97316"/>
+    <SolidColorBrush x:Key="ToggleSwitchStrokeOnPointerOver"     Color="#FB923C"/>
+    <SolidColorBrush x:Key="ToggleSwitchStrokeOnPressed"         Color="#FB923C"/>
+
     <!-- Check boxes in the app accent. -->
     <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillChecked"            Color="#F97316"/>
     <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillCheckedPointerOver" Color="#FB923C"/>

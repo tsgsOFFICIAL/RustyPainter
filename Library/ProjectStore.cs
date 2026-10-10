@@ -11,6 +11,9 @@ namespace RustyPainter.Library;
 /// <summary>Keeps projects on disk, one folder each: the settings, the picture and a small picture of the result.</summary>
 public interface IProjectStore
 {
+    /// <summary>The folder the projects are kept in.</summary>
+    string Root { get; }
+
     /// <summary>Every project that can be read, the most recently changed first. Damaged ones are left out.</summary>
     IReadOnlyList<ProjectEntry> List();
 
@@ -50,6 +53,8 @@ public sealed class ProjectStore : IProjectStore
     };
 
     private readonly string _root;
+
+    public string Root => _root;
 
     /// <summary>The folder the projects of the real app live in.</summary>
     public static string DefaultRoot { get; } = Path.Combine(

@@ -29,6 +29,15 @@ public sealed class AppSettings
     /// <summary>How fast painting is, from 1 (slowest, most reliable) to 100 (fastest).</summary>
     public int PaintSpeed { get; set; } = 60;
 
+    /// <summary>Whether the picture is shown over the game on the get-ready page.</summary>
+    public bool ShowHologram { get; set; } = true;
+
+    /// <summary>How solid the picture over the game is, from 10 to 90 percent.</summary>
+    public int HologramStrength { get; set; } = 55;
+
+    /// <summary>Whether the box with the progress is drawn over the game while painting.</summary>
+    public bool ShowStatusBox { get; set; } = true;
+
     /// <summary>The key that starts, pauses and resumes painting, such as "Space" or "Ctrl+F8". It works while Rust is in front.</summary>
     public string StartPauseHotkey { get; set; } = "Space";
 

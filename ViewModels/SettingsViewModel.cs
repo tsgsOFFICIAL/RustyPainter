@@ -3,6 +3,7 @@ using RustyPainter.Service.Logging;
 using RustyPainter.Interface;
 using RustyPainter.Painting;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using System;
 
@@ -25,9 +26,12 @@ public sealed class SettingsViewModel : ViewModelBase
     private string _updateStatusText = "";
     private bool _isUpdateStatusVisible;
     private bool _isCheckingForUpdates;
+    private readonly string _libraryFolder;
 
-    public SettingsViewModel(IAppSettingsService settings, IUpdateService updates, IDialogService dialogs)
+    /// <param name="libraryFolder">The folder the Library keeps projects in, to open from the page. Empty when there is none.</param>
+    public SettingsViewModel(IAppSettingsService settings, IUpdateService updates, IDialogService dialogs, string libraryFolder = "")
     {
+        _libraryFolder = libraryFolder;
         _settings = settings;
         _updates = updates;
         _dialogs = dialogs;
@@ -42,6 +46,8 @@ public sealed class SettingsViewModel : ViewModelBase
         CaptureStartPauseCommand = new RelayCommand(() => BeginCapture(HotkeyAction.StartPause));
         CaptureAbortCommand = new RelayCommand(() => BeginCapture(HotkeyAction.Abort));
         ResetHotkeysCommand = new RelayCommand(ResetHotkeys);
+        ResetPaintingCommand = new RelayCommand(ResetPainting);
+        OpenLibraryFolderCommand = new RelayCommand(OpenLibraryFolder, () => _libraryFolder.Length > 0);
     }
 
     /// <summary>The running version, including any nightly suffix.</summary>
@@ -101,6 +107,103 @@ public sealed class SettingsViewModel : ViewModelBase
             _settings.Save();
             AppLog.ApplyVerbose(value);
         }
+    }
+
+    // ---- painting ----
+
+    /// <summary>How fast painting is to begin with, from 1 (slowest, most reliable) to 100 (fastest).</summary>
+    public double PaintSpeed
+    {
+        get => _settings.Current.PaintSpeed;
+        set
+        {
+            int speed = (int)Math.Round(Math.Clamp(value, 1, 100));
+            if (speed == _settings.Current.PaintSpeed)
+                return;
+
+            _settings.Current.PaintSpeed = speed;
+            _settings.Save();
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(PaintSpeedText));
+        }
+    }
+
+    public string PaintSpeedText => $"{_settings.Current.PaintSpeed}%";
+
+    /// <summary>Whether the get-ready page starts by showing the picture over the game.</summary>
+    public bool ShowHologram
+    {
+        get => _settings.Current.ShowHologram;
+        set
+        {
+            if (value == _settings.Current.ShowHologram)
+                return;
+
+            _settings.Current.ShowHologram = value;
+            _settings.Save();
+            OnPropertyChanged();
+        }
+    }
+
+    /// <summary>How solid the picture over the game is to begin with, from 10 to 90 percent.</summary>
+    public double HologramStrength
+    {
+        get => _settings.Current.HologramStrength;
+        set
+        {
+            int strength = (int)Math.Round(Math.Clamp(value, 10, 90));
+            if (strength == _settings.Current.HologramStrength)
+                return;
+
+            _settings.Current.HologramStrength = strength;
+            _settings.Save();
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(HologramStrengthText));
+        }
+    }
+
+    public string HologramStrengthText => $"{_settings.Current.HologramStrength}%";
+
+    /// <summary>Whether the box with the progress is drawn over the game while painting.</summary>
+    public bool ShowStatusBox
+    {
+        get => _settings.Current.ShowStatusBox;
+        set
+        {
+            if (value == _settings.Current.ShowStatusBox)
+                return;
+
+            _settings.Current.ShowStatusBox = value;
+            _settings.Save();
+            OnPropertyChanged();
+        }
+    }
+
+    public RelayCommand ResetPaintingCommand { get; }
+    public RelayCommand OpenLibraryFolderCommand { get; }
+
+    /// <summary>Puts the speed, the picture over the game, the status box and the painting keys back as they were at the start.</summary>
+    private void ResetPainting()
+    {
+        AppSettings defaults = new();
+        _settings.Current.PaintSpeed = defaults.PaintSpeed;
+        _settings.Current.ShowHologram = defaults.ShowHologram;
+        _settings.Current.HologramStrength = defaults.HologramStrength;
+        _settings.Current.ShowStatusBox = defaults.ShowStatusBox;
+        ResetHotkeys();
+
+        OnPropertyChanged(nameof(PaintSpeed));
+        OnPropertyChanged(nameof(PaintSpeedText));
+        OnPropertyChanged(nameof(ShowHologram));
+        OnPropertyChanged(nameof(HologramStrength));
+        OnPropertyChanged(nameof(HologramStrengthText));
+        OnPropertyChanged(nameof(ShowStatusBox));
+    }
+
+    private void OpenLibraryFolder()
+    {
+        Directory.CreateDirectory(_libraryFolder);
+        Utility.OpenUrl(_libraryFolder);
     }
 
     // ---- painting hotkeys ----

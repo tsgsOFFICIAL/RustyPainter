@@ -35,8 +35,8 @@ public sealed class GetReadyViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
 
     private GameWindow? _window;
     private bool _clearFirst = true;
-    private bool _showHologram = true;
-    private double _hologramOpacity = 55;
+    private bool _showHologram;
+    private double _hologramOpacity;
     private double _speed;
     private double _nudgeX, _nudgeY;
     private string _hotkeyProblem = "";
@@ -54,6 +54,8 @@ public sealed class GetReadyViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
         AbortKeyText = abortKey.Display;
 
         _speed = Math.Clamp(settings.Current.PaintSpeed, 1, 100);
+        _showHologram = settings.Current.ShowHologram;
+        _hologramOpacity = Math.Clamp(settings.Current.HologramStrength, 10, 90);
 
         StartCommand = new RelayCommand(Start, () => IsRustRunning);
         BackCommand = new RelayCommand(() => BackRequested?.Invoke());
