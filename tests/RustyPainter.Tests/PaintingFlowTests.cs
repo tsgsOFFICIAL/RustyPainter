@@ -927,7 +927,7 @@ public class HologramTests
         GetReadyViewModel page = Page(new FakeGame(FakeGame.Rust()), hologram);
 
         Assert.True(hologram.IsShown);
-        Assert.Equal(new ScreenRect(680, 544, 1307, 877), hologram.Area);
+        Assert.Equal(new ScreenRect(669, 537, 1317, 880), hologram.Area);
         Assert.Equal(0.55, hologram.Opacity, 3);
         Assert.Equal((8, 4), (hologram.Picture!.Width, hologram.Picture.Height));
         Assert.Equal(hologram.Area, page.PaintArea);
@@ -940,8 +940,8 @@ public class HologramTests
 
         Page(new FakeGame(FakeGame.Rust(1920, 1080)), hologram);
 
-        Assert.Equal(680 * 0.75, hologram.Area.X1, 6);
-        Assert.Equal(877 * 0.75, hologram.Area.Y2, 6);
+        Assert.Equal(669 * 0.75, hologram.Area.X1, 6);
+        Assert.Equal(880 * 0.75, hologram.Area.Y2, 6);
     }
 
     [AvaloniaFact]
@@ -974,7 +974,7 @@ public class HologramTests
         page.NudgeX = 5;
         page.NudgeY = -3;
 
-        Assert.Equal(new ScreenRect(685, 541, 1312, 874), hologram.Area);
+        Assert.Equal(new ScreenRect(674, 534, 1322, 877), hologram.Area);
 
         // What is painted moves by exactly the same amount.
         PaintSession? session = null;

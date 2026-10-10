@@ -176,14 +176,14 @@ public class SurfaceServiceTests
     [Fact]
     public void Reference_resolution_leaves_the_canvas_unchanged()
     {
-        AssertRect(Service.Resolve(Find("sign-small"), 2560, 1440).Canvas, 680, 544, 1307, 877);
+        AssertRect(Service.Resolve(Find("sign-small"), 2560, 1440).Canvas, 669, 537, 1317, 880);
     }
 
     [Fact]
     public void Scales_canvas_and_controls_to_1080p()
     {
         ResolvedLayout hd = Service.Resolve(Find("sign-small"), 1920, 1080);
-        AssertRect(hd.Canvas, 510, 408, 980.25, 657.75);
+        AssertRect(hd.Canvas, 501.75, 402.75, 987.75, 660);
         Assert.Equal(2463 * 0.75, hd.Swatches.ColorGrid!.CellCenter(63).X, 3);
         Assert.Equal(1182.5 * 0.75, hd.Swatches.ColorGrid.CellCenter(63).Y, 3);
         Assert.Equal(2419 * 0.75, hd.Free.FreeColor!.ColorHex.X1, 3);
@@ -195,8 +195,8 @@ public class SurfaceServiceTests
         GameWindow window = new(1, 1, new ScreenRect(100, 50, 1060, 590), false, true);   // 960x540, 0.375 of the reference
         ResolvedLayout layout = Service.Resolve(Find("sign-small"), window);
 
-        Assert.Equal(100 + 680 * 0.375, layout.Canvas.X1, 3);
-        Assert.Equal(50 + 544 * 0.375, layout.Canvas.Y1, 3);
+        Assert.Equal(100 + 669 * 0.375, layout.Canvas.X1, 3);
+        Assert.Equal(50 + 537 * 0.375, layout.Canvas.Y1, 3);
         Assert.Equal(100 + 2079 * 0.375, layout.Swatches.ColorGrid!.CellCenter(0).X, 3);
         Assert.Equal(50 + 906 * 0.375, layout.Free.FreeColor!.AddColor.Y2, 3);
     }

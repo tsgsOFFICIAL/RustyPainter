@@ -143,7 +143,7 @@
     }
   },
   "surfaces": [
-    { "id": "sign-small", "name": "Small Wooden Sign", "layout": "standard", "texture": { "width": 256, "height": 128 }, "canvas": { "x1": 680, "y1": 544, "x2": 1307, "y2": 877 } },
+    { "id": "sign-small", "name": "Small Wooden Sign", "layout": "standard", "texture": { "width": 256, "height": 128 }, "canvas": { "x1": 669, "y1": 537, "x2": 1317, "y2": 880 } },
     { "id": "sign-medium", "name": "Medium Wooden Sign", "layout": "standard", "texture": { "width": 512, "height": 256 }, "canvas": { "x1": 571, "y1": 502, "x2": 1414, "y2": 934 } },
     { "id": "sign-large", "name": "Large Wooden Sign", "layout": "standard", "canvas": { "x1": 518, "y1": 488, "x2": 1462, "y2": 959 } },
     { "id": "sign-huge", "name": "Huge Wooden Sign", "layout": "standard", "canvas": { "x1": 361, "y1": 506, "x2": 1623, "y2": 930 } },
