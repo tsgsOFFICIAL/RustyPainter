@@ -2,6 +2,12 @@
 
 All notable changes to Rusty Painter are documented here.
 
+## 0.1.1
+
+### Updates
+
+- Test release to check that an installed 0.1.0 can update itself. There are no other changes.
+
 ## 0.1.0
 
 ### App
