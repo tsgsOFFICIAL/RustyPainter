@@ -12,6 +12,15 @@ Load a picture by dragging it in, pasting a link or typing some text, pick a sur
 [![Discord](https://img.shields.io/discord/227048721710317569?logo=discord&logoColor=FFF&label=Discord&labelColor=5865F2)](https://discord.gg/Cddu5aJ)
 [![Support on Ko-fi](https://img.shields.io/badge/Support%20me%20on%20Ko--fi-F16061?logo=ko-fi&logoColor=white)](https://ko-fi.com/tsgsOFFICIAL)
 
+## Features
+
+- Paint pictures, links and typed text onto 13 surfaces: wooden signs, artist canvases, a picture frame and neon signs.
+- Studio with a live preview, a split view against the original, filters, up to 256 colors and a choice between the game's swatches and any color.
+- A hologram of the picture over the game, and a small progress box, so the app does not have to be in view while it paints.
+- Hotkeys that only work while Rust is in front: Space starts, pauses and resumes, Esc stops. Both can be changed.
+- A Library that keeps your projects, with search, rename, copy and delete.
+- English, Danish and Russian, and a light or dark theme (or follow Windows).
+
 ## Requirements
 
 Windows 10 or 11 (64-bit)
