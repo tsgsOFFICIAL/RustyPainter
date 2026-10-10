@@ -1,4 +1,5 @@
 using RustyPainter.ViewModels.Mvvm;
+using RustyPainter.Imaging;
 using RustyPainter.Interface;
 using RustyPainter.Painting;
 using Avalonia.Threading;
@@ -20,29 +21,38 @@ public sealed record PaintSession(PaintRequest Request, PaintOptions Options, Pa
 
 /// <summary>
 /// The page between Studio and the painting itself: it says what is about to happen, checks that Rust is running,
-/// lets the user choose the pace, and waits for the start key.
+/// shows the picture over the game where it will be painted, lets the user choose the pace and nudge the position,
+/// and waits for the start key.
 /// </summary>
 public sealed class GetReadyViewModel : ViewModelBase, IHotkeyTarget, IDisposable
 {
     private readonly IGameWindowService _game;
+    private readonly ISurfaceService _surfaces;
     private readonly IAppSettingsService _settings;
+    private readonly IHologramService _hologram;
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromSeconds(1) };
+    private readonly PixelBuffer _picture;
 
     private GameWindow? _window;
-    private bool _clearFirst;
+    private bool _clearFirst = true;
+    private bool _showHologram = true;
+    private double _hologramOpacity = 55;
     private double _speed;
     private double _nudgeX, _nudgeY;
     private string _hotkeyProblem = "";
 
-    public GetReadyViewModel(PaintRequest request, IGameWindowService game, IAppSettingsService settings, Hotkey startKey, Hotkey abortKey)
+    public GetReadyViewModel(PaintRequest request, IGameWindowService game, ISurfaceService surfaces, IAppSettingsService settings,
+        IHologramService hologram, Hotkey startKey, Hotkey abortKey)
     {
         Request = request;
         _game = game;
+        _surfaces = surfaces;
         _settings = settings;
+        _hologram = hologram;
+        _picture = request.Plan.Render();
         StartKeyText = startKey.Display;
         AbortKeyText = abortKey.Display;
 
-        _clearFirst = settings.Current.ClearBeforePainting;
         _speed = Math.Clamp(settings.Current.PaintSpeed, 1, 100);
 
         StartCommand = new RelayCommand(Start, () => IsRustRunning);
@@ -71,7 +81,7 @@ public sealed class GetReadyViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
     public string AbortKeyText { get; }
 
     public string StrokesText => $"{Request.Plan.StrokeCount:N0} strokes";
-    public string ColorsText => Request.Mode == Imaging.ColorMode.Swatches
+    public string ColorsText => Request.Mode == ColorMode.Swatches
         ? $"{Request.Plan.ColorsUsed} swatches"
         : $"{Request.Plan.ColorsUsed} typed colors";
 
@@ -96,7 +106,8 @@ public sealed class GetReadyViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
     public void Refresh()
     {
         GameWindow? found = _game.Find();
-        bool changed = (found is null) != (_window is null) || found?.Width != _window?.Width || found?.Height != _window?.Height;
+        bool changed = (found is null) != (_window is null) || found?.Width != _window?.Width || found?.Height != _window?.Height
+            || found?.Client != _window?.Client;
         _window = found;
 
         if (!changed)
@@ -105,22 +116,77 @@ public sealed class GetReadyViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
         OnPropertyChanged(nameof(IsRustRunning));
         OnPropertyChanged(nameof(RustText));
         StartCommand.RaiseCanExecuteChanged();
+        UpdateHologram();
+    }
+
+    // ---- the picture over the game ----
+
+    /// <summary>Whether the picture is shown over the game where it will be painted.</summary>
+    public bool ShowHologram
+    {
+        get => _showHologram;
+        set
+        {
+            if (SetProperty(ref _showHologram, value))
+                UpdateHologram();
+        }
+    }
+
+    /// <summary>How solid the picture over the game is, from 10 to 90 percent.</summary>
+    public double HologramOpacity
+    {
+        get => _hologramOpacity;
+        set
+        {
+            if (!SetProperty(ref _hologramOpacity, Math.Round(Math.Clamp(value, 10, 90))))
+                return;
+
+            OnPropertyChanged(nameof(HologramOpacityText));
+            UpdateHologram();
+        }
+    }
+
+    public string HologramOpacityText => $"{HologramOpacity:0}%";
+
+    /// <summary>The place on screen the painting goes, with the fine tuning counted in. Empty while Rust is not running.</summary>
+    public ScreenRect? PaintArea
+    {
+        get
+        {
+            if (_window is null)
+                return null;
+
+            try
+            {
+                return _surfaces.Resolve(Request.Surface, _window).Canvas.Offset(NudgeX, NudgeY);
+            }
+            catch (ArgumentException)
+            {
+                return null;
+            }
+        }
+    }
+
+    private void UpdateHologram()
+    {
+        if (ShowHologram && PaintArea is { } area)
+            _hologram.Show(_picture, area, HologramOpacity / 100);
+        else
+            _hologram.Hide();
     }
 
     // ---- options ----
 
-    /// <summary>Whether the canvas is cleared first. Leave it off to paint over what is there.</summary>
+    /// <summary>
+    /// Whether the canvas is cleared first. It is on every time, because painting over an old picture is rarely wanted.
+    /// </summary>
     public bool ClearFirst
     {
         get => _clearFirst;
         set
         {
-            if (!SetProperty(ref _clearFirst, value))
-                return;
-
-            _settings.Current.ClearBeforePainting = value;
-            _settings.Save();
-            OnPropertyChanged(nameof(TimeText));
+            if (SetProperty(ref _clearFirst, value))
+                OnPropertyChanged(nameof(TimeText));
         }
     }
 
@@ -148,8 +214,11 @@ public sealed class GetReadyViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
         get => _nudgeX;
         set
         {
-            if (SetProperty(ref _nudgeX, Math.Round(Math.Clamp(value, -30, 30))))
-                OnPropertyChanged(nameof(NudgeXText));
+            if (!SetProperty(ref _nudgeX, Math.Round(Math.Clamp(value, -30, 30))))
+                return;
+
+            OnPropertyChanged(nameof(NudgeXText));
+            UpdateHologram();
         }
     }
 
@@ -159,15 +228,18 @@ public sealed class GetReadyViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
         get => _nudgeY;
         set
         {
-            if (SetProperty(ref _nudgeY, Math.Round(Math.Clamp(value, -30, 30))))
-                OnPropertyChanged(nameof(NudgeYText));
+            if (!SetProperty(ref _nudgeY, Math.Round(Math.Clamp(value, -30, 30))))
+                return;
+
+            OnPropertyChanged(nameof(NudgeYText));
+            UpdateHologram();
         }
     }
 
     public string NudgeXText => $"{NudgeX:+0;-0;0} px";
     public string NudgeYText => $"{NudgeY:+0;-0;0} px";
 
-    /// <summary>Says a hotkey could not be registered, for example because another program has it.</summary>
+    /// <summary>Says a hotkey could not be set up, for example because another program has it.</summary>
     public string HotkeyProblem
     {
         get => _hotkeyProblem;
@@ -190,9 +262,16 @@ public sealed class GetReadyViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
 
     private void Start()
     {
+        // The picture must be gone before the first stroke, or it would be painted over.
+        _hologram.Hide();
+
         PaintOptions options = new(Request.Mode, Request.BlockSize, ClearFirst, NudgeX: NudgeX, NudgeY: NudgeY);
         StartRequested?.Invoke(new PaintSession(Request, options, PaintTiming.FromSpeed((int)Speed)));
     }
 
-    public void Dispose() => _timer.Stop();
+    public void Dispose()
+    {
+        _timer.Stop();
+        _hologram.Hide();
+    }
 }

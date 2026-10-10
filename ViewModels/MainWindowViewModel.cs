@@ -25,6 +25,7 @@ public sealed class MainWindowViewModel : ViewModelBase
     private readonly IGameWindowService _game;
     private readonly IHotkeyService _hotkeys;
     private readonly IPaintEngineFactory _engines;
+    private readonly IHologramService _hologram;
 
     private HomeViewModel? _home;
     private StudioViewModel? _studio;
@@ -37,12 +38,13 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     /// <summary>Creates the shell, its sidebar, and the initial Home page.</summary>
     public MainWindowViewModel(IUpdateService updates, IDialogService dialogs, IAppSettingsService settings, ISurfaceService surfaces,
-        IGameWindowService game, IHotkeyService hotkeys, IPaintEngineFactory engines)
+        IGameWindowService game, IHotkeyService hotkeys, IPaintEngineFactory engines, IHologramService hologram)
     {
         _settings = settings;
         _game = game;
         _hotkeys = hotkeys;
         _engines = engines;
+        _hologram = hologram;
         _hotkeys.Pressed += action => Dispatcher.UIThread.Post(() => RouteHotkey(action));
         _updates = updates;
         _dialogs = dialogs;
@@ -176,7 +178,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         CloseSession();
 
         IReadOnlyDictionary<HotkeyAction, Hotkey> keys = HotkeyDefaults.FromSettings(_settings.Current.StartPauseHotkey, _settings.Current.AbortHotkey);
-        GetReadyViewModel ready = new(request, _game, _settings, keys[HotkeyAction.StartPause], keys[HotkeyAction.Abort]);
+        GetReadyViewModel ready = new(request, _game, _surfaces, _settings, _hologram, keys[HotkeyAction.StartPause], keys[HotkeyAction.Abort]);
         ready.BackRequested += () => Navigate(SidebarPage.Studio);
         ready.StartRequested += StartPainting;
 

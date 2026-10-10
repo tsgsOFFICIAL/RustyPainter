@@ -48,7 +48,10 @@ public static class PaintTimeEstimator
             return $"About {Math.Round(time.TotalSeconds / 5) * 5:0} seconds";
 
         if (time < TimeSpan.FromMinutes(90))
-            return $"About {Math.Round(time.TotalMinutes):0} minutes";
+        {
+            double minutes = Math.Round(time.TotalMinutes);
+            return minutes == 1 ? "About 1 minute" : $"About {minutes:0} minutes";
+        }
 
         return $"About {time.TotalHours:0.0} hours";
     }

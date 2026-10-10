@@ -36,6 +36,7 @@ namespace RustyPainter
             IGameWindowService game = services.GetRequiredService<IGameWindowService>();
             IHotkeyService hotkeys = services.GetRequiredService<IHotkeyService>();
             IPaintEngineFactory engines = services.GetRequiredService<IPaintEngineFactory>();
+            IHologramService hologram = services.GetRequiredService<IHologramService>();
             IDialogService dialogs = services.GetRequiredService<IDialogService>();
             ISurfaceService surfaces = services.GetRequiredService<ISurfaceService>();
 
@@ -46,7 +47,7 @@ namespace RustyPainter
             AppLog.ApplyRetention(settings.Current.LogRetentionDays);
             AppLog.ApplyVerbose(settings.Current.VerboseLogging);
 
-            MainWindowViewModel viewModel = new(updates, dialogs, settings, surfaces, game, hotkeys, engines);
+            MainWindowViewModel viewModel = new(updates, dialogs, settings, surfaces, game, hotkeys, engines, hologram);
 
             if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
                 desktop.MainWindow = new MainWindow(viewModel);

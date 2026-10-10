@@ -95,3 +95,29 @@ internal sealed class FakeEngines(FakeMachine machine) : IPaintEngineFactory
             return Task.CompletedTask;
         });
 }
+
+/// <summary>Remembers what would be shown over the game.</summary>
+internal sealed class FakeHologram : IHologramService
+{
+    public bool IsShown { get; private set; }
+    public PixelBuffer? Picture { get; private set; }
+    public ScreenRect Area { get; private set; }
+    public double Opacity { get; private set; }
+    public int Shows { get; private set; }
+    public int Hides { get; private set; }
+
+    public void Show(PixelBuffer picture, ScreenRect area, double opacity)
+    {
+        IsShown = true;
+        Picture = picture;
+        Area = area;
+        Opacity = opacity;
+        Shows++;
+    }
+
+    public void Hide()
+    {
+        IsShown = false;
+        Hides++;
+    }
+}

@@ -53,31 +53,31 @@
                 <StackPanel Spacing="12">
                     <TextBlock Text="BEFORE YOU START" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextMutedColor}"/>
 
-                    <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
                         <iconPacks:PackIconPhosphorIcons Kind="CheckCircleFill" Width="18" Height="18"
                                                          Foreground="{DynamicResource SuccessColor}" IsVisible="{Binding IsRustRunning}"/>
                         <iconPacks:PackIconPhosphorIcons Kind="XCircleFill" Width="18" Height="18"
                                                          Foreground="{DynamicResource DangerColor}" IsVisible="{Binding !IsRustRunning}"/>
-                        <TextBlock Text="{Binding RustText}" VerticalAlignment="Center" TextWrapping="Wrap"/>
-                    </StackPanel>
+                        <TextBlock Grid.Column="1" Text="{Binding RustText}" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                    </Grid>
 
-                    <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
                         <iconPacks:PackIconPhosphorIcons Kind="ArrowCircleRight" Width="18" Height="18"
                                                          Foreground="{DynamicResource AccentColor}"/>
-                        <TextBlock Text="{Binding SetupText}" VerticalAlignment="Center" TextWrapping="Wrap"/>
-                    </StackPanel>
+                        <TextBlock Grid.Column="1" Text="{Binding SetupText}" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                    </Grid>
 
-                    <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
                         <iconPacks:PackIconPhosphorIcons Kind="Keyboard" Width="18" Height="18"
                                                          Foreground="{DynamicResource AccentColor}"/>
-                        <TextBlock VerticalAlignment="Center" TextWrapping="Wrap">
+                        <TextBlock Grid.Column="1" VerticalAlignment="Center" TextWrapping="Wrap">
                             <Run Text="Press"/>
                             <Run Text="{Binding StartKeyText}" FontWeight="Bold"/>
                             <Run Text="in Rust to start. While painting, the same key pauses and resumes and"/>
                             <Run Text="{Binding AbortKeyText}" FontWeight="Bold"/>
                             <Run Text="stops. Moving the mouse also pauses. You can change the keys in Settings."/>
                         </TextBlock>
-                    </StackPanel>
+                    </Grid>
 
                     <TextBlock Text="{Binding HotkeyProblem}" IsVisible="{Binding HasHotkeyProblem}"
                                Foreground="{DynamicResource DangerColor}" FontSize="12" TextWrapping="Wrap"/>
@@ -90,6 +90,16 @@
                     <TextBlock Text="OPTIONS" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextMutedColor}"/>
 
                     <CheckBox Content="Clear the canvas first" IsChecked="{Binding ClearFirst}"/>
+
+                    <CheckBox Content="Show the picture over the game, where it will be painted" IsChecked="{Binding ShowHologram}"/>
+
+                    <StackPanel Spacing="0" IsVisible="{Binding ShowHologram}">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="Picture strength" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextMutedColor}"/>
+                            <TextBlock Grid.Column="1" Text="{Binding HologramOpacityText}" FontSize="12"/>
+                        </Grid>
+                        <Slider Minimum="10" Maximum="90" Value="{Binding HologramOpacity}"/>
+                    </StackPanel>
 
                     <StackPanel Spacing="0">
                         <Grid ColumnDefinitions="*,Auto">
@@ -115,7 +125,7 @@
                             <TextBlock Grid.Column="1" Text="{Binding NudgeYText}" FontSize="12"/>
                         </Grid>
                         <Slider Minimum="-30" Maximum="30" Value="{Binding NudgeY}"/>
-                        <TextBlock Text="Only needed if the painting sits a few pixels off the edge of the canvas."
+                        <TextBlock Text="Moves the picture shown over the game, and the painting with it. Only needed if it sits a few pixels off the edge of the canvas."
                                    Classes="muted" FontSize="11" TextWrapping="Wrap"/>
                     </StackPanel>
                 </StackPanel>

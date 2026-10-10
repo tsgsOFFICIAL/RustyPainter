@@ -244,6 +244,8 @@ public class PaintTimeEstimatorTests
     [Theory]
     [InlineData(4, "A few seconds")]
     [InlineData(30, "About 30 seconds")]
+    [InlineData(60, "About 1 minute")]
+    [InlineData(80, "About 1 minute")]
     [InlineData(240, "About 4 minutes")]
     [InlineData(5340, "About 89 minutes")]
     public void Describes_a_time_in_words(int seconds, string text)
@@ -268,10 +270,10 @@ public class GetReadyTests
         return new PaintRequest(new PaintPlan(8, 4, swatches, cells), surface, mode, 8, "cat.png");
     }
 
-    private static GetReadyViewModel Page(FakeGame game, AppSettingsService? settings = null, PaintRequest? request = null)
+    private static GetReadyViewModel Page(FakeGame game, AppSettingsService? settings = null, PaintRequest? request = null, FakeHologram? hologram = null)
     {
         settings ??= new AppSettingsService();
-        return new GetReadyViewModel(request ?? Request(), game, settings, new Hotkey(0, 0x77), new Hotkey(0, 0x78));
+        return new GetReadyViewModel(request ?? Request(), game, new SurfaceService(), settings, hologram ?? new FakeHologram(), new Hotkey(0, 0x77), new Hotkey(0, 0x78));
     }
 
     [AvaloniaFact]
@@ -347,20 +349,22 @@ public class GetReadyTests
     }
 
     [AvaloniaFact]
-    public void The_choices_are_remembered_in_the_settings()
+    public void The_speed_is_remembered_but_clearing_is_on_every_time()
     {
         AppSettingsService settings = new();
         GetReadyViewModel page = Page(new FakeGame(FakeGame.Rust()), settings);
 
+        Assert.True(page.ClearFirst);
         page.ClearFirst = false;
         page.Speed = 35;
 
-        Assert.False(settings.Current.ClearBeforePainting);
         Assert.Equal(35, settings.Current.PaintSpeed);
 
         GetReadyViewModel next = Page(new FakeGame(FakeGame.Rust()), settings);
-        Assert.False(next.ClearFirst);
         Assert.Equal(35, next.Speed);
+
+        // The canvas is cleared again unless that is turned off for this painting.
+        Assert.True(next.ClearFirst);
     }
 
     [AvaloniaFact]
@@ -600,10 +604,10 @@ public class PaintingPageTests
 
 public class PaintingNavigationTests
 {
-    private static MainWindowViewModel Shell(FakeGame game, FakeHotkeys hotkeys, FakeMachine machine)
+    private static MainWindowViewModel Shell(FakeGame game, FakeHotkeys hotkeys, FakeMachine machine, FakeHologram? hologram = null)
     {
         AppSettingsService settings = new();
-        return new MainWindowViewModel(new UpdateService(), new DialogService(), settings, new SurfaceService(), game, hotkeys, new FakeEngines(machine));
+        return new MainWindowViewModel(new UpdateService(), new DialogService(), settings, new SurfaceService(), game, hotkeys, new FakeEngines(machine), hologram ?? new FakeHologram());
     }
 
     private static StudioViewModel PreparedStudio(MainWindowViewModel shell)
@@ -896,4 +900,147 @@ public class PaintingKeySettingsTests
     [InlineData(Avalonia.Input.Key.LWin, 0u)]
     public void Turns_pressed_keys_into_windows_keys(Avalonia.Input.Key key, uint expected)
         => Assert.Equal(expected, RustyPainter.Views.SettingsView.ToVirtualKey(key));
+}
+
+public class HologramTests
+{
+    private static PaintRequest Request(string surfaceId = "sign-small")
+    {
+        SurfaceService surfaces = new();
+        Surface surface = surfaces.Catalog.Surfaces.Single(s => s.Id == surfaceId);
+        IReadOnlyList<Rgb> swatches = surfaces.Catalog.Layouts[surface.Layout].Swatches.ColorGrid!.Colors.Select(Rgb.Parse).ToList();
+        int[] cells = new int[8 * 4];
+        for (int i = 0; i < cells.Length; i++)
+            cells[i] = i % 8 < 4 ? 1 : Quantizer.Unpainted;
+
+        return new PaintRequest(new PaintPlan(8, 4, swatches, cells), surface, ColorMode.Swatches, 8, "cat.png");
+    }
+
+    private static GetReadyViewModel Page(FakeGame game, FakeHologram hologram, PaintRequest? request = null)
+        => new(request ?? Request(), game, new SurfaceService(), new AppSettingsService(), hologram, new Hotkey(0, 0x20), new Hotkey(0, 0x1B));
+
+    [AvaloniaFact]
+    public void The_picture_is_shown_over_the_game_where_it_will_be_painted()
+    {
+        FakeHologram hologram = new();
+
+        GetReadyViewModel page = Page(new FakeGame(FakeGame.Rust()), hologram);
+
+        Assert.True(hologram.IsShown);
+        Assert.Equal(new ScreenRect(680, 544, 1307, 877), hologram.Area);
+        Assert.Equal(0.55, hologram.Opacity, 3);
+        Assert.Equal((8, 4), (hologram.Picture!.Width, hologram.Picture.Height));
+        Assert.Equal(hologram.Area, page.PaintArea);
+    }
+
+    [AvaloniaFact]
+    public void The_area_follows_the_game_resolution()
+    {
+        FakeHologram hologram = new();
+
+        Page(new FakeGame(FakeGame.Rust(1920, 1080)), hologram);
+
+        Assert.Equal(680 * 0.75, hologram.Area.X1, 6);
+        Assert.Equal(877 * 0.75, hologram.Area.Y2, 6);
+    }
+
+    [AvaloniaFact]
+    public void Nothing_is_shown_while_rust_is_not_running_and_it_appears_when_it_does()
+    {
+        FakeHologram hologram = new();
+        FakeGame game = new(null);
+        GetReadyViewModel page = Page(game, hologram);
+
+        Assert.False(hologram.IsShown);
+        Assert.Null(page.PaintArea);
+
+        game.Window = FakeGame.Rust();
+        page.Refresh();
+
+        Assert.True(hologram.IsShown);
+
+        game.Window = null;
+        page.Refresh();
+
+        Assert.False(hologram.IsShown);
+    }
+
+    [AvaloniaFact]
+    public void The_fine_tuning_moves_the_picture_with_the_painting()
+    {
+        FakeHologram hologram = new();
+        GetReadyViewModel page = Page(new FakeGame(FakeGame.Rust()), hologram);
+
+        page.NudgeX = 5;
+        page.NudgeY = -3;
+
+        Assert.Equal(new ScreenRect(685, 541, 1312, 874), hologram.Area);
+
+        // What is painted moves by exactly the same amount.
+        PaintSession? session = null;
+        page.StartRequested += s => session = s;
+        page.StartCommand.Execute(null);
+        Assert.Equal((5d, -3d), (session!.Options.NudgeX, session.Options.NudgeY));
+    }
+
+    [AvaloniaFact]
+    public void The_picture_can_be_turned_off_and_its_strength_changed()
+    {
+        FakeHologram hologram = new();
+        GetReadyViewModel page = Page(new FakeGame(FakeGame.Rust()), hologram);
+
+        page.HologramOpacity = 80;
+        Assert.Equal(0.8, hologram.Opacity, 3);
+        Assert.Equal("80%", page.HologramOpacityText);
+
+        page.HologramOpacity = 500;
+        Assert.Equal(90, page.HologramOpacity);
+
+        page.ShowHologram = false;
+        Assert.False(hologram.IsShown);
+
+        page.ShowHologram = true;
+        Assert.True(hologram.IsShown);
+    }
+
+    [AvaloniaFact]
+    public void The_picture_is_gone_before_the_first_stroke_and_when_the_page_is_left()
+    {
+        FakeHologram hologram = new();
+        GetReadyViewModel page = Page(new FakeGame(FakeGame.Rust()), hologram);
+        bool shownAtStart = true;
+        page.StartRequested += _ => shownAtStart = hologram.IsShown;
+
+        page.StartCommand.Execute(null);
+
+        Assert.False(shownAtStart);
+
+        GetReadyViewModel other = Page(new FakeGame(FakeGame.Rust()), hologram);
+        Assert.True(hologram.IsShown);
+
+        other.Dispose();
+        Assert.False(hologram.IsShown);
+    }
+
+    [AvaloniaFact]
+    public void The_window_that_shows_it_takes_a_picture_and_a_place()
+    {
+        RustyPainter.Windows.HologramWindow window = new();
+        PixelBuffer picture = PixelBuffer.Solid(2, 2, 10, 20, 30);
+
+        using var bitmap = BitmapPixels.ToBitmap(picture);
+        window.Image = bitmap;
+        window.PictureOpacity = 0.4;
+        window.MoveTo(new Avalonia.PixelRect(100, 200, 640, 320));
+        window.Show();
+
+        Assert.Equal(new Avalonia.PixelPoint(100, 200), window.Position);
+        Assert.Equal(640 / window.RenderScaling, window.Width, 3);
+        Assert.Equal(320 / window.RenderScaling, window.Height, 3);
+        Assert.Equal(0.4, window.PictureOpacity, 3);
+        Assert.True(window.Topmost);
+        Assert.False(window.ShowInTaskbar);
+
+        window.Close();
+    }
 }
