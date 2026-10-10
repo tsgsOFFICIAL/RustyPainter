@@ -148,7 +148,7 @@
     { "id": "sign-large", "name": "Large Wooden Sign", "layout": "standard", "texture": { "width": 512, "height": 256 }, "canvas": { "x1": 517, "y1": 478, "x2": 1472, "y2": 962 } },
     { "id": "sign-huge", "name": "Huge Wooden Sign", "layout": "standard", "texture": { "width": 1024, "height": 256 }, "canvas": { "x1": 358, "y1": 500, "x2": 1630, "y2": 933 } },
     { "id": "canvas-large", "name": "Artist Canvas Large", "layout": "standard", "texture": { "width": 320, "height": 240 }, "canvas": { "x1": 344, "y1": 180, "x2": 1640, "y2": 1260 } },
-    { "id": "canvas-xl", "name": "Artist Canvas XL", "layout": "standard", "canvas": { "x1": 407, "y1": 142, "x2": 1564, "y2": 1311 } },
+    { "id": "canvas-xl", "name": "Artist Canvas XL", "layout": "standard", "texture": { "width": 512, "height": 512 }, "canvas": { "x1": 408, "y1": 142, "x2": 1564, "y2": 1298 } },
     { "id": "canvas-standing", "name": "Artist Canvas Standing", "layout": "standard", "texture": { "width": 256, "height": 640 }, "canvas": { "x1": 811, "y1": 268, "x2": 1173, "y2": 1172 } },
     { "id": "canvas-small", "name": "Artist Canvas Small", "layout": "standard", "scrollOut": 6, "canvas": { "x1": 550, "y1": 132, "x2": 1434, "y2": 1308 } },
     { "id": "canvas-xxl", "name": "Artist Canvas XXL", "layout": "standard", "scrollOut": 11, "canvas": { "x1": 137, "y1": 292, "x2": 1850, "y2": 1149 } },
