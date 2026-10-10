@@ -357,5 +357,7 @@
   "AboutLinksSubtitle": "Ask a question, report a problem, read the code or support the project.",
   "AboutNoChangelog": "The changelog could not be read.",
   "ChangelogTitle": "Changelog",
-  "Close": "Close"
+  "Close": "Close",
+  "ImageLoading": "Loading image...",
+  "ImageFailed": "The image could not be loaded."
 }

@@ -12,7 +12,7 @@ namespace RustyPainter;
 
 /// <summary>
 /// Renders a small, changelog-oriented subset of Markdown (headings, bullet lists, rules,
-/// bold/italic/strikethrough/code spans and links) directly into Avalonia controls,
+/// bold/italic/strikethrough/code spans, links and images/GIFs) directly into Avalonia controls,
 /// without pulling in a full CommonMark dependency.
 /// </summary>
 public static partial class MarkdownRenderer
@@ -20,6 +20,14 @@ public static partial class MarkdownRenderer
     [GeneratedRegex(
         @"\*\*(?<bold>.+?)\*\*|~~(?<strike>.+?)~~|\*(?<italic>.+?)\*|`(?<code>.+?)`|\[(?<linktext>.+?)\]\((?<linkurl>.+?)\)")]
     private static partial Regex InlineTokenRegex();
+
+    /// <summary>
+    /// Matches a line that is entirely a Markdown image, e.g. "![Demo](https://example.com/demo.gif)".
+    /// Only matched as a standalone block (not inline within other text), since a changelog image is
+    /// almost always on its own line.
+    /// </summary>
+    [GeneratedRegex(@"^!\[(?<alt>.*?)\]\((?<url>.+?)\)$")]
+    private static partial Regex ImageLineRegex();
 
     /// <summary>
     /// Renders the given Markdown text into a scrollable panel of controls.
@@ -56,6 +64,14 @@ public static partial class MarkdownRenderer
                 Border rule = new() { Height = 1, Margin = new Thickness(0, 8) };
                 rule.Bind(Border.BackgroundProperty, new DynamicResourceExtension("BorderColor"));
                 panel.Children.Add(rule);
+                continue;
+            }
+
+            Match imageMatch = ImageLineRegex().Match(line);
+            if (imageMatch.Success)
+            {
+                panel.Children.Add(AnimatedImage.Create(imageMatch.Groups["url"].Value,
+                    imageMatch.Groups["alt"].Value));
                 continue;
             }
 

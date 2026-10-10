@@ -357,5 +357,7 @@
   "AboutLinksSubtitle": "Stil et spørgsmål, meld et problem, læs koden eller støt projektet.",
   "AboutNoChangelog": "Ændringsloggen kunne ikke læses.",
   "ChangelogTitle": "Ændringslog",
-  "Close": "Luk"
+  "Close": "Luk",
+  "ImageLoading": "Indlæser billede...",
+  "ImageFailed": "Billedet kunne ikke indlæses."
 }

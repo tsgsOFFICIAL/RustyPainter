@@ -57,6 +57,18 @@
         <!-- Embedded so the update prompt can fall back to the shipped notes, and so the About page can show them offline. -->
         <None Remove="CHANGELOG.md" />
         <EmbeddedResource Include="CHANGELOG.md" />
+
+        <!-- WithCulture=false is needed: MSBuild would otherwise take "da-DK" and "ru-RU" in the file names for cultures and put
+             these files in satellite assemblies instead of the main one. -->
+        <None Remove="CHANGELOG.da-DK.md" />
+        <EmbeddedResource Include="CHANGELOG.da-DK.md">
+            <WithCulture>false</WithCulture>
+        </EmbeddedResource>
+
+        <None Remove="CHANGELOG.ru-RU.md" />
+        <EmbeddedResource Include="CHANGELOG.ru-RU.md">
+            <WithCulture>false</WithCulture>
+        </EmbeddedResource>
     </ItemGroup>
 
     <ItemGroup>

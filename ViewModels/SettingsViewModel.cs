@@ -414,7 +414,7 @@ public sealed class SettingsViewModel : ViewModelBase
         string changes;
         try
         {
-            changes = await RemoteChangelog.GetChangesSinceAsync(Utility.GetDisplayVersion());
+            changes = await RemoteChangelog.GetChangesSinceAsync(Loc.Service.Current, Utility.GetDisplayVersion());
         }
         catch
         {

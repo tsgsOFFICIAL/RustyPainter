@@ -32,7 +32,7 @@ public sealed class AboutViewModel : ViewModelBase
         BuildText = GetBuildText();
         OsText = $"{Utility.GetFriendlyOsName()} ({Environment.OSVersion.Version})";
 
-        ViewChangelogCommand = new AsyncRelayCommand(() => _dialogs.ShowChangelogAsync(BundledChangelog.Load()));
+        ViewChangelogCommand = new AsyncRelayCommand(() => _dialogs.ShowChangelogAsync(BundledChangelog.Load(Loc.Service.Current)));
         CheckForUpdatesCommand = new AsyncRelayCommand(CheckForUpdatesAsync, () => !IsCheckingForUpdates);
         OpenGitHubCommand = new RelayCommand(() => Utility.OpenUrl(ProjectLinks.GitHub));
         OpenDiscordCommand = new RelayCommand(() => Utility.OpenUrl(ProjectLinks.Discord));
@@ -130,7 +130,7 @@ public sealed class AboutViewModel : ViewModelBase
         string changes;
         try
         {
-            changes = await RemoteChangelog.GetChangesSinceAsync(Utility.GetDisplayVersion());
+            changes = await RemoteChangelog.GetChangesSinceAsync(Loc.Service.Current, Utility.GetDisplayVersion());
         }
         catch
         {
