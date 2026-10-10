@@ -1,3 +1,5 @@
+using System.Linq;
+
 namespace RustyPainter.Interface;
 
 /// <summary>A point in screen pixels.</summary>
@@ -18,68 +20,100 @@ public readonly record struct ScreenRect(double X1, double Y1, double X2, double
 }
 
 /// <summary>
-/// The grid of colour swatches in Rust's paint screen. Swatches are numbered left to right, then top to
-/// bottom, which is also the order of <see cref="SurfaceCatalog.Palette"/>.
+/// Where the clickable parts of Rust's paint screen are for one family of surfaces. Surfaces that share a
+/// panel arrangement (the wooden signs, for example) share a layout.
 /// </summary>
-/// <param name="Area">The whole grid.</param>
-/// <param name="Columns">Swatches per row.</param>
-/// <param name="Rows">Number of rows.</param>
-/// <param name="CellWidth">Width of one swatch.</param>
-/// <param name="CellHeight">Height of one swatch.</param>
-/// <param name="GapX">Horizontal gap between swatches.</param>
-/// <param name="GapY">Vertical gap between swatches.</param>
-public sealed record ColorGrid(ScreenRect Area, int Columns, int Rows, double CellWidth, double CellHeight, double GapX, double GapY);
-
-/// <summary>Where the clickable controls of Rust's paint screen are.</summary>
-public sealed record GameControls(
+/// <param name="Clear">The button that clears the canvas.</param>
+/// <param name="ResetCamera">The button that resets the view of the canvas.</param>
+/// <param name="Undo">The undo button.</param>
+/// <param name="Redo">The redo button.</param>
+/// <param name="ToolBrush">The paint brush tool.</param>
+/// <param name="ToolEraser">The eraser tool.</param>
+/// <param name="ToolPicker">The colour picker tool.</param>
+/// <param name="BrushShapes">The brush shape buttons, left to right.</param>
+/// <param name="Size">The brush size value, which can be clicked to type a number.</param>
+/// <param name="Spacing">The brush spacing value.</param>
+/// <param name="Opacity">The brush opacity value.</param>
+/// <param name="ColorHex">The hex colour field.</param>
+/// <param name="ColorArea">The saturation and brightness square of the colour picker.</param>
+/// <param name="HueBar">The hue bar of the colour picker.</param>
+/// <param name="SavedColors">The saved colour slots, top to bottom.</param>
+/// <param name="AddColor">The button that saves the current colour into a slot.</param>
+/// <param name="SaveChanges">The button that saves the painting and leaves the paint screen.</param>
+/// <param name="Cancel">The button that leaves the paint screen without saving.</param>
+public sealed record PaintLayout(
+    ScreenRect Clear,
     ScreenRect ResetCamera,
-    ScreenRect BrushSize,
+    ScreenRect Undo,
+    ScreenRect Redo,
+    ScreenRect ToolBrush,
+    ScreenRect ToolEraser,
+    ScreenRect ToolPicker,
+    ScreenRect[] BrushShapes,
+    ScreenRect Size,
     ScreenRect Spacing,
     ScreenRect Opacity,
-    ScreenRect BrushMode,
-    ScreenRect PaintTool,
-    ColorGrid ColorGrid);
+    ScreenRect ColorHex,
+    ScreenRect ColorArea,
+    ScreenRect HueBar,
+    ScreenRect[] SavedColors,
+    ScreenRect AddColor,
+    ScreenRect SaveChanges,
+    ScreenRect Cancel)
+{
+    /// <summary>Returns a copy of this layout with <paramref name="transform"/> applied to every rectangle.</summary>
+    public PaintLayout Map(System.Func<ScreenRect, ScreenRect> transform) => new(
+        transform(Clear), transform(ResetCamera), transform(Undo), transform(Redo),
+        transform(ToolBrush), transform(ToolEraser), transform(ToolPicker),
+        BrushShapes.Select(transform).ToArray(),
+        transform(Size), transform(Spacing), transform(Opacity),
+        transform(ColorHex), transform(ColorArea), transform(HueBar),
+        SavedColors.Select(transform).ToArray(),
+        transform(AddColor), transform(SaveChanges), transform(Cancel));
+
+    /// <summary>Every rectangle in the layout, for checks that apply to all of them.</summary>
+    public ScreenRect[] All() =>
+    [
+        Clear, ResetCamera, Undo, Redo, ToolBrush, ToolEraser, ToolPicker,
+        .. BrushShapes, Size, Spacing, Opacity, ColorHex, ColorArea, HueBar,
+        .. SavedColors, AddColor, SaveChanges, Cancel
+    ];
+}
 
 /// <summary>One paintable surface and where its canvas sits on screen.</summary>
 /// <param name="Id">A stable identifier, used in saved projects.</param>
 /// <param name="Name">The name shown in the UI.</param>
+/// <param name="Layout">The key of the <see cref="PaintLayout"/> this surface's paint screen uses.</param>
 /// <param name="Canvas">The canvas rectangle at the catalog's reference resolution.</param>
-public sealed record Surface(string Id, string Name, ScreenRect Canvas);
+public sealed record Surface(string Id, string Name, string Layout, ScreenRect Canvas);
 
 /// <summary>
 /// Everything known about Rust's paint screen, recorded once at a reference resolution and loaded from
-/// <c>Data/surfaces.json</c>. Use <see cref="ISurfaceService.Resolve"/> to get positions for the real game resolution.
+/// <c>Data/surfaces.json</c>. Use <see cref="ISurfaceService.Resolve(Surface, int, int)"/> to get positions for the real game resolution.
 /// </summary>
 /// <param name="ReferenceWidth">Width of the screen the coordinates were recorded on.</param>
 /// <param name="ReferenceHeight">Height of the screen the coordinates were recorded on.</param>
-/// <param name="BrushSizes">The brush sizes the painter can use, in pixels, largest first.</param>
-/// <param name="Controls">Positions of the paint screen controls.</param>
-/// <param name="Palette">The in-game colours as #RRGGBB, in swatch order.</param>
+/// <param name="Layouts">The paint screen arrangements, by key.</param>
 /// <param name="Surfaces">The paintable surfaces.</param>
 public sealed record SurfaceCatalog(
     int ReferenceWidth,
     int ReferenceHeight,
-    int[] BrushSizes,
-    GameControls Controls,
-    string[] Palette,
+    System.Collections.Generic.Dictionary<string, PaintLayout> Layouts,
     Surface[] Surfaces);
 
 /// <summary>
-/// A surface and the paint screen controls for one specific game resolution: every coordinate here is in
+/// A surface and its paint screen controls for one specific game resolution: every coordinate here is in
 /// real screen pixels and can be used directly for mouse input.
 /// </summary>
 public sealed class ResolvedLayout
 {
-    private readonly ColorGrid _grid;
-
-    public ResolvedLayout(Surface surface, int screenWidth, int screenHeight, ScreenRect canvas, GameControls controls, ColorGrid grid)
+    public ResolvedLayout(Surface surface, int screenWidth, int screenHeight, ScreenRect canvas, PaintLayout controls)
     {
         Surface = surface;
         ScreenWidth = screenWidth;
         ScreenHeight = screenHeight;
         Canvas = canvas;
         Controls = controls;
-        _grid = grid;
     }
 
     public Surface Surface { get; }
@@ -90,16 +124,5 @@ public sealed class ResolvedLayout
     public ScreenRect Canvas { get; }
 
     /// <summary>The paint screen controls in screen pixels.</summary>
-    public GameControls Controls { get; }
-
-    /// <summary>Gets the point to click for the palette swatch at <paramref name="paletteIndex"/>.</summary>
-    public ScreenPoint ColorCenter(int paletteIndex)
-    {
-        int row = paletteIndex / _grid.Columns;
-        int column = paletteIndex % _grid.Columns;
-
-        return new ScreenPoint(
-            _grid.Area.X1 + column * (_grid.CellWidth + _grid.GapX) + _grid.CellWidth / 2,
-            _grid.Area.Y1 + row * (_grid.CellHeight + _grid.GapY) + _grid.CellHeight / 2);
-    }
+    public PaintLayout Controls { get; }
 }
