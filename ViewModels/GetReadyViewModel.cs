@@ -265,7 +265,9 @@ public sealed class GetReadyViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
         // The picture must be gone before the first stroke, or it would be painted over.
         _hologram.Hide();
 
-        PaintOptions options = new(Request.Mode, Request.BlockSize, ClearFirst, NudgeX: NudgeX, NudgeY: NudgeY);
+        // Neon signs have no size to type. The number Studio hands over is which of their fixed brushes to use.
+        int? preset = StudioGeometry.HasPresets(Request.Surface) ? Request.BlockSize : null;
+        PaintOptions options = new(Request.Mode, Request.BlockSize, ClearFirst, ShapeIndex: preset, NudgeX: NudgeX, NudgeY: NudgeY);
         StartRequested?.Invoke(new PaintSession(Request, options, PaintTiming.FromSpeed((int)Speed)));
     }
 

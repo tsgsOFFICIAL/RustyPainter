@@ -82,7 +82,7 @@ public sealed class SurfaceService : ISurfaceService
     }
 
     /// <summary>Fails loudly on a bad catalog, so a typo in the data file is caught at startup and not mid painting.</summary>
-    private static void Validate(SurfaceCatalog catalog)
+    internal static void Validate(SurfaceCatalog catalog)
     {
         if (catalog.ReferenceWidth <= 0 || catalog.ReferenceHeight <= 0)
             throw new InvalidDataException("The reference resolution must be positive.");
@@ -124,6 +124,20 @@ public sealed class SurfaceService : ISurfaceService
 
             if (surface.Texture is { } texture && (texture.Width <= 0 || texture.Height <= 0))
                 throw new InvalidDataException($"The texture size of '{surface.Id}' must be positive.");
+
+            if (surface.BrushPresets is { } presets)
+            {
+                if (presets.Length == 0 || presets.Any(preset => preset.Width <= 0 || preset.Height <= 0))
+                    throw new InvalidDataException($"The brush presets of '{surface.Id}' must be positive sizes.");
+
+                int shapes = catalog.Layouts[surface.Layout].Swatches.BrushShapes.Length;
+                if (presets.Length != shapes)
+                    throw new InvalidDataException($"'{surface.Id}' lists {presets.Length} brush presets but its paint screen has {shapes}.");
+            }
+            else if (catalog.Layouts[surface.Layout].Swatches.Size is null)
+            {
+                throw new InvalidDataException($"'{surface.Id}' has no brush size field, so it needs its brush presets measured.");
+            }
 
             if (surface.ScrollOut is < 0 or > 40)
                 throw new InvalidDataException($"The scroll count of '{surface.Id}' must be between 0 and 40, got {surface.ScrollOut}.");

@@ -87,9 +87,9 @@ public class SurfaceServiceTests
     [Theory]
     [InlineData("canvas-small", 550, 132, 1434, 1308)]
     [InlineData("canvas-xxl", 137, 292, 1850, 1149)]
-    [InlineData("neon-large", 545, 237, 1434, 1125)]
-    [InlineData("neon-medium", 545, 364, 1439, 879)]
-    [InlineData("neon-small", 730, 361, 1252, 882)]
+    [InlineData("neon-large", 544, 236, 1435, 1126)]
+    [InlineData("neon-medium", 545, 362, 1439, 881)]
+    [InlineData("neon-small", 730, 360, 1252, 883)]
     public void Measured_canvases_are_where_the_screenshots_put_them(string id, double x1, double y1, double x2, double y2)
     {
         AssertRect(Find(id).Canvas, x1, y1, x2, y2);

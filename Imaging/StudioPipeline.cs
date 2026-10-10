@@ -39,8 +39,11 @@ public static class StudioGeometry
     /// <summary>The biggest brush the game allows.</summary>
     public const int MaxBlockSize = 100;
 
-    /// <summary>Whether the texture size of the surface is known, as opposed to estimated.</summary>
-    public static bool IsTextureKnown(Surface surface) => surface.Texture is not null;
+    /// <summary>Whether the surface has fixed brush presets instead of a brush size to type, as neon signs do.</summary>
+    public static bool HasPresets(Surface surface) => surface.BrushPresets is { Length: > 0 };
+
+    /// <summary>Whether the size of the surface is known from the game, as opposed to estimated.</summary>
+    public static bool IsTextureKnown(Surface surface) => surface.Texture is not null || HasPresets(surface);
 
     /// <summary>The texture size in game units: the real one when it is known, otherwise an estimate from the canvas on screen.</summary>
     public static (int Width, int Height) Texture(Surface surface)
@@ -53,9 +56,18 @@ public static class StudioGeometry
             Math.Max(1, (int)Math.Round(surface.Canvas.Height / EstimatedPixelsPerUnit)));
     }
 
-    /// <summary>The number of cells across and down when every cell is one brush stroke of <paramref name="blockSize"/> units.</summary>
+    /// <summary>
+    /// The number of cells across and down when every cell is one brush stamp. On most surfaces that is a brush size in units; on
+    /// surfaces with fixed presets <paramref name="blockSize"/> counts the preset from 0 and a cell is as big as its stamp.
+    /// </summary>
     public static (int Width, int Height) Grid(Surface surface, int blockSize)
     {
+        if (surface.BrushPresets is { Length: > 0 } presets)
+        {
+            BrushPreset preset = presets[Math.Clamp(blockSize, 0, presets.Length - 1)];
+            return ((int)Math.Ceiling(surface.Canvas.Width / preset.Width), (int)Math.Ceiling(surface.Canvas.Height / preset.Height));
+        }
+
         int block = Math.Clamp(blockSize, 1, MaxBlockSize);
         (int width, int height) = Texture(surface);
 

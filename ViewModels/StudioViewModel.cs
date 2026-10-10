@@ -150,6 +150,7 @@ public sealed class StudioViewModel : ViewModelBase
             ("Invert", ImageFilter.Invert), ("Brighten", ImageFilter.Brighten), ("Posterize", ImageFilter.Posterize)
         ], ImageFilter.None);
         QualityChoices = new([("1", 1), ("2", 2), ("4", 4), ("8", 8), ("16", 16), ("32", 32)], 4);
+        PresetChoices = new([("Fine", 0), ("Medium", 1), ("Thick", 2), ("Heavy", 3)], 1);
         PreviewChoices = new([("Result", PreviewMode.Result), ("Original", PreviewMode.Original), ("Split", PreviewMode.Split)], PreviewMode.Result);
 
         PlacementChoices.Changed += Changed;
@@ -157,6 +158,7 @@ public sealed class StudioViewModel : ViewModelBase
         DitheringChoices.Changed += Changed;
         FilterChoices.Changed += Changed;
         QualityChoices.Changed += Changed;
+        PresetChoices.Changed += Changed;
         PreviewChoices.Changed += () => { OnPropertyChanged(nameof(ShowOriginal)); OnPropertyChanged(nameof(ShowResult)); OnPropertyChanged(nameof(ShowSplit)); };
 
         ClearImageCommand = new RelayCommand(ClearImage, () => HasImage);
@@ -215,6 +217,8 @@ public sealed class StudioViewModel : ViewModelBase
             OnPropertyChanged(nameof(HasScrollHint));
             OnPropertyChanged(nameof(GridText));
             OnPropertyChanged(nameof(IsTextureEstimated));
+            OnPropertyChanged(nameof(IsPresetSurface));
+            OnPropertyChanged(nameof(IsSizeSurface));
             Changed();
         }
     }
@@ -460,7 +464,19 @@ public sealed class StudioViewModel : ViewModelBase
     public ChoiceGroup<int> QualityChoices { get; }
 
     /// <summary>The brush size in game units.</summary>
-    public int BlockSize => QualityChoices.Selected;
+    public int BlockSize => IsPresetSurface ? PresetChoices.Selected : QualityChoices.Selected;
+
+    /// <summary>
+    /// The brush presets, for surfaces such as neon signs that have no brush size to type. The first is the finest and each
+    /// one after it paints a thicker line, so the grid gets coarser.
+    /// </summary>
+    public ChoiceGroup<int> PresetChoices { get; }
+
+    /// <summary>Whether the selected surface has fixed brush presets instead of a brush size.</summary>
+    public bool IsPresetSurface => StudioGeometry.HasPresets(SelectedSurface.Surface);
+
+    /// <summary>Whether the selected surface takes a brush size.</summary>
+    public bool IsSizeSurface => !IsPresetSurface;
 
     // ---- result ----
 

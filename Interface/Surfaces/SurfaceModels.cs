@@ -163,6 +163,14 @@ public sealed record LayoutFamily(PaintLayout Swatches, PaintLayout Free);
 /// <param name="Height">Units down.</param>
 public sealed record TextureSize(int Width, int Height);
 
+/// <summary>
+/// What one of the fixed brush presets of a surface leaves on screen, measured in the game at the catalog's reference resolution.
+/// Surfaces that have no brush size to type, such as neon signs, only have these.
+/// </summary>
+/// <param name="Width">How many pixels wide one stamp of the brush is.</param>
+/// <param name="Height">How many pixels tall one stamp of the brush is.</param>
+public sealed record BrushPreset(double Width, double Height);
+
 /// <summary>One paintable surface and where its canvas sits on screen.</summary>
 /// <param name="Id">A stable identifier, used in saved projects.</param>
 /// <param name="Name">The name shown in the UI.</param>
@@ -175,7 +183,10 @@ public sealed record TextureSize(int Width, int Height);
 /// <param name="Texture">
 /// The paint texture size, when it is known. Without it the size is estimated from the canvas on screen.
 /// </param>
-public sealed record Surface(string Id, string Name, string Layout, ScreenRect Canvas, int ScrollOut = 0, TextureSize? Texture = null);
+/// <param name="BrushPresets">
+/// The fixed brush presets, left to right, for surfaces that have no brush size to type. One brush stamp is one cell then.
+/// </param>
+public sealed record Surface(string Id, string Name, string Layout, ScreenRect Canvas, int ScrollOut = 0, TextureSize? Texture = null, BrushPreset[]? BrushPresets = null);
 
 /// <summary>
 /// Everything known about Rust's paint screen, recorded once at a reference resolution and loaded from

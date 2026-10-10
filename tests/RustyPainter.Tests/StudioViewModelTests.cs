@@ -75,7 +75,7 @@ public class StudioViewModelTests
 
         Assert.Equal(large.Surface.Canvas.Width, studio.CanvasWidth, 3);
         Assert.Equal(large.Surface.Canvas.Height, studio.CanvasHeight, 3);
-        Assert.Equal("889 x 888 px", studio.CanvasText);
+        Assert.Equal("891 x 890 px", studio.CanvasText);
     }
 
     [Fact]

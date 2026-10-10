@@ -321,8 +321,11 @@
                         <StackPanel Spacing="10">
                             <TextBlock Text="QUALITY" Classes="eyebrow"/>
                             <TextBlock Text="Brush size in game units. Small is fine and very slow, large is quick and blocky."
-                                       Classes="muted" FontSize="11" TextWrapping="Wrap"/>
-                            <ItemsControl Classes="chips" ItemsSource="{Binding QualityChoices.Choices}"/>
+                                       Classes="muted" FontSize="11" TextWrapping="Wrap" IsVisible="{Binding IsSizeSurface}"/>
+                            <ItemsControl Classes="chips" ItemsSource="{Binding QualityChoices.Choices}" IsVisible="{Binding IsSizeSurface}"/>
+                            <TextBlock Text="Neon signs have four fixed brushes. A fine brush draws thin lines on a fine grid and takes longer, a heavy one is quick and bold."
+                                       Classes="muted" FontSize="11" TextWrapping="Wrap" IsVisible="{Binding IsPresetSurface}"/>
+                            <ItemsControl Classes="chips" ItemsSource="{Binding PresetChoices.Choices}" IsVisible="{Binding IsPresetSurface}"/>
                             <TextBlock Text="{Binding GridText}" FontWeight="SemiBold"/>
                             <TextBlock Text="The size of this surface's texture is estimated until it has been measured in the game."
                                        IsVisible="{Binding IsTextureEstimated}" Classes="muted" FontSize="11" TextWrapping="Wrap"/>

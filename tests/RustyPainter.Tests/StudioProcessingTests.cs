@@ -60,15 +60,15 @@ public class StudioProcessingTests : IDisposable
     }
 
     [AvaloniaFact]
-    public void Says_when_the_texture_size_is_only_an_estimate()
+    public void Every_surface_in_the_catalog_has_a_size_measured_in_the_game()
     {
         StudioViewModel studio = Loaded(TestImages.Rainbow());
-        studio.SelectedSurface = studio.AllSurfaces.Single(option => option.Surface.Id == "neon-large");
 
-        Assert.True(studio.IsTextureEstimated);
-
-        studio.SelectedSurface = studio.AllSurfaces.Single(option => option.Surface.Id == "sign-medium");
-        Assert.False(studio.IsTextureEstimated);
+        foreach (SurfaceOption option in studio.AllSurfaces)
+        {
+            studio.SelectedSurface = option;
+            Assert.False(studio.IsTextureEstimated, option.Surface.Id);
+        }
     }
 
     [AvaloniaFact]
