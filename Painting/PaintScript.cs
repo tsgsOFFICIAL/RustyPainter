@@ -72,6 +72,9 @@ public sealed record PaintOptions(
 {
     /// <summary>The hard square brush, which paints exactly the square it is sized to. It is the fourth shape on the standard paint screens.</summary>
     public const int SquareShape = 3;
+
+    /// <summary>The hard square brush on the carving screen of a pumpkin, which has four brushes and no round one that is hard.</summary>
+    public const int CarvingShape = 2;
 }
 
 public static class PaintScriptBuilder
@@ -102,7 +105,9 @@ public static class PaintScriptBuilder
         if (plans.Count > surface.Frames)
             throw new System.ArgumentException($"The surface '{surface.Id}' has {surface.Frames} frame(s), but {plans.Count} pictures were given.", nameof(plans));
 
-        PaintLayout controls = options.Mode == ColorMode.Swatches ? layout.Swatches : layout.Free;
+        // A paint screen with only a fixed set of colors has no other mode to be in.
+        ColorMode mode = layout.Surface.FixedPalette ? ColorMode.Swatches : options.Mode;
+        PaintLayout controls = mode == ColorMode.Swatches ? layout.Swatches : layout.Free;
         ScreenRect canvas = layout.Canvas.Offset(options.NudgeX, options.NudgeY);
         FrameControls? frames = surface.IsAnimated ? controls.Frames ?? throw new System.InvalidOperationException("The paint screen has no frame buttons.") : null;
         List<PaintStep> steps = [];
@@ -112,9 +117,13 @@ public static class PaintScriptBuilder
         if (surface.ScrollOut > 0)
             steps.Add(new ScrollOutStep(surface.ScrollOut));
 
-        ScreenRect freeToggle = layout.Free.ColorModeToggle;
-        steps.Add(new EnsureColorModeStep(options.Mode, layout.Swatches.ColorModeToggle.Center, freeToggle.Center,
-            new ScreenPoint(freeToggle.X1 + 0.12 * freeToggle.Width, freeToggle.Y1 + 0.5 * freeToggle.Height)));
+        if (!layout.Surface.FixedPalette)
+        {
+            ScreenRect freeToggle = layout.Free.ColorModeToggle;
+            steps.Add(new EnsureColorModeStep(mode, layout.Swatches.ColorModeToggle.Center, freeToggle.Center,
+                new ScreenPoint(freeToggle.X1 + 0.12 * freeToggle.Width, freeToggle.Y1 + 0.5 * freeToggle.Height)));
+        }
+
         steps.Add(new ClickControlStep("Brush", controls.ToolBrush.Center));
 
         // Clearing only clears the frame that is open. The frames after the last picture are cleared too, so nothing old is left in them.
@@ -150,13 +159,15 @@ public static class PaintScriptBuilder
             int shape = options.ShapeIndex ?? (controls.Size is null ? 0 : PaintOptions.SquareShape);
             steps.Add(new ClickControlStep("Brush shape", controls.BrushShapes[System.Math.Clamp(shape, 0, controls.BrushShapes.Length - 1)].Center));
 
-            // Neon signs have fixed brush presets and no numbers to type.
-            if (controls.Size is { } size && controls.Spacing is { } spacing && controls.Opacity is { } opacity)
-            {
+            // Neon signs have fixed brush presets and no numbers to type. A paint screen can also have only some of the numbers.
+            if (controls.Size is { } size)
                 steps.Add(new SetBrushValueStep("Size", size.Center, options.BlockSize.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+
+            if (controls.Spacing is { } spacing)
                 steps.Add(new SetBrushValueStep("Spacing", spacing.Center, options.Spacing.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)));
+
+            if (controls.Opacity is { } opacity)
                 steps.Add(new SetBrushValueStep("Opacity", opacity.Center, options.Opacity.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)));
-            }
 
             double cellWidth = canvas.Width / plan.Width;
             double cellHeight = canvas.Height / plan.Height;
@@ -165,7 +176,7 @@ public static class PaintScriptBuilder
 
             foreach (ColorPass pass in plan.Strokes.Passes)
             {
-                if (options.Mode == ColorMode.Swatches)
+                if (mode == ColorMode.Swatches)
                 {
                     ColorGrid grid = controls.ColorGrid ?? throw new System.InvalidOperationException("The swatch layout has no color grid.");
                     steps.Add(new SelectSwatchStep(pass.PaletteIndex, pass.Color, grid.CellCenter(pass.PaletteIndex)));

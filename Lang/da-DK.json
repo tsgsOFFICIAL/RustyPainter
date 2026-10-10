@@ -359,5 +359,8 @@
   "ChangelogTitle": "Ændringslog",
   "Close": "Luk",
   "ImageLoading": "Indlæser billede...",
-  "ImageFailed": "Billedet kunne ikke indlæses."
+  "ImageFailed": "Billedet kunne ikke indlæses.",
+  "Category_Carving": "Udskæring",
+  "Surface_pumpkin": "Udskærbart græskar",
+  "StudioCarvingNote": "Gråtonerne er, hvor dybt græskarret skæres. Hvid skærer helt igennem og lader lyset skinne, sort lader skallen stå. Billedet gøres sort-hvidt."
 }

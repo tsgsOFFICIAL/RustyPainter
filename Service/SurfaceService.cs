@@ -62,7 +62,7 @@ public sealed class SurfaceService : ISurfaceService
             surface, screenWidth, screenHeight,
             surface.Canvas.Scale(sx, sy).Offset(originX, originY),
             family.Swatches.Place(sx, sy, originX, originY),
-            family.Free.Place(sx, sy, originX, originY));
+            family.Free?.Place(sx, sy, originX, originY) ?? family.Swatches.Place(sx, sy, originX, originY));
     }
 
     private static SurfaceCatalog LoadEmbedded()
@@ -93,7 +93,8 @@ public sealed class SurfaceService : ISurfaceService
         foreach ((string key, LayoutFamily family) in catalog.Layouts)
         {
             ValidateLayout(catalog, $"{key} (swatches)", family.Swatches);
-            ValidateLayout(catalog, $"{key} (free)", family.Free);
+            if (family.Free is not null)
+                ValidateLayout(catalog, $"{key} (free)", family.Free);
 
             if (family.Swatches.ColorGrid is not { } grid)
                 throw new InvalidDataException($"The swatch layout of '{key}' has no color grid.");
@@ -110,7 +111,7 @@ public sealed class SurfaceService : ISurfaceService
             if (duplicates.Length > 0)
                 throw new InvalidDataException($"The palette of '{key}' repeats these colors, so one swatch can never be picked: {string.Join(", ", duplicates)}.");
 
-            if (family.Free.FreeColor is not { SavedColors.Length: > 0 })
+            if (family.Free is not null && family.Free.FreeColor is not { SavedColors.Length: > 0 })
                 throw new InvalidDataException($"The free layout of '{key}' has no free color controls or no saved color slots.");
         }
 
@@ -139,13 +140,16 @@ public sealed class SurfaceService : ISurfaceService
                 throw new InvalidDataException($"'{surface.Id}' has no brush size field, so it needs its brush presets measured.");
             }
 
+            if (catalog.Layouts[surface.Layout].Free is null && !surface.FixedPalette)
+                throw new InvalidDataException($"'{surface.Id}' uses a paint screen with no free color mode, so it has to say it has a fixed palette.");
+
             if (surface.Frames < 1)
                 throw new InvalidDataException($"The frame count of '{surface.Id}' must be at least 1.");
 
             if (surface.IsAnimated)
             {
                 LayoutFamily animated = catalog.Layouts[surface.Layout];
-                if (animated.Swatches.Frames is not { } swatchFrames || animated.Free.Frames is not { } freeFrames
+                if (animated.Swatches.Frames is not { } swatchFrames || animated.Free?.Frames is not { } freeFrames
                     || swatchFrames.Buttons.Length < surface.Frames || freeFrames.Buttons.Length < surface.Frames)
                     throw new InvalidDataException($"'{surface.Id}' has {surface.Frames} frames but its paint screen does not list that many frame buttons.");
             }

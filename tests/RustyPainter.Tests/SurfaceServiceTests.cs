@@ -28,7 +28,7 @@ public class SurfaceServiceTests
     {
         Assert.Equal(2560, Catalog.ReferenceWidth);
         Assert.Equal(1440, Catalog.ReferenceHeight);
-        Assert.Equal(16, Catalog.Surfaces.Length);
+        Assert.Equal(17, Catalog.Surfaces.Length);
         Assert.Contains("standard", Catalog.Layouts.Keys);
         Assert.Contains("neon", Catalog.Layouts.Keys);
         Assert.Contains("animated", Catalog.Layouts.Keys);
@@ -133,12 +133,12 @@ public class SurfaceServiceTests
     [Fact]
     public void Toolbar_and_bottom_buttons_do_not_move_between_modes()
     {
-        foreach (LayoutFamily f in Catalog.Layouts.Values)
+        foreach (LayoutFamily f in Catalog.Layouts.Values.Where(family => family.Free is not null))
         {
-            Assert.Equal(f.Swatches.Clear, f.Free.Clear);
-            Assert.Equal(f.Swatches.Undo, f.Free.Undo);
-            Assert.Equal(f.Swatches.SaveChanges, f.Free.SaveChanges);
-            Assert.Equal(f.Swatches.Cancel, f.Free.Cancel);
+            Assert.Equal(f.Swatches.Clear, f.Free!.Clear);
+            Assert.Equal(f.Swatches.Undo, f.Free!.Undo);
+            Assert.Equal(f.Swatches.SaveChanges, f.Free!.SaveChanges);
+            Assert.Equal(f.Swatches.Cancel, f.Free!.Cancel);
         }
     }
 

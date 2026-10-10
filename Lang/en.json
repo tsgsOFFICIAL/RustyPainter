@@ -359,5 +359,8 @@
   "ChangelogTitle": "Changelog",
   "Close": "Close",
   "ImageLoading": "Loading image...",
-  "ImageFailed": "The image could not be loaded."
+  "ImageFailed": "The image could not be loaded.",
+  "Category_Carving": "Carving",
+  "Surface_pumpkin": "Carvable Pumpkin",
+  "StudioCarvingNote": "The grays are how deep the pumpkin is cut. White cuts all the way through and lets the candle shine, black leaves the shell as it is. The picture is turned to black and white."
 }

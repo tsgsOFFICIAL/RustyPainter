@@ -236,6 +236,38 @@ public class LiveGameTests
         }
     }
 
+    /// <summary>Reads the gray circles, the brush row and the tools of the pumpkin screen from the game. Reads only.</summary>
+    [Fact]
+    public async Task Read_the_pumpkin_screen()
+    {
+        Assert.SkipUnless(Mode is "look" or "paint", "Set RUSTYPAINTER_LIVE=look to run this.");
+
+        GameWindowService game = new();
+        Win32PaintSensors sensors = new(game);
+        for (int i = 0; i < 90 && !sensors.IsGameInFront(); i++)
+            await Task.Delay(500, TestContext.Current.CancellationToken);
+
+        Assert.True(sensors.IsGameInFront(), "Rust did not come to the front in time.");
+        await Task.Delay(1500, TestContext.Current.CancellationToken);
+        GameWindow window = game.Find()!;
+        double sx = window.Width / 2560.0, sy = window.Height / 1440.0;
+        ScreenPoint At(double x, double y) => new(window.Client.X1 + x * sx, window.Client.Y1 + y * sy);
+
+        Write($"window {window.Width}x{window.Height}");
+        double[] xs = [2081, 2210, 2340, 2469];
+        double[] ys = [768, 896];
+        int number = 0;
+        foreach (double y in ys)
+            foreach (double x in xs)
+                Write($"gray {number++} at {x},{y}: {sensors.ReadColor(At(x, y))?.Hex}   edge {sensors.ReadColor(At(x - 38, y))?.Hex}");
+
+        foreach (double x in new[] { 2176, 2240, 2304, 2368 })
+            Write($"brush shape at {x},500: center {sensors.ReadColor(At(x, 500))?.Hex} top {sensors.ReadColor(At(x, 500 - 20))?.Hex}");
+
+        foreach (double x in new[] { 2208, 2272, 2336 })
+            Write($"tool at {x},321: top {sensors.ReadColor(At(x, 321 - 20))?.Hex} left {sensors.ReadColor(At(x - 20, 321))?.Hex}");
+    }
+
     /// <summary>Reads the row of brush shapes and prints a few pixels of each, to tell the selected one from the others. Reads only.</summary>
     [Fact]
     public void Read_the_brush_shape_row()

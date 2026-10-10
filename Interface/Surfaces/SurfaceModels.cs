@@ -174,8 +174,8 @@ public sealed record PaintLayout(
 
 /// <summary>The two arrangements of one family of paint screens, one per color mode.</summary>
 /// <param name="Swatches">The layout while the game shows the fixed swatch grid.</param>
-/// <param name="Free">The layout while the game shows the free color picker.</param>
-public sealed record LayoutFamily(PaintLayout Swatches, PaintLayout Free);
+/// <param name="Free">The layout while the game shows the free color picker. Absent on paint screens that only have a fixed set of colors.</param>
+public sealed record LayoutFamily(PaintLayout Swatches, PaintLayout? Free = null);
 
 /// <summary>The size of a surface's paint texture in the game's own units. One unit is what a brush of size 1 paints.</summary>
 /// <param name="Width">Units across.</param>
@@ -206,7 +206,8 @@ public sealed record BrushPreset(double Width, double Height);
 /// The fixed brush presets, left to right, for surfaces that have no brush size to type. One brush stamp is one cell then.
 /// </param>
 /// <param name="Frames">How many frames the surface can show one after the other. One for everything that does not animate.</param>
-public sealed record Surface(string Id, string Name, string Layout, ScreenRect Canvas, int ScrollOut = 0, TextureSize? Texture = null, BrushPreset[]? BrushPresets = null, int Frames = 1)
+/// <param name="FixedPalette">Whether the paint screen only has its fixed set of colors, with no switch to any color. A carvable pumpkin is like that: its grays are how deep to cut.</param>
+public sealed record Surface(string Id, string Name, string Layout, ScreenRect Canvas, int ScrollOut = 0, TextureSize? Texture = null, BrushPreset[]? BrushPresets = null, int Frames = 1, bool FixedPalette = false)
 {
     /// <summary>Whether the surface is an animated sign that shows several pictures one after the other.</summary>
     public bool IsAnimated => Frames > 1;

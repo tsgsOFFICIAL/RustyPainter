@@ -231,6 +231,9 @@ public sealed partial class StudioViewModel : ViewModelBase
             OnPropertyChanged(nameof(IsTextureEstimated));
             OnPropertyChanged(nameof(IsPresetSurface));
             OnPropertyChanged(nameof(IsSizeSurface));
+            OnPropertyChanged(nameof(IsFixedPalette));
+            OnPropertyChanged(nameof(HasChoosableColors));
+            OnPropertyChanged(nameof(IsFreeMode));
 
             StopPlaying();
             if (SelectedSurface.Surface.IsAnimated && _frames.Count > MaxFrames)
@@ -399,7 +402,22 @@ public sealed partial class StudioViewModel : ViewModelBase
     public ChoiceGroup<ImageFilter> FilterChoices { get; }
 
     /// <summary>Whether any color can be used, so the number of colors is a choice.</summary>
-    public bool IsFreeMode => ColorModeChoices.Selected == ColorMode.Free;
+    public bool IsFreeMode => !IsFixedPalette && ColorModeChoices.Selected == ColorMode.Free;
+
+    /// <summary>Whether the open surface only has its fixed colors, as a carvable pumpkin does with its grays.</summary>
+    public bool IsFixedPalette => SelectedSurface.Surface.FixedPalette;
+
+    /// <summary>Whether there is a choice between the palette and any color.</summary>
+    public bool HasChoosableColors => !IsFixedPalette;
+
+    /// <summary>The color mode that is used: the choice made, or the palette on a surface that has nothing else.</summary>
+    private ColorMode EffectiveMode => IsFixedPalette ? ColorMode.Swatches : ColorModeChoices.Selected;
+
+    /// <summary>
+    /// The filter that is used. A surface with only grays is carved by how light the picture is, so a picture with colors is
+    /// turned to black and white unless a filter was chosen.
+    /// </summary>
+    private ImageFilter EffectiveFilter => IsFixedPalette && FilterChoices.Selected == ImageFilter.None ? ImageFilter.BlackAndWhite : FilterChoices.Selected;
 
     /// <summary>How many colors the picture is reduced to in free mode, from 2 to 256.</summary>
     public double MaxColors
@@ -631,7 +649,7 @@ public sealed partial class StudioViewModel : ViewModelBase
         if (Plan is not { } plan)
             return;
 
-        PaintRequested?.Invoke(new PaintRequest(plan, SelectedSurface.Surface, ColorModeChoices.Selected, BlockSize, ImageName));
+        PaintRequested?.Invoke(new PaintRequest(plan, SelectedSurface.Surface, EffectiveMode, BlockSize, ImageName));
     }
 
     private async Task RequestAnimationAsync()
@@ -640,7 +658,7 @@ public sealed partial class StudioViewModel : ViewModelBase
         try
         {
             IReadOnlyList<PaintPlan> plans = await PreparePlansAsync();
-            PaintRequested?.Invoke(new PaintRequest(plans[0], SelectedSurface.Surface, ColorModeChoices.Selected, BlockSize, ImageName, plans, SpeedChoices.Selected));
+            PaintRequested?.Invoke(new PaintRequest(plans[0], SelectedSurface.Surface, EffectiveMode, BlockSize, ImageName, plans, SpeedChoices.Selected));
         }
         catch (Exception ex)
         {
@@ -672,7 +690,7 @@ public sealed partial class StudioViewModel : ViewModelBase
 
     /// <summary>A rough time for painting at the pace chosen in the get-ready page, or the default pace before that.</summary>
     public string TimeText => Plan is { } plan
-        ? PaintTimeEstimator.Describe(PaintTimeEstimator.Estimate(plan.Strokes, PaintTiming.FromSpeed(PaintSpeed), ColorModeChoices.Selected, SelectedSurface.Surface.ScrollOut))
+        ? PaintTimeEstimator.Describe(PaintTimeEstimator.Estimate(plan.Strokes, PaintTiming.FromSpeed(PaintSpeed), EffectiveMode, SelectedSurface.Surface.ScrollOut))
         : "";
 
     /// <summary>The pace the estimate is made for, from 1 to 100.</summary>
@@ -1053,8 +1071,8 @@ public sealed partial class StudioViewModel : ViewModelBase
 
         StudioSettings settings = new(
             new PlacementSettings(PlacementChoices.Selected, Zoom, OffsetX / 100, OffsetY / 100),
-            new AdjustmentSettings(Brightness / 100, Contrast / 100, Saturation / 100, FilterChoices.Selected),
-            ColorModeChoices.Selected,
+            new AdjustmentSettings(Brightness / 100, Contrast / 100, Saturation / 100, EffectiveFilter),
+            EffectiveMode,
             (int)MaxColors,
             DitheringChoices.Selected,
             FillBackground && Rgb.TryParse(BackgroundHex, out Rgb background) ? background : null);
@@ -1161,6 +1179,7 @@ public sealed partial class StudioViewModel : ViewModelBase
             "frame" => "Frames",
             "neon" => "Neon",
             "animated" => "Animated",
+            "pumpkin" => "Carving",
             _ => "Other"
         };
     }
