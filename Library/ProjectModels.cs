@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using System;
 
 namespace RustyPainter.Library;
@@ -67,6 +69,70 @@ public sealed record StudioProject
     public bool TextBold { get; init; } = true;
     public bool TextSolidBackground { get; init; }
     public string TextBackgroundColor { get; init; } = "#000000";
+
+    /// <summary>The second frame onward of an animated sign. The first frame is what the fields above describe.</summary>
+    public FrameList MoreFrames { get; init; } = [];
+
+    /// <summary>What the fields above say about the picture of the first frame.</summary>
+    public FrameSettings FirstFrame() => new()
+    {
+        Source = Source, SourceName = SourceName, Placement = Placement, Zoom = Zoom, OffsetX = OffsetX, OffsetY = OffsetY,
+        QuarterTurns = QuarterTurns, FlipX = FlipX, FlipY = FlipY, Text = Text, TextColor = TextColor, TextBold = TextBold,
+        TextSolidBackground = TextSolidBackground, TextBackgroundColor = TextBackgroundColor
+    };
+}
+
+/// <summary>A list of frames that is equal to another list with the same frames, as a record needs when it holds one.</summary>
+public sealed class FrameList : List<FrameSettings>
+{
+    public FrameList()
+    {
+    }
+
+    public FrameList(IEnumerable<FrameSettings> frames) : base(frames)
+    {
+    }
+
+    public override bool Equals(object? obj) => obj is FrameList other && this.SequenceEqual(other);
+
+    public override int GetHashCode()
+    {
+        HashCode hash = new();
+        foreach (FrameSettings frame in this)
+            hash.Add(frame);
+
+        return hash.ToHashCode();
+    }
+}
+
+/// <summary>
+/// What belongs to the picture of one frame of an animated sign: where it came from and how it sits on the canvas.
+/// Everything else, such as the colors and the brush, is the same for all frames and is kept in the project.
+/// </summary>
+public sealed record FrameSettings
+{
+    public ProjectSource Source { get; init; } = ProjectSource.Picture;
+    public string SourceName { get; init; } = "";
+    public string Placement { get; init; } = "Fill";
+    public double Zoom { get; init; } = 1;
+    public double OffsetX { get; init; }
+    public double OffsetY { get; init; }
+    public int QuarterTurns { get; init; }
+    public bool FlipX { get; init; }
+    public bool FlipY { get; init; }
+    public string Text { get; init; } = "";
+    public string TextColor { get; init; } = "#FFFFFF";
+    public bool TextBold { get; init; } = true;
+    public bool TextSolidBackground { get; init; }
+    public string TextBackgroundColor { get; init; } = "#000000";
+
+    /// <summary>Puts these settings in place of the picture fields of a project, which describe its first frame.</summary>
+    public StudioProject AsFirstFrameOf(StudioProject project) => project with
+    {
+        Source = Source, SourceName = SourceName, Placement = Placement, Zoom = Zoom, OffsetX = OffsetX, OffsetY = OffsetY,
+        QuarterTurns = QuarterTurns, FlipX = FlipX, FlipY = FlipY, Text = Text, TextColor = TextColor, TextBold = TextBold,
+        TextSolidBackground = TextSolidBackground, TextBackgroundColor = TextBackgroundColor
+    };
 }
 
 /// <summary>A project as the Library shows it.</summary>

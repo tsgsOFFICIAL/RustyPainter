@@ -5,6 +5,7 @@ using RustyPainter.Imaging;
 using RustyPainter.Library;
 using RustyPainter.Service.Logging;
 using RustyPainter.ViewModels.Mvvm;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System;
@@ -131,7 +132,19 @@ public sealed partial class StudioViewModel
             using MemoryStream picture = new();
             Image.Save(picture);
 
-            StudioProject saved = _projects.Save(CaptureProject(), picture.ToArray(), MakeThumbnail());
+            StudioProject project = CaptureProject();
+            byte[] first = picture.ToArray();
+            List<byte[]>? more = null;
+
+            if (IsAnimatedSurface && FrameCount > 1)
+            {
+                (List<FrameSettings> settings, List<byte[]> pictures, FrameSettings firstFrame, byte[]? firstPicture) = CaptureFrames();
+                project = firstFrame.AsFirstFrameOf(project) with { MoreFrames = new FrameList(settings) };
+                first = firstPicture ?? first;
+                more = pictures;
+            }
+
+            StudioProject saved = _projects.Save(project, first, MakeThumbnail(), more);
             CurrentProjectId = saved.Id;
             ProjectName = saved.Name;
             _projectCreated = saved.Created;
@@ -180,7 +193,7 @@ public sealed partial class StudioViewModel
 
         try
         {
-            ApplyProject(loaded.Project, loaded.Picture);
+            ApplyProject(loaded.Project, loaded.Picture, _projects.LoadFramePictures(id));
             return true;
         }
         catch (Exception ex)
@@ -191,29 +204,17 @@ public sealed partial class StudioViewModel
         }
     }
 
-    /// <summary>Puts a saved setup back, with its picture.</summary>
-    /// <param name="project">The settings.</param>
-    /// <param name="picture">The picture as a PNG file.</param>
-    public void ApplyProject(StudioProject project, byte[] picture)
+    /// <summary>Puts a picture and the way it sits on the canvas in place, which is all that differs between frames.</summary>
+    private void ApplyFrame(FrameSettings frame, byte[] picture)
     {
-        // A surface that is no longer in the catalog leaves the current one, and says so.
-        SurfaceOption? surface = AllSurfaces.FirstOrDefault(option => option.Surface.Id == project.SurfaceId);
-
-        if (SelectedCategory != AllCategories)
-            SelectedCategory = AllCategories;
-
-        if (surface is not null)
-            SelectedSurface = surface;
-
-        // The picture first, because bringing it in puts the placement back to its start.
-        if (project.Source == ProjectSource.Text)
+        if (frame.Source == ProjectSource.Text)
         {
             SourceChoices.Select(SourceKind.Text);
-            TextColorHex = project.TextColor;
-            TextBackgroundChoices.Select(project.TextSolidBackground);
-            TextBackgroundHex = project.TextBackgroundColor;
-            TextWeightChoices.Select(project.TextBold);
-            Text = project.Text;
+            TextColorHex = frame.TextColor;
+            TextBackgroundChoices.Select(frame.TextSolidBackground);
+            TextBackgroundHex = frame.TextBackgroundColor;
+            TextWeightChoices.Select(frame.TextBold);
+            Text = frame.Text;
 
             // An unchanged text has not drawn anything yet, so bring the saved picture in as it was.
             if (ImageName != "Text")
@@ -226,17 +227,35 @@ public sealed partial class StudioViewModel
         {
             SourceChoices.Select(SourceKind.Picture);
             using MemoryStream stream = new(picture);
-            Show(new Bitmap(stream), project.SourceName);
+            Show(new Bitmap(stream), frame.SourceName);
         }
 
-        _quarterTurns = Math.Clamp(project.QuarterTurns, 0, 3);
-        _flipX = project.FlipX;
-        _flipY = project.FlipY;
+        _quarterTurns = Math.Clamp(frame.QuarterTurns, 0, 3);
+        _flipX = frame.FlipX;
+        _flipY = frame.FlipY;
 
-        if (Enum.TryParse(project.Placement, out FitMode fit)) PlacementChoices.Select(fit);
-        Zoom = project.Zoom;
-        OffsetX = project.OffsetX;
-        OffsetY = project.OffsetY;
+        if (Enum.TryParse(frame.Placement, out FitMode fit)) PlacementChoices.Select(fit);
+        Zoom = frame.Zoom;
+        OffsetX = frame.OffsetX;
+        OffsetY = frame.OffsetY;
+    }
+
+    /// <summary>Puts a saved setup back, with its picture.</summary>
+    /// <param name="project">The settings.</param>
+    /// <param name="picture">The picture as a PNG file.</param>
+    public void ApplyProject(StudioProject project, byte[] picture, IReadOnlyList<byte[]?>? framePictures = null)
+    {
+        // A surface that is no longer in the catalog leaves the current one, and says so.
+        SurfaceOption? surface = AllSurfaces.FirstOrDefault(option => option.Surface.Id == project.SurfaceId);
+
+        if (SelectedCategory != AllCategories)
+            SelectedCategory = AllCategories;
+
+        if (surface is not null)
+            SelectedSurface = surface;
+
+        // The picture first, because bringing it in puts the placement back to its start.
+        ApplyFrame(project.FirstFrame(), picture);
 
         if (Enum.TryParse(project.ColorMode, out ColorMode mode)) ColorModeChoices.Select(mode);
         MaxColors = project.MaxColors;
@@ -252,6 +271,8 @@ public sealed partial class StudioViewModel
             PresetChoices.Select(project.Quality);
         else
             QualityChoices.Select(project.Quality);
+
+        LoadMoreFrames(project, framePictures);
 
         CurrentProjectId = project.Id.Length > 0 ? project.Id : null;
         ProjectName = project.Name;

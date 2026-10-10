@@ -117,6 +117,16 @@ public class ThemeRenderTests
             ExpectLook(Draw(new HomeView { DataContext = new HomeViewModel(shell.Sidebar) }, new Sidebar { ViewModel = shell.Sidebar }, variant, $"home-{tag}"), variant);
             ExpectLook(Draw(new SettingsView { DataContext = new SettingsViewModel(settings, new UpdateService(), new DialogService(), "C:\\Library") }, new Sidebar { ViewModel = shell.Sidebar }, variant, $"settings-{tag}"), variant);
             ExpectLook(Draw(new StudioView { DataContext = new StudioViewModel(new SurfaceService()) }, new Sidebar { ViewModel = shell.Sidebar }, variant, $"studio-{tag}"), variant);
+            StudioViewModel animated = new(new SurfaceService()) { ReprocessDelay = TimeSpan.Zero };
+            animated.SelectedSurface = animated.AllSurfaces.Single(option => option.Surface.Id == "animated-neon-large");
+            string picture = Path.Combine(Path.GetTempPath(), $"rp-anim-{Guid.NewGuid():N}.png");
+            TestImages.SavePng(TestImages.Rainbow(), picture);
+            animated.TryLoad(picture);
+            animated.ProcessNow();
+            File.Delete(picture);
+            animated.AddFrame();
+            animated.AddFrame();
+            ExpectLook(Draw(new StudioView { DataContext = animated }, new Sidebar { ViewModel = shell.Sidebar }, variant, $"studio-animated-{tag}"), variant);
             ExpectLook(Draw(new LibraryView { DataContext = new LibraryViewModel(TestLibrary.Create(), new SurfaceService()) }, new Sidebar { ViewModel = shell.Sidebar }, variant, $"library-{tag}"), variant);
         }
         finally

@@ -178,6 +178,8 @@ public sealed partial class StudioViewModel : ViewModelBase
         FlipVerticalCommand = new RelayCommand(() => { _flipY = !_flipY; Changed(); });
         ResetPlacementCommand = new RelayCommand(ResetPlacement);
         ResetAdjustmentsCommand = new RelayCommand(ResetAdjustments);
+
+        InitializeFrames();
     }
 
     // ---- surface picker ----
@@ -229,6 +231,20 @@ public sealed partial class StudioViewModel : ViewModelBase
             OnPropertyChanged(nameof(IsTextureEstimated));
             OnPropertyChanged(nameof(IsPresetSurface));
             OnPropertyChanged(nameof(IsSizeSurface));
+
+            StopPlaying();
+            if (SelectedSurface.Surface.IsAnimated && _frames.Count > MaxFrames)
+            {
+                StoreOpenFrame();
+                _frames.RemoveRange(MaxFrames, _frames.Count - MaxFrames);
+                if (_frameIndex >= _frames.Count)
+                {
+                    _frameIndex = _frames.Count - 1;
+                    LoadOpenFrame();
+                }
+            }
+
+            RaiseFrames();
             Changed();
         }
     }
@@ -498,10 +514,10 @@ public sealed partial class StudioViewModel : ViewModelBase
     public bool ShowOriginal => HasImage && PreviewChoices.Selected == PreviewMode.Original;
 
     /// <summary>The result as it would be painted. In split view it fills the whole canvas, with the placed picture over its left half.</summary>
-    public bool ShowResult => HasImage && PreviewChoices.Selected != PreviewMode.Original && Preview is not null;
+    public bool ShowResult => IsPlaying || HasImage && PreviewChoices.Selected != PreviewMode.Original && Preview is not null;
 
     /// <summary>Whether the left of the divider shows the original picture, placed like the result.</summary>
-    public bool ShowSplit => HasImage && PreviewChoices.Selected == PreviewMode.Split && Reference is not null;
+    public bool ShowSplit => !IsPlaying && HasImage && PreviewChoices.Selected == PreviewMode.Split && Reference is not null;
 
     /// <summary>Where the divider of the split view is, from 0 (left edge) to 1 (right edge).</summary>
     public double SplitPosition
@@ -558,6 +574,7 @@ public sealed partial class StudioViewModel : ViewModelBase
                 return;
 
             OnPropertyChanged(nameof(ShowResult));
+            OnPropertyChanged(nameof(ShownPreview));
         }
     }
 
@@ -584,14 +601,45 @@ public sealed partial class StudioViewModel : ViewModelBase
     public RelayCommand PaintCommand { get; }
 
     /// <summary>Whether there is a finished plan to paint, which is not the case while it is still being worked out.</summary>
-    public bool CanPaint => Plan is { PaintedCells: > 0 } && !IsBusy;
+    public bool CanPaint => (Plan is { PaintedCells: > 0 } || OtherFramesHavePictures) && !IsBusy;
+
+    private bool OtherFramesHavePictures
+        => IsAnimatedSurface && _frames.Where((_, index) => index != _frameIndex).Any(slot => slot.Picture is not null);
 
     private void RequestPaint()
     {
-        if (Plan is not { } plan || !CanPaint)
+        if (!CanPaint)
+            return;
+
+        if (IsAnimatedSurface && FrameCount > 1)
+        {
+            _ = RequestAnimationAsync();
+            return;
+        }
+
+        if (Plan is not { } plan)
             return;
 
         PaintRequested?.Invoke(new PaintRequest(plan, SelectedSurface.Surface, ColorModeChoices.Selected, BlockSize, ImageName));
+    }
+
+    private async Task RequestAnimationAsync()
+    {
+        IsBusy = true;
+        try
+        {
+            IReadOnlyList<PaintPlan> plans = await PreparePlansAsync();
+            PaintRequested?.Invoke(new PaintRequest(plans[0], SelectedSurface.Surface, ColorModeChoices.Selected, BlockSize, ImageName, plans));
+        }
+        catch (Exception ex)
+        {
+            AppLog.Error("StudioViewModel", "Preparing the frames failed.", ex);
+            ErrorText = Loc.Get("StudioErrPrepare");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     /// <summary>The cells across and down for the selected surface and brush size.</summary>
@@ -1049,6 +1097,12 @@ public sealed partial class StudioViewModel : ViewModelBase
     private void ClearImage()
     {
         DetachProject();
+        ClearPicture();
+    }
+
+    /// <summary>Empties the picture that is shown, without touching the project it belongs to.</summary>
+    private void ClearPicture()
+    {
         _download?.Cancel();
         _pending?.Cancel();
         Image?.Dispose();

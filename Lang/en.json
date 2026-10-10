@@ -332,5 +332,15 @@
   "Category_Animated": "Animated",
   "Surface_animated-neon-large": "Large Animated Neon Sign",
   "Surface_animated-neon-medium": "Medium Animated Neon Sign",
-  "Surface_animated-neon-small": "Small Animated Neon Sign"
+  "Surface_animated-neon-small": "Small Animated Neon Sign",
+  "StudioFramesHeader": "FRAMES",
+  "StudioFramesNote": "Each frame has its own picture. A new frame starts as a copy of the open one.",
+  "StudioFramesSpeedNote": "Slow shows a frame every 2 seconds, medium every second and fast twice a second.",
+  "FramesAdd": "Add a frame",
+  "FramesRemove": "Remove this frame",
+  "FramesPlay": "Play",
+  "FramesStop": "Stop",
+  "FramesSlow": "Slow",
+  "FramesMedium": "Medium",
+  "FramesFast": "Fast"
 }

@@ -27,7 +27,11 @@ public interface IProjectStore
     /// <param name="picture">The picture as a PNG file.</param>
     /// <param name="thumbnail">A small picture of the result as a PNG file, or <see langword="null"/>.</param>
     /// <returns>The project as saved, with its id and its time of change.</returns>
-    StudioProject Save(StudioProject project, byte[] picture, byte[]? thumbnail);
+    /// <param name="framePictures">The pictures of the second frame onward of an animated sign, as PNG files, in order.</param>
+    StudioProject Save(StudioProject project, byte[] picture, byte[]? thumbnail, IReadOnlyList<byte[]>? framePictures = null);
+
+    /// <summary>The pictures of the second frame onward of an animated sign. A frame whose picture is missing is <see langword="null"/>.</summary>
+    IReadOnlyList<byte[]?> LoadFramePictures(string id);
 
     /// <summary>Changes the name of a project.</summary>
     void Rename(string id, string name);
@@ -45,6 +49,8 @@ public sealed class ProjectStore : IProjectStore
     private const string SettingsFile = "project.json";
     private const string PictureFile = "picture.png";
     private const string ThumbnailFile = "thumbnail.png";
+
+    private static string FrameFile(int number) => $"frame-{number}.png";
 
     private static readonly JsonSerializerOptions Options = new()
     {
@@ -109,15 +115,24 @@ public sealed class ProjectStore : IProjectStore
         }
     }
 
-    public StudioProject Save(StudioProject project, byte[] picture, byte[]? thumbnail)
+    public StudioProject Save(StudioProject project, byte[] picture, byte[]? thumbnail, IReadOnlyList<byte[]>? framePictures = null)
     {
         string id = IsSafeId(project.Id) ? project.Id : NewId();
-        StudioProject saved = project with { Id = id, Name = CleanName(project.Name), Modified = DateTimeOffset.UtcNow };
+        StudioProject saved = project with { Id = id, Name = CleanName(project.Name), Modified = DateTimeOffset.UtcNow, MoreFrames = new FrameList(project.MoreFrames.Take(framePictures?.Count ?? 0)) };
         string folder = Folder(id);
         Directory.CreateDirectory(folder);
 
         // Each file is written beside its place and then moved into it, so a crash in the middle never leaves half a file.
         WriteAtomically(Path.Combine(folder, PictureFile), picture);
+
+        // The pictures of the other frames follow the frames listed in the settings, and any left over from before are removed.
+        int frames = framePictures?.Count ?? 0;
+        for (int i = 0; i < frames; i++)
+            WriteAtomically(Path.Combine(folder, FrameFile(i + 2)), framePictures![i]);
+
+        foreach (string old in Directory.EnumerateFiles(folder, "frame-*.png"))
+            if (!Enumerable.Range(2, frames).Any(number => Path.GetFileName(old) == FrameFile(number)))
+                File.Delete(old);
 
         string thumbnailPath = Path.Combine(folder, ThumbnailFile);
         if (thumbnail is not null)
@@ -127,6 +142,26 @@ public sealed class ProjectStore : IProjectStore
 
         WriteAtomically(Path.Combine(folder, SettingsFile), JsonSerializer.SerializeToUtf8Bytes(saved, Options));
         return saved;
+    }
+
+    public IReadOnlyList<byte[]?> LoadFramePictures(string id)
+    {
+        try
+        {
+            if (!IsSafeId(id) || ReadSettings(id) is not { } project)
+                return [];
+
+            return [.. Enumerable.Range(2, project.MoreFrames.Count).Select(number =>
+            {
+                string path = Path.Combine(Folder(id), FrameFile(number));
+                return File.Exists(path) ? File.ReadAllBytes(path) : null;
+            })];
+        }
+        catch (Exception ex)
+        {
+            AppLog.Warn("ProjectStore", $"Could not load the frames of the project '{id}'.", ex);
+            return [];
+        }
     }
 
     public void Rename(string id, string name)
@@ -147,7 +182,8 @@ public sealed class ProjectStore : IProjectStore
         string thumbnail = Path.Combine(Folder(id), ThumbnailFile);
         byte[]? thumbnailBytes = File.Exists(thumbnail) ? File.ReadAllBytes(thumbnail) : null;
 
-        return Save(loaded.Project with { Id = "", Name = name, Created = DateTimeOffset.UtcNow }, loaded.Picture, thumbnailBytes);
+        List<byte[]> frames = [.. LoadFramePictures(id).OfType<byte[]>()];
+        return Save(loaded.Project with { Id = "", Name = name, Created = DateTimeOffset.UtcNow }, loaded.Picture, thumbnailBytes, frames);
     }
 
     public void Delete(string id)

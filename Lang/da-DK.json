@@ -332,5 +332,15 @@
   "Category_Animated": "Animerede",
   "Surface_animated-neon-large": "Stort animeret neonskilt",
   "Surface_animated-neon-medium": "Mellem animeret neonskilt",
-  "Surface_animated-neon-small": "Lille animeret neonskilt"
+  "Surface_animated-neon-small": "Lille animeret neonskilt",
+  "StudioFramesHeader": "FRAMES",
+  "StudioFramesNote": "Hvert frame har sit eget billede. Et nyt frame starter som en kopi af det åbne.",
+  "StudioFramesSpeedNote": "Langsom viser et frame hvert andet sekund, mellem hvert sekund og hurtig to gange i sekundet.",
+  "FramesAdd": "Tilføj et frame",
+  "FramesRemove": "Fjern dette frame",
+  "FramesPlay": "Afspil",
+  "FramesStop": "Stop",
+  "FramesSlow": "Langsom",
+  "FramesMedium": "Mellem",
+  "FramesFast": "Hurtig"
 }

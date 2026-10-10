@@ -332,5 +332,15 @@
   "Category_Animated": "Анимация",
   "Surface_animated-neon-large": "Большая анимированная неоновая вывеска",
   "Surface_animated-neon-medium": "Средняя анимированная неоновая вывеска",
-  "Surface_animated-neon-small": "Маленькая анимированная неоновая вывеска"
+  "Surface_animated-neon-small": "Маленькая анимированная неоновая вывеска",
+  "StudioFramesHeader": "КАДРЫ",
+  "StudioFramesNote": "У каждого кадра своя картинка. Новый кадр начинается как копия открытого.",
+  "StudioFramesSpeedNote": "Медленно: кадр раз в 2 секунды, средне: раз в секунду, быстро: дважды в секунду.",
+  "FramesAdd": "Добавить кадр",
+  "FramesRemove": "Удалить этот кадр",
+  "FramesPlay": "Играть",
+  "FramesStop": "Стоп",
+  "FramesSlow": "Медленно",
+  "FramesMedium": "Средне",
+  "FramesFast": "Быстро"
 }
