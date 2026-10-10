@@ -24,6 +24,8 @@ public class TestApp : Application
         Styles.Add(new StyleInclude(new Uri("avares://RustyPainter/")) { Source = new Uri("avares://RustyPainter/Styles/AppStyles.axaml") });
         Styles.Add(new StyleInclude(new Uri("avares://RustyPainter/")) { Source = new Uri("avares://IconPacks.Avalonia.PhosphorIcons/PhosphorIcons.axaml") });
 
+        DataTemplates.Add(new RustyPainter.ViewLocator());
+
         Resources.MergedDictionaries.Add(new ResourceInclude(new Uri("avares://RustyPainter/")) { Source = new Uri("avares://RustyPainter/Theme/Colors.axaml") });
     }
 }

@@ -17,7 +17,7 @@
                     <TextBlock Text="{loc:L NavLibrary}" FontSize="26" FontWeight="Bold" Foreground="{DynamicResource TextColor}"/>
                     <TextBlock Text="{Binding CountText}" Classes="muted"/>
                 </StackPanel>
-                <TextBox Grid.Column="1" Width="260" VerticalAlignment="Center" PlaceholderText="{loc:L LibrarySearchPlaceholder}"
+                <TextBox Grid.Column="1" Width="320" VerticalAlignment="Center" PlaceholderText="{loc:L LibrarySearchPlaceholder}"
                          Text="{Binding Search}" IsVisible="{Binding HasProjects}"/>
             </Grid>
 
@@ -62,7 +62,7 @@
                                 </Button>
 
                                 <StackPanel Spacing="2" IsVisible="{Binding IsNotRenaming}">
-                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Name}"/>
                                     <TextBlock Text="{Binding SurfaceName}" Classes="muted" FontSize="11" TextTrimming="CharacterEllipsis"/>
                                     <TextBlock Text="{Binding ModifiedText}" Classes="muted" FontSize="11"/>
                                 </StackPanel>

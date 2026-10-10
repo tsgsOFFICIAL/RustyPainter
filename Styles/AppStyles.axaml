@@ -52,8 +52,15 @@
         <Setter Property="CornerRadius" Value="8" />
     </Style>
 
-    <Style Selector="Button.accentButton:disabled, Button.dangerButton:disabled">
-        <Setter Property="Opacity" Value="0.45" />
+    <!-- A button that cannot be pressed turns plain grey, so its text can still be read on either theme. -->
+    <Style Selector="Button.accentButton:disabled /template/ ContentPresenter#PART_ContentPresenter, Button.dangerButton:disabled /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource BorderColor}" />
+        <Setter Property="TextElement.Foreground" Value="{DynamicResource TextMutedColor}" />
+    </Style>
+
+    <Style Selector="ProgressBar">
+        <Setter Property="Foreground" Value="{DynamicResource AccentColor}" />
+        <Setter Property="Background" Value="{DynamicResource BorderColor}" />
     </Style>
 
     <Style Selector="Button.dangerButton">

@@ -17,6 +17,10 @@
          AccentColor or this theme's BgColor ever change. -->
     <SolidColorBrush x:Key="AccentSurfaceColor"     Color="#342118"/>
 
+    <SolidColorBrush x:Key="DangerColor"            Color="#F87171"/>
+    <SolidColorBrush x:Key="DangerColorHover"       Color="#FCA5A5"/>
+    <SolidColorBrush x:Key="DangerColorTransparent" Color="#00F87171"/>
+
     <!-- The area a picture is shown on, and the small floating chips over it. -->
     <SolidColorBrush x:Key="StageColor"             Color="#0C0E12"/>
     <SolidColorBrush x:Key="OverlayColor"           Color="#E6111318"/>

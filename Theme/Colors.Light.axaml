@@ -10,6 +10,11 @@
          same way as in Colors.Dark.axaml. Recompute it if AccentColor or BgColor ever change. -->
     <SolidColorBrush x:Key="AccentSurfaceColor"     Color="#F4E1D5"/>
 
+    <!-- A stronger red than the dark theme uses, so white text on a red button can be read on a light page. -->
+    <SolidColorBrush x:Key="DangerColor"            Color="#DC2626"/>
+    <SolidColorBrush x:Key="DangerColorHover"       Color="#EF4444"/>
+    <SolidColorBrush x:Key="DangerColorTransparent" Color="#00DC2626"/>
+
     <!-- The area a picture is shown on, and the small floating chips over it. -->
     <SolidColorBrush x:Key="StageColor"             Color="#E3E6ED"/>
     <SolidColorBrush x:Key="OverlayColor"           Color="#E6FFFFFF"/>

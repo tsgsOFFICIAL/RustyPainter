@@ -88,7 +88,7 @@
                                         <Image Source="{Binding Image}" Stretch="Uniform"/>
                                     </Border>
                                     <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center" Spacing="2">
-                                        <TextBlock Text="{Binding ImageName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding ImageLabel}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding ImageLabel}"/>
                                         <TextBlock Text="{Binding ImageInfo}" Classes="muted" FontSize="11"/>
                                     </StackPanel>
                                 </Grid>
@@ -307,17 +307,14 @@
         <!-- Preview -->
         <Grid Grid.Column="1" RowDefinitions="Auto,*,Auto">
             <Border Grid.Row="0" Padding="16,12" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1">
-                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
-                    <StackPanel Spacing="2" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding SelectedSurface.Name}" FontSize="16" FontWeight="Bold"/>
+                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="12">
+                    <TextBlock Grid.ColumnSpan="2" Text="{Binding SelectedSurface.Name}" FontSize="16" FontWeight="Bold" TextWrapping="Wrap"/>
+                    <StackPanel Grid.Row="1" Spacing="2" VerticalAlignment="Center">
                         <TextBlock Text="{Binding CanvasText}" Classes="muted" FontSize="12"/>
                         <TextBlock Text="{Binding ScrollHint}" IsVisible="{Binding HasScrollHint}"
-                                   Foreground="{DynamicResource AccentColor}" FontSize="12"/>
+                                   Foreground="{DynamicResource AccentColor}" FontSize="12" TextWrapping="Wrap"/>
                     </StackPanel>
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center" IsVisible="{Binding HasImage}">
-                        <ItemsControl Classes="chips" ItemsSource="{Binding PreviewChoices.Choices}" VerticalAlignment="Center"/>
-                        <TextBlock Text="{Binding SaveStatus}" IsVisible="{Binding HasSaveStatus}" Classes="muted" FontSize="12"
-                                   VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="160"/>
+                    <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center" IsVisible="{Binding HasImage}">
                         <Button Classes="secondaryButton" Command="{Binding SaveCommand}" VerticalAlignment="Center" Padding="12,7"
                                 ToolTip.Tip="{loc:L StudioSaveTooltip}">
                             <StackPanel Orientation="Horizontal" Spacing="8">
@@ -332,7 +329,12 @@
                             </StackPanel>
                         </Button>
                     </StackPanel>
-                    <WrapPanel Grid.Row="1" Grid.ColumnSpan="2" ItemSpacing="8" LineSpacing="8" Margin="0,10,0,0" IsVisible="{Binding IsAnimatedSurface}">
+                    <WrapPanel Grid.Row="2" Grid.ColumnSpan="2" ItemSpacing="12" LineSpacing="4" Margin="0,10,0,0" IsVisible="{Binding HasImage}">
+                        <ItemsControl Classes="chips" ItemsSource="{Binding PreviewChoices.Choices}" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding SaveStatus}" IsVisible="{Binding HasSaveStatus}" Classes="muted" FontSize="12"
+                                   VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="220"/>
+                    </WrapPanel>
+                    <WrapPanel Grid.Row="3" Grid.ColumnSpan="2" ItemSpacing="8" LineSpacing="8" Margin="0,6,0,0" IsVisible="{Binding IsAnimatedSurface}">
                         <TextBlock Text="{loc:L StudioFramesHeader}" Classes="eyebrow" VerticalAlignment="Center"/>
                         <ItemsControl Classes="chips" ItemsSource="{Binding FrameChips}" VerticalAlignment="Center">
                             <ItemsControl.ItemTemplate>
@@ -414,8 +416,8 @@
                     </Viewbox>
                     <!-- Outside the Viewbox so the text keeps its size however big the canvas is. -->
                     <TextBlock Text="{loc:L StudioCanvasHint}" Classes="muted" FontSize="11"
-                               IsVisible="{Binding HasImage}" HorizontalAlignment="Center" VerticalAlignment="Bottom"
-                               Margin="0,0,0,10" IsHitTestVisible="False"/>
+                               IsVisible="{Binding HasImage}" HorizontalAlignment="Center" VerticalAlignment="Bottom" TextWrapping="Wrap" TextAlignment="Center"
+                               Margin="16,0,16,10" IsHitTestVisible="False"/>
                     <TextBlock Text="{loc:L StudioNoPicture}" IsVisible="{Binding NoImage}"
                                Classes="muted" FontSize="14" TextAlignment="Center"
                                HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"/>
@@ -480,7 +482,7 @@
                     <ListBox.ItemTemplate>
                         <DataTemplate x:DataType="vm:SurfaceOption">
                             <StackPanel Margin="12,10" Spacing="2">
-                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13"/>
+                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13" TextWrapping="Wrap"/>
                                 <TextBlock Text="{Binding SizeText}" Classes="muted" FontSize="11"/>
                             </StackPanel>
                         </DataTemplate>

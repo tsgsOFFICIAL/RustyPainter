@@ -9,11 +9,6 @@
              x:Class="RustyPainter.Views.PaintingView"
              x:DataType="vm:PaintingViewModel">
 
-    <UserControl.Resources>
-        <StaticResource x:Key="ProgressBarForeground" ResourceKey="AccentColor"/>
-        <StaticResource x:Key="ProgressBarBackground" ResourceKey="BorderColor"/>
-    </UserControl.Resources>
-
     <ScrollViewer>
         <StackPanel MaxWidth="680" Margin="32,28" Spacing="16" HorizontalAlignment="Stretch" VerticalAlignment="Center">
 

@@ -289,7 +289,18 @@ public sealed partial class StudioViewModel : ViewModelBase
 
     public RelayCommand ClearImageCommand { get; }
 
-    public string ImageName { get => _imageName; private set => SetProperty(ref _imageName, value); }
+    public string ImageName
+    {
+        get => _imageName;
+        private set
+        {
+            if (SetProperty(ref _imageName, value))
+                OnPropertyChanged(nameof(ImageLabel));
+        }
+    }
+
+    /// <summary>The name of the picture as shown to the user. The picture made from typed text is saved under one fixed name and shown in the language in use.</summary>
+    public string ImageLabel => Loc.PictureName(ImageName);
 
     public string ImageInfo => Image is { } image ? $"{image.PixelSize.Width} x {image.PixelSize.Height}" : "";
 

@@ -12,7 +12,7 @@
         Title="RustyPainter"
         Icon="/Assets/App/logo.ico"
         Width="1280" Height="800"
-        MinWidth="1000" MinHeight="640"
+        MinWidth="1240" MinHeight="640"
         Background="{DynamicResource BgColor}"
         WindowStartupLocation="CenterScreen">
 
