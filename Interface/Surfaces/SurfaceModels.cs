@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 
 namespace RustyPainter.Interface;
@@ -20,8 +21,56 @@ public readonly record struct ScreenRect(double X1, double Y1, double X2, double
 }
 
 /// <summary>
-/// Where the clickable parts of Rust's paint screen are for one family of surfaces. Surfaces that share a
-/// panel arrangement (the wooden signs, for example) share a layout.
+/// The grid of colour swatches shown in swatch mode. Swatches are numbered left to right, then top to
+/// bottom, which is also the order of <see cref="SurfaceCatalog.Palette"/>.
+/// </summary>
+/// <param name="Area">The whole grid.</param>
+/// <param name="Columns">Swatches per row.</param>
+/// <param name="Rows">Number of rows.</param>
+/// <param name="CellWidth">Width of one swatch.</param>
+/// <param name="CellHeight">Height of one swatch.</param>
+/// <param name="GapX">Horizontal gap between swatches.</param>
+/// <param name="GapY">Vertical gap between swatches.</param>
+public sealed record ColorGrid(ScreenRect Area, int Columns, int Rows, double CellWidth, double CellHeight, double GapX, double GapY)
+{
+    /// <summary>The number of swatches in the grid.</summary>
+    public int Count => Columns * Rows;
+
+    /// <summary>Gets the point to click for the swatch at <paramref name="index"/>.</summary>
+    public ScreenPoint CellCenter(int index)
+    {
+        int row = index / Columns;
+        int column = index % Columns;
+
+        return new ScreenPoint(
+            Area.X1 + column * (CellWidth + GapX) + CellWidth / 2,
+            Area.Y1 + row * (CellHeight + GapY) + CellHeight / 2);
+    }
+
+    /// <summary>Scales every size and position in the grid, then moves it by the given offset.</summary>
+    public ColorGrid Place(double sx, double sy, double dx, double dy)
+        => new(Area.Scale(sx, sy).Offset(dx, dy), Columns, Rows, CellWidth * sx, CellHeight * sy, GapX * sx, GapY * sy);
+}
+
+/// <summary>The controls shown in free colour mode, where any colour can be typed or picked.</summary>
+/// <param name="ColorHex">The hex colour field.</param>
+/// <param name="ColorArea">The saturation and brightness square.</param>
+/// <param name="HueBar">The hue bar.</param>
+/// <param name="SavedColors">The saved colour slots, top to bottom.</param>
+/// <param name="AddColor">The button that saves the current colour into a slot.</param>
+public sealed record FreeColorControls(ScreenRect ColorHex, ScreenRect ColorArea, ScreenRect HueBar, ScreenRect[] SavedColors, ScreenRect AddColor)
+{
+    /// <summary>Scales every rectangle, then moves it by the given offset.</summary>
+    public FreeColorControls Place(double sx, double sy, double dx, double dy)
+    {
+        ScreenRect Move(ScreenRect rect) => rect.Scale(sx, sy).Offset(dx, dy);
+        return new(Move(ColorHex), Move(ColorArea), Move(HueBar), SavedColors.Select(Move).ToArray(), Move(AddColor));
+    }
+}
+
+/// <summary>
+/// Where the clickable parts of Rust's paint screen are, for one colour mode of one family of surfaces.
+/// Switching colour mode changes the height of the right hand panel, so every item in it moves.
 /// </summary>
 /// <param name="Clear">The button that clears the canvas.</param>
 /// <param name="ResetCamera">The button that resets the view of the canvas.</param>
@@ -34,13 +83,11 @@ public readonly record struct ScreenRect(double X1, double Y1, double X2, double
 /// <param name="Size">The brush size value, which can be clicked to type a number.</param>
 /// <param name="Spacing">The brush spacing value.</param>
 /// <param name="Opacity">The brush opacity value.</param>
-/// <param name="ColorHex">The hex colour field.</param>
-/// <param name="ColorArea">The saturation and brightness square of the colour picker.</param>
-/// <param name="HueBar">The hue bar of the colour picker.</param>
-/// <param name="SavedColors">The saved colour slots, top to bottom.</param>
-/// <param name="AddColor">The button that saves the current colour into a slot.</param>
+/// <param name="ColorModeToggle">The button in the colour header that switches between swatch mode and free colour mode.</param>
 /// <param name="SaveChanges">The button that saves the painting and leaves the paint screen.</param>
 /// <param name="Cancel">The button that leaves the paint screen without saving.</param>
+/// <param name="ColorGrid">The swatch grid, present in swatch mode only.</param>
+/// <param name="FreeColor">The free colour controls, present in free colour mode only.</param>
 public sealed record PaintLayout(
     ScreenRect Clear,
     ScreenRect ResetCamera,
@@ -53,37 +100,55 @@ public sealed record PaintLayout(
     ScreenRect Size,
     ScreenRect Spacing,
     ScreenRect Opacity,
-    ScreenRect ColorHex,
-    ScreenRect ColorArea,
-    ScreenRect HueBar,
-    ScreenRect[] SavedColors,
-    ScreenRect AddColor,
+    ScreenRect ColorModeToggle,
     ScreenRect SaveChanges,
-    ScreenRect Cancel)
+    ScreenRect Cancel,
+    ColorGrid? ColorGrid = null,
+    FreeColorControls? FreeColor = null)
 {
-    /// <summary>Returns a copy of this layout with <paramref name="transform"/> applied to every rectangle.</summary>
-    public PaintLayout Map(System.Func<ScreenRect, ScreenRect> transform) => new(
-        transform(Clear), transform(ResetCamera), transform(Undo), transform(Redo),
-        transform(ToolBrush), transform(ToolEraser), transform(ToolPicker),
-        BrushShapes.Select(transform).ToArray(),
-        transform(Size), transform(Spacing), transform(Opacity),
-        transform(ColorHex), transform(ColorArea), transform(HueBar),
-        SavedColors.Select(transform).ToArray(),
-        transform(AddColor), transform(SaveChanges), transform(Cancel));
+    /// <summary>Every plain rectangle in the layout, for checks that apply to all of them.</summary>
+    public ScreenRect[] AllRects()
+    {
+        List<ScreenRect> all =
+        [
+            Clear, ResetCamera, Undo, Redo, ToolBrush, ToolEraser, ToolPicker,
+            .. BrushShapes, Size, Spacing, Opacity, ColorModeToggle, SaveChanges, Cancel
+        ];
 
-    /// <summary>Every rectangle in the layout, for checks that apply to all of them.</summary>
-    public ScreenRect[] All() =>
-    [
-        Clear, ResetCamera, Undo, Redo, ToolBrush, ToolEraser, ToolPicker,
-        .. BrushShapes, Size, Spacing, Opacity, ColorHex, ColorArea, HueBar,
-        .. SavedColors, AddColor, SaveChanges, Cancel
-    ];
+        if (ColorGrid is not null)
+            all.Add(ColorGrid.Area);
+
+        if (FreeColor is not null)
+            all.AddRange([FreeColor.ColorHex, FreeColor.ColorArea, FreeColor.HueBar, .. FreeColor.SavedColors, FreeColor.AddColor]);
+
+        return [.. all];
+    }
+
+    /// <summary>Scales the whole layout, then moves it by the given offset.</summary>
+    public PaintLayout Place(double sx, double sy, double dx, double dy)
+    {
+        ScreenRect Move(ScreenRect rect) => rect.Scale(sx, sy).Offset(dx, dy);
+
+        return new PaintLayout(
+            Move(Clear), Move(ResetCamera), Move(Undo), Move(Redo),
+            Move(ToolBrush), Move(ToolEraser), Move(ToolPicker),
+            BrushShapes.Select(Move).ToArray(),
+            Move(Size), Move(Spacing), Move(Opacity),
+            Move(ColorModeToggle), Move(SaveChanges), Move(Cancel),
+            ColorGrid?.Place(sx, sy, dx, dy),
+            FreeColor?.Place(sx, sy, dx, dy));
+    }
 }
+
+/// <summary>The two arrangements of one family of paint screens, one per colour mode.</summary>
+/// <param name="Swatches">The layout while the game shows the fixed swatch grid.</param>
+/// <param name="Free">The layout while the game shows the free colour picker.</param>
+public sealed record LayoutFamily(PaintLayout Swatches, PaintLayout Free);
 
 /// <summary>One paintable surface and where its canvas sits on screen.</summary>
 /// <param name="Id">A stable identifier, used in saved projects.</param>
 /// <param name="Name">The name shown in the UI.</param>
-/// <param name="Layout">The key of the <see cref="PaintLayout"/> this surface's paint screen uses.</param>
+/// <param name="Layout">The key of the <see cref="LayoutFamily"/> this surface's paint screen uses.</param>
 /// <param name="Canvas">The canvas rectangle at the catalog's reference resolution.</param>
 public sealed record Surface(string Id, string Name, string Layout, ScreenRect Canvas);
 
@@ -93,12 +158,14 @@ public sealed record Surface(string Id, string Name, string Layout, ScreenRect C
 /// </summary>
 /// <param name="ReferenceWidth">Width of the screen the coordinates were recorded on.</param>
 /// <param name="ReferenceHeight">Height of the screen the coordinates were recorded on.</param>
+/// <param name="Palette">The colours of the swatch grid as #RRGGBB, in swatch order.</param>
 /// <param name="Layouts">The paint screen arrangements, by key.</param>
 /// <param name="Surfaces">The paintable surfaces.</param>
 public sealed record SurfaceCatalog(
     int ReferenceWidth,
     int ReferenceHeight,
-    System.Collections.Generic.Dictionary<string, PaintLayout> Layouts,
+    string[] Palette,
+    Dictionary<string, LayoutFamily> Layouts,
     Surface[] Surfaces);
 
 /// <summary>
@@ -107,13 +174,14 @@ public sealed record SurfaceCatalog(
 /// </summary>
 public sealed class ResolvedLayout
 {
-    public ResolvedLayout(Surface surface, int screenWidth, int screenHeight, ScreenRect canvas, PaintLayout controls)
+    public ResolvedLayout(Surface surface, int screenWidth, int screenHeight, ScreenRect canvas, PaintLayout swatches, PaintLayout free)
     {
         Surface = surface;
         ScreenWidth = screenWidth;
         ScreenHeight = screenHeight;
         Canvas = canvas;
-        Controls = controls;
+        Swatches = swatches;
+        Free = free;
     }
 
     public Surface Surface { get; }
@@ -123,6 +191,9 @@ public sealed class ResolvedLayout
     /// <summary>The surface's canvas in screen pixels.</summary>
     public ScreenRect Canvas { get; }
 
-    /// <summary>The paint screen controls in screen pixels.</summary>
-    public PaintLayout Controls { get; }
+    /// <summary>The controls in screen pixels while the game is in swatch mode.</summary>
+    public PaintLayout Swatches { get; }
+
+    /// <summary>The controls in screen pixels while the game is in free colour mode.</summary>
+    public PaintLayout Free { get; }
 }

@@ -50,7 +50,7 @@ public sealed class SurfaceService : ISurfaceService
         if (screenWidth <= 0 || screenHeight <= 0)
             throw new ArgumentException($"The game resolution must be positive, got {screenWidth}x{screenHeight}.");
 
-        if (!Catalog.Layouts.TryGetValue(surface.Layout, out PaintLayout? layout))
+        if (!Catalog.Layouts.TryGetValue(surface.Layout, out LayoutFamily? family))
             throw new ArgumentException($"The surface '{surface.Id}' uses the unknown layout '{surface.Layout}'.");
 
         // The coordinates were recorded on a 16:9 screen. Scaling each axis on its own is exact for
@@ -58,9 +58,11 @@ public sealed class SurfaceService : ISurfaceService
         double sx = (double)screenWidth / Catalog.ReferenceWidth;
         double sy = (double)screenHeight / Catalog.ReferenceHeight;
 
-        ScreenRect Place(ScreenRect rect) => rect.Scale(sx, sy).Offset(originX, originY);
-
-        return new ResolvedLayout(surface, screenWidth, screenHeight, Place(surface.Canvas), layout.Map(Place));
+        return new ResolvedLayout(
+            surface, screenWidth, screenHeight,
+            surface.Canvas.Scale(sx, sy).Offset(originX, originY),
+            family.Swatches.Place(sx, sy, originX, originY),
+            family.Free.Place(sx, sy, originX, originY));
     }
 
     private static SurfaceCatalog LoadEmbedded()
@@ -88,22 +90,28 @@ public sealed class SurfaceService : ISurfaceService
         if (catalog.Layouts is not { Count: > 0 })
             throw new InvalidDataException("There must be at least one layout.");
 
-        foreach ((string key, PaintLayout layout) in catalog.Layouts)
+        string[] badColors = catalog.Palette.Where(color => !IsHexColor(color)).ToArray();
+        if (badColors.Length > 0)
+            throw new InvalidDataException($"These palette entries are not #RRGGBB: {string.Join(", ", badColors)}.");
+
+        string[] duplicates = catalog.Palette.GroupBy(color => color, StringComparer.OrdinalIgnoreCase)
+            .Where(group => group.Count() > 1).Select(group => group.Key).ToArray();
+        if (duplicates.Length > 0)
+            throw new InvalidDataException($"The palette repeats these colours, so one swatch can never be picked: {string.Join(", ", duplicates)}.");
+
+        foreach ((string key, LayoutFamily family) in catalog.Layouts)
         {
-            if (layout.BrushShapes is not { Length: > 0 })
-                throw new InvalidDataException($"The layout '{key}' has no brush shapes.");
+            ValidateLayout(catalog, $"{key} (swatches)", family.Swatches);
+            ValidateLayout(catalog, $"{key} (free)", family.Free);
 
-            if (layout.SavedColors is not { Length: > 0 })
-                throw new InvalidDataException($"The layout '{key}' has no saved colour slots.");
+            if (family.Swatches.ColorGrid is not { } grid)
+                throw new InvalidDataException($"The swatch layout of '{key}' has no colour grid.");
 
-            foreach (ScreenRect rect in layout.All())
-            {
-                if (rect.Width <= 0 || rect.Height <= 0)
-                    throw new InvalidDataException($"A control in the layout '{key}' has no area (the second corner must be below and right of the first).");
+            if (catalog.Palette.Length != grid.Count)
+                throw new InvalidDataException($"The palette has {catalog.Palette.Length} colours but the colour grid of '{key}' has {grid.Count} swatches.");
 
-                if (rect.X1 < 0 || rect.Y1 < 0 || rect.X2 > catalog.ReferenceWidth || rect.Y2 > catalog.ReferenceHeight)
-                    throw new InvalidDataException($"A control in the layout '{key}' is outside the {catalog.ReferenceWidth}x{catalog.ReferenceHeight} reference screen.");
-            }
+            if (family.Free.FreeColor is not { SavedColors.Length: > 0 })
+                throw new InvalidDataException($"The free layout of '{key}' has no free colour controls or no saved colour slots.");
         }
 
         foreach (Surface surface in catalog.Surfaces)
@@ -126,4 +134,22 @@ public sealed class SurfaceService : ISurfaceService
         if (repeatedIds.Length > 0)
             throw new InvalidDataException($"These surface ids are used more than once: {string.Join(", ", repeatedIds)}.");
     }
+
+    private static void ValidateLayout(SurfaceCatalog catalog, string name, PaintLayout layout)
+    {
+        if (layout.BrushShapes is not { Length: > 0 })
+            throw new InvalidDataException($"The layout '{name}' has no brush shapes.");
+
+        foreach (ScreenRect rect in layout.AllRects())
+        {
+            if (rect.Width <= 0 || rect.Height <= 0)
+                throw new InvalidDataException($"A control in the layout '{name}' has no area (the second corner must be below and right of the first).");
+
+            if (rect.X1 < 0 || rect.Y1 < 0 || rect.X2 > catalog.ReferenceWidth || rect.Y2 > catalog.ReferenceHeight)
+                throw new InvalidDataException($"A control in the layout '{name}' is outside the {catalog.ReferenceWidth}x{catalog.ReferenceHeight} reference screen.");
+        }
+    }
+
+    private static bool IsHexColor(string value)
+        => value.Length == 7 && value[0] == '#' && value.Skip(1).All(Uri.IsHexDigit);
 }
