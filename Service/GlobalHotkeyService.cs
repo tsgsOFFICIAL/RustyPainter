@@ -19,7 +19,7 @@ namespace RustyPainter.Service;
 /// the user interface is doing, and it passes on every key it does not use. Keys that other programs send
 /// to the system, such as the painter's own typing, are never taken.
 /// </remarks>
-public sealed class GlobalHotkeyService(Func<bool> isGameInFront) : IHotkeyService
+public sealed class GlobalHotkeyService(Func<bool> isGameInFront, bool acceptInjectedKeys = false) : IHotkeyService
 {
     private readonly object _lock = new();
     private readonly HashSet<uint> _held = [];
@@ -63,7 +63,10 @@ public sealed class GlobalHotkeyService(Func<bool> isGameInFront) : IHotkeyServi
         ready.Wait(TimeSpan.FromSeconds(5));
 
         if (installed)
+        {
+            AppLog.Info("GlobalHotkeyService", $"Listening for {string.Join(", ", bindings.Select(pair => $"{pair.Value.Display} ({pair.Key})"))}.");
             return [];
+        }
 
         lock (_lock)
             _thread = null;
@@ -144,7 +147,7 @@ public sealed class GlobalHotkeyService(Func<bool> isGameInFront) : IHotkeyServi
             bool up = message is HotkeyNativeMethods.MessageKeyUp or HotkeyNativeMethods.MessageSysKeyUp;
 
             // Input sent by programs, the painter included, is never a hotkey.
-            if ((key.Flags & HotkeyNativeMethods.FlagInjected) != 0)
+            if (!acceptInjectedKeys && (key.Flags & HotkeyNativeMethods.FlagInjected) != 0)
                 return HotkeyNativeMethods.CallNextHookEx(0, code, wParam, lParam);
 
             if (down)
@@ -153,6 +156,8 @@ public sealed class GlobalHotkeyService(Func<bool> isGameInFront) : IHotkeyServi
 
                 if (action is { } matched)
                 {
+                    AppLog.Debug("GlobalHotkeyService", $"{matched} pressed.");
+
                     // A key that is held down repeats, which must not press the hotkey again.
                     if (_held.Add(key.VirtualKey))
                         Pressed?.Invoke(matched);
@@ -199,31 +204,59 @@ public sealed class GlobalHotkeyService(Func<bool> isGameInFront) : IHotkeyServi
 /// Tells whether the game is in front without searching for it every time. It runs for every key anywhere on the
 /// machine, so it must be cheap: the game's process is only looked up again every few seconds.
 /// </summary>
-public sealed class ForegroundGameCheck(IGameWindowService game)
+public sealed class ForegroundGameCheck
 {
-    private static readonly TimeSpan LookupEvery = TimeSpan.FromSeconds(2);
+    /// <summary>How long a lookup of the game is trusted before it is made again.</summary>
+    public static readonly TimeSpan LookupEvery = TimeSpan.FromSeconds(2);
+
+    private readonly IGameWindowService _game;
+    private readonly Func<int> _foregroundProcess;
+    private readonly Func<TimeSpan> _clock;
 
     private int _processId;
-    private long _lookedUp = long.MinValue;
+    private TimeSpan? _lookedUpAt;
+
+    public ForegroundGameCheck(IGameWindowService game) : this(game, ForegroundProcessId, () => Stopwatch.GetElapsedTime(0))
+    {
+    }
+
+    /// <param name="game">Finds the game's window.</param>
+    /// <param name="foregroundProcess">The process that owns the window in front, or 0. Tests give their own.</param>
+    /// <param name="clock">A clock that only goes forward. Tests give their own.</param>
+    public ForegroundGameCheck(IGameWindowService game, Func<int> foregroundProcess, Func<TimeSpan> clock)
+    {
+        _game = game;
+        _foregroundProcess = foregroundProcess;
+        _clock = clock;
+    }
 
     public bool IsGameInFront()
     {
-        nint front = NativeMethods.GetForegroundWindow();
+        int front = _foregroundProcess();
         if (front == 0)
             return false;
 
-        NativeMethods.GetWindowThreadProcessId(front, out uint pid);
-
-        if (_processId != 0 && pid == _processId)
+        if (_processId != 0 && front == _processId)
             return true;
 
-        long now = Stopwatch.GetTimestamp();
-        if (Stopwatch.GetElapsedTime(_lookedUp, now) > LookupEvery)
+        // Not the game as far as is known. Look the game up again, but not for every key that is pressed in another program.
+        TimeSpan now = _clock();
+        if (_lookedUpAt is not { } last || now - last >= LookupEvery)
         {
-            _lookedUp = now;
-            _processId = game.Find()?.ProcessId ?? 0;
+            _lookedUpAt = now;
+            _processId = _game.Find()?.ProcessId ?? 0;
         }
 
-        return _processId != 0 && pid == _processId;
+        return _processId != 0 && front == _processId;
+    }
+
+    private static int ForegroundProcessId()
+    {
+        nint window = NativeMethods.GetForegroundWindow();
+        if (window == 0)
+            return 0;
+
+        NativeMethods.GetWindowThreadProcessId(window, out uint pid);
+        return (int)pid;
     }
 }

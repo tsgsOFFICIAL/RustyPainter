@@ -1044,3 +1044,206 @@ public class HologramTests
         window.Close();
     }
 }
+
+public class ForegroundGameCheckTests
+{
+    private sealed class Clock
+    {
+        public TimeSpan Now { get; set; } = TimeSpan.FromSeconds(100);
+    }
+
+    private sealed class CountingGame(GameWindow? window) : IGameWindowService
+    {
+        public int Lookups { get; private set; }
+        public GameWindow? Window { get; set; } = window;
+
+        public GameWindow? Find(string processName = IGameWindowService.RustProcessName)
+        {
+            Lookups++;
+            return Window;
+        }
+    }
+
+    private static GameWindow RustWithProcess(int pid) => new(1, pid, new ScreenRect(0, 0, 2560, 1440), false, true);
+
+    [Fact]
+    public void Knows_the_game_is_in_front_the_very_first_time_it_is_asked()
+    {
+        CountingGame game = new(RustWithProcess(4242));
+        ForegroundGameCheck check = new(game, () => 4242, () => new Clock().Now);
+
+        Assert.True(check.IsGameInFront());
+        Assert.Equal(1, game.Lookups);
+    }
+
+    [Fact]
+    public void Does_not_look_for_the_game_again_while_it_is_in_front()
+    {
+        CountingGame game = new(RustWithProcess(4242));
+        ForegroundGameCheck check = new(game, () => 4242, () => new Clock().Now);
+
+        for (int i = 0; i < 50; i++)
+            Assert.True(check.IsGameInFront());
+
+        Assert.Equal(1, game.Lookups);
+    }
+
+    [Fact]
+    public void Another_program_in_front_is_not_the_game_and_lookups_are_rationed()
+    {
+        Clock clock = new();
+        CountingGame game = new(RustWithProcess(4242));
+        ForegroundGameCheck check = new(game, () => 777, () => clock.Now);
+
+        for (int i = 0; i < 100; i++)
+            Assert.False(check.IsGameInFront());
+
+        // A hundred keys typed in another program cause one lookup, not a hundred.
+        Assert.Equal(1, game.Lookups);
+
+        clock.Now += ForegroundGameCheck.LookupEvery + TimeSpan.FromMilliseconds(1);
+        Assert.False(check.IsGameInFront());
+        Assert.Equal(2, game.Lookups);
+    }
+
+    [Fact]
+    public void Notices_a_game_that_was_started_after_the_check_began()
+    {
+        Clock clock = new();
+        CountingGame game = new(null);
+        int front = 4242;
+        ForegroundGameCheck check = new(game, () => front, () => clock.Now);
+
+        Assert.False(check.IsGameInFront());
+
+        game.Window = RustWithProcess(4242);
+        clock.Now += TimeSpan.FromSeconds(3);
+
+        Assert.True(check.IsGameInFront());
+    }
+
+    [Fact]
+    public void Follows_a_game_that_was_restarted_with_a_new_process()
+    {
+        Clock clock = new();
+        CountingGame game = new(RustWithProcess(100));
+        int front = 100;
+        ForegroundGameCheck check = new(game, () => front, () => clock.Now);
+
+        Assert.True(check.IsGameInFront());
+
+        game.Window = RustWithProcess(200);
+        front = 200;
+        clock.Now += TimeSpan.FromSeconds(3);
+
+        Assert.True(check.IsGameInFront());
+    }
+
+    [Fact]
+    public void Nothing_in_front_is_not_the_game()
+    {
+        ForegroundGameCheck check = new(new CountingGame(RustWithProcess(1)), () => 0, () => TimeSpan.Zero);
+
+        Assert.False(check.IsGameInFront());
+    }
+}
+
+public class RealKeyboardHookTests
+{
+    /// <summary>
+    /// Sends one real key through Windows and checks that the hook sees it. F24 is used because no program binds it, and
+    /// the hook takes it, so nothing else ever sees it either.
+    /// </summary>
+    private static bool SendF24(bool up)
+    {
+        RustyPainter.Service.Native.InputRecord record = new()
+        {
+            Type = RustyPainter.Service.Native.InputNativeMethods.InputKeyboard,
+            Union = new RustyPainter.Service.Native.InputUnion
+            {
+                Keyboard = new RustyPainter.Service.Native.KeyboardInput
+                {
+                    VirtualKey = 0x87,
+                    Flags = up ? RustyPainter.Service.Native.InputNativeMethods.KeyUp : 0
+                }
+            }
+        };
+
+        return RustyPainter.Service.Native.InputNativeMethods.SendInput(1, [record], System.Runtime.InteropServices.Marshal.SizeOf<RustyPainter.Service.Native.InputRecord>()) == 1;
+    }
+
+    private static async Task<bool> WaitFor(Func<bool> condition)
+    {
+        for (int i = 0; i < 100 && !condition(); i++)
+            await Task.Delay(20);
+
+        return condition();
+    }
+
+    [Fact]
+    public async Task A_key_pressed_while_the_game_is_in_front_reaches_the_service_once()
+    {
+        List<HotkeyAction> pressed = [];
+        using GlobalHotkeyService service = new(() => true, acceptInjectedKeys: true);
+        service.Pressed += action => { lock (pressed) pressed.Add(action); };
+        Assert.Empty(service.Start(new Dictionary<HotkeyAction, Hotkey> { [HotkeyAction.StartPause] = new Hotkey(0, 0x87) }));
+
+        Assert.SkipUnless(SendF24(up: false), "Windows would not take simulated input here.");
+        Assert.True(await WaitFor(() => { lock (pressed) return pressed.Count > 0; }), "The hook never saw the key.");
+
+        // A held key repeats, which must not count again.
+        SendF24(up: false);
+        SendF24(up: false);
+        SendF24(up: true);
+        await Task.Delay(150);
+
+        lock (pressed)
+            Assert.Equal([HotkeyAction.StartPause], pressed);
+    }
+
+    [Fact]
+    public async Task A_key_pressed_while_another_program_is_in_front_is_left_alone()
+    {
+        int pressed = 0;
+        using GlobalHotkeyService service = new(() => false, acceptInjectedKeys: true);
+        service.Pressed += _ => Interlocked.Increment(ref pressed);
+        service.Start(new Dictionary<HotkeyAction, Hotkey> { [HotkeyAction.StartPause] = new Hotkey(0, 0x87) });
+
+        Assert.SkipUnless(SendF24(up: false), "Windows would not take simulated input here.");
+        SendF24(up: true);
+        await Task.Delay(300);
+
+        Assert.Equal(0, pressed);
+    }
+
+    [Fact]
+    public async Task Keys_sent_by_programs_are_ignored_unless_asked_for()
+    {
+        int pressed = 0;
+        using GlobalHotkeyService service = new(() => true);
+        service.Pressed += _ => Interlocked.Increment(ref pressed);
+        service.Start(new Dictionary<HotkeyAction, Hotkey> { [HotkeyAction.StartPause] = new Hotkey(0, 0x87) });
+
+        Assert.SkipUnless(SendF24(up: false), "Windows would not take simulated input here.");
+        SendF24(up: true);
+        await Task.Delay(300);
+
+        Assert.Equal(0, pressed);
+    }
+
+    [Fact]
+    public async Task Stopping_stops_listening()
+    {
+        int pressed = 0;
+        using GlobalHotkeyService service = new(() => true, acceptInjectedKeys: true);
+        service.Pressed += _ => Interlocked.Increment(ref pressed);
+        service.Start(new Dictionary<HotkeyAction, Hotkey> { [HotkeyAction.StartPause] = new Hotkey(0, 0x87) });
+        service.Stop();
+
+        Assert.SkipUnless(SendF24(up: false), "Windows would not take simulated input here.");
+        SendF24(up: true);
+        await Task.Delay(300);
+
+        Assert.Equal(0, pressed);
+    }
+}
