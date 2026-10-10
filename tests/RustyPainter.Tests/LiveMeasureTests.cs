@@ -121,7 +121,7 @@ public class LiveMeasureTests
         Write($"canvas average brightness {N(average)}, painting with swatch {swatch} {swatches[swatch].Hex}");
 
         // 2. Dots of known sizes along the longer side of the canvas.
-        (int size, double position)[] dots = [(8, 0.15), (16, 0.38), (32, 0.70)];
+        (int size, double position)[] dots = [(16, 0.10), (50, 0.34), (100, 0.78)];
         bool wide = canvas.Width >= canvas.Height;
         List<PaintStep> dotSteps = [new SelectSwatchStep(swatch, swatches[swatch], controls.ColorGrid!.CellCenter(swatch))];
         foreach ((int size, double position) in dots)
@@ -134,19 +134,41 @@ public class LiveMeasureTests
         await Run(dotSteps);
         PixelBuffer withDots = await Look();
 
-        IReadOnlyList<PixelBox> found = CanvasMeasure.Blobs(CanvasMeasure.Changed(empty, withDots), empty.Width, minimum: 12);
-        Write($"found {found.Count} dots");
-        List<PixelBox> ordered = wide ? [.. found.OrderBy(b => b.X1)] : [.. found.OrderBy(b => b.Y1)];
+        bool[] changedByDots = CanvasMeasure.Changed(empty, withDots);
+        Write($"separate pieces found: {CanvasMeasure.Blobs(changedByDots, empty.Width, minimum: 12).Count}");
 
+        // Each dot is looked for around the place it was painted, so a dot that the plank seams cut into pieces is still one dot.
         List<(double X, double Y)> perUnit = [];
-        for (int i = 0; i < Math.Min(ordered.Count, dots.Length); i++)
+        for (int i = 0; i < dots.Length; i++)
         {
-            (double x, double y) = CanvasMeasure.PixelsPerUnit(ordered[i], dots[i].size);
+            ScreenPoint center = wide ? At(dots[i].position, 0.5) : At(0.5, dots[i].position);
+            double nearest = double.MaxValue;
+            for (int j = 0; j < dots.Length; j++)
+            {
+                if (j == i)
+                    continue;
+
+                ScreenPoint other = wide ? At(dots[j].position, 0.5) : At(0.5, dots[j].position);
+                nearest = Math.Min(nearest, Math.Abs(wide ? other.X - center.X : other.Y - center.Y));
+            }
+
+            double reach = Math.Min(dots[i].size * 3.5, nearest * 0.55);
+
+            PixelBox? box = CanvasMeasure.BoundsAround(changedByDots, empty.Width, center.X - region.X1, center.Y - region.Y1, reach);
+            Assert.True(box is not null, $"Dot {dots[i].size} left nothing to measure.");
+
+            (double x, double y) = CanvasMeasure.PixelsPerUnit(box.Value, dots[i].size);
             perUnit.Add((x, y));
-            Write($"size {dots[i].size}: {ordered[i].Width} x {ordered[i].Height} px, {N(x)} x {N(y)} px per unit");
+            Write($"size {dots[i].size}: {box.Value.Width} x {box.Value.Height} px, {N(x)} x {N(y)} px per unit");
         }
 
-        Assert.True(perUnit.Count == dots.Length, "Not every dot could be found.");
+        // How much each size adds over the one before is free of the soft edge every dot has.
+        for (int i = 1; i < dots.Length; i++)
+        {
+            double growX = (perUnit[i].X * dots[i].size - perUnit[i - 1].X * dots[i - 1].size) / (dots[i].size - dots[i - 1].size);
+            double growY = (perUnit[i].Y * dots[i].size - perUnit[i - 1].Y * dots[i - 1].size) / (dots[i].size - dots[i - 1].size);
+            Write($"growth {dots[i - 1].size} to {dots[i].size}: {N(growX)} x {N(growY)} px per unit");
+        }
 
         // The biggest dot is the most exact one, because a pixel of error counts for less.
         (double ppuX, double ppuY) = perUnit[^1];

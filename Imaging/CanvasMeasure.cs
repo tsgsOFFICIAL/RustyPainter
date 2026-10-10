@@ -68,6 +68,37 @@ public static class CanvasMeasure
         return count == 0 ? null : new PixelBox(minX, minY, maxX, maxY, count);
     }
 
+    /// <summary>The smallest rectangle that holds every marked pixel within a distance of a point, or <see langword="null"/> when there are none.</summary>
+    /// <param name="mask">The marked pixels.</param>
+    /// <param name="width">The width of the picture the mask is for.</param>
+    /// <param name="centerX">The column of the point.</param>
+    /// <param name="centerY">The row of the point.</param>
+    /// <param name="reach">How far from the point to look, in pixels, in each direction.</param>
+    public static PixelBox? BoundsAround(bool[] mask, int width, double centerX, double centerY, double reach)
+    {
+        int height = mask.Length / width;
+        int x1 = Math.Max(0, (int)Math.Floor(centerX - reach)), x2 = Math.Min(width - 1, (int)Math.Ceiling(centerX + reach));
+        int y1 = Math.Max(0, (int)Math.Floor(centerY - reach)), y2 = Math.Min(height - 1, (int)Math.Ceiling(centerY + reach));
+        int minX = int.MaxValue, minY = int.MaxValue, maxX = -1, maxY = -1, count = 0;
+
+        for (int y = y1; y <= y2; y++)
+        {
+            for (int x = x1; x <= x2; x++)
+            {
+                if (!mask[y * width + x])
+                    continue;
+
+                minX = Math.Min(minX, x);
+                maxX = Math.Max(maxX, x);
+                minY = Math.Min(minY, y);
+                maxY = Math.Max(maxY, y);
+                count++;
+            }
+        }
+
+        return count == 0 ? null : new PixelBox(minX, minY, maxX, maxY, count);
+    }
+
     /// <summary>
     /// Finds each separate blob of marked pixels, left to right. A blob smaller than <paramref name="minimum"/> pixels
     /// is noise and is dropped.
