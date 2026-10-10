@@ -62,6 +62,9 @@ public static class StudioGeometry
 
 public static class StudioPipeline
 {
+    /// <summary>How many pixels along its longer side the reference picture has at least, however coarse the grid is.</summary>
+    public const int ReferenceDetail = 1024;
+
     /// <summary>
     /// Turns an already oriented picture into a plan: place it on the grid, adjust it, choose the colors
     /// (the game's swatches or an adaptive palette), and match every cell to a color.
@@ -81,6 +84,20 @@ public static class StudioPipeline
             : MedianCut.BuildPalette(cells, settings.MaxColors);
 
         int[] indices = Quantizer.Map(cells, palette, settings.Dithering);
-        return new PaintPlan(gridWidth, gridHeight, palette, indices, cells);
+        return new PaintPlan(gridWidth, gridHeight, palette, indices, PlaceOriginal(oriented, settings.Placement, gridWidth, gridHeight));
+    }
+
+    /// <summary>
+    /// The picture placed on the canvas the same way as the plan, but untouched: no filter, no adjustments, no
+    /// colors matched and not reduced to the grid, so the brush size does not change how it looks. It has the same
+    /// shape as the grid, so it lines up with the plan when both are stretched over the canvas.
+    /// </summary>
+    private static PixelBuffer PlaceOriginal(PixelBuffer oriented, PlacementSettings placement, int gridWidth, int gridHeight)
+    {
+        double scale = Math.Max(1, ReferenceDetail / (double)Math.Max(gridWidth, gridHeight));
+        int width = Math.Max(1, (int)Math.Round(gridWidth * scale));
+        int height = Math.Max(1, (int)Math.Round(gridHeight * scale));
+
+        return PlacementEngine.Resample(oriented, placement, width, height);
     }
 }

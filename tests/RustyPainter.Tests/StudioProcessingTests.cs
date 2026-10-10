@@ -262,13 +262,65 @@ public class StudioProcessingTests : IDisposable
     }
 
     [AvaloniaFact]
+    public void The_original_in_the_split_view_keeps_its_detail_whatever_the_brush_size()
+    {
+        // Alternating black and white columns, one pixel wide: far finer than a big brush can show.
+        PixelBuffer stripes = new(256, 128);
+        for (int y = 0; y < stripes.Height; y++)
+            for (int x = 0; x < stripes.Width; x++)
+                stripes.Set(x, y, x % 2 == 0 ? (byte)0 : (byte)255, x % 2 == 0 ? (byte)0 : (byte)255, x % 2 == 0 ? (byte)0 : (byte)255);
+
+        StudioViewModel studio = Loaded(stripes);
+        studio.QualityChoices.Select(32);
+        PaintPlan coarse = studio.ProcessNow()!;
+
+        // The plan itself is only a few cells wide and has lost the stripes.
+        Assert.True(coarse.Width < 20);
+
+        // The original still has them, so the left of the split view really is the original.
+        PixelBuffer reference = coarse.Reference!;
+        Assert.True(reference.Width > 500);
+        int middle = reference.Height / 2 * reference.Width;
+        Assert.NotEqual(reference.Data[(middle + 100) * 4], reference.Data[(middle + 101) * 4]);
+    }
+
+    [AvaloniaFact]
+    public void The_original_in_the_split_view_ignores_filters_and_adjustments()
+    {
+        StudioViewModel studio = Loaded(TestImages.Rainbow(64, 32));
+        byte[] before = studio.ProcessNow()!.Reference!.Data.ToArray();
+
+        studio.FilterChoices.Select(ImageFilter.BlackAndWhite);
+        studio.Brightness = 40;
+        studio.Saturation = -60;
+        studio.ColorModeChoices.Select(ColorMode.Free);
+        studio.MaxColors = 3;
+        byte[] after = studio.ProcessNow()!.Reference!.Data.ToArray();
+
+        Assert.Equal(before, after);
+    }
+
+    [AvaloniaFact]
+    public void The_original_in_the_split_view_moves_with_the_placement()
+    {
+        StudioViewModel studio = Loaded(TestImages.RedAndGreen(64, 32));
+        PixelBuffer centered = studio.ProcessNow()!.Reference!;
+        Assert.True(centered.Data[(centered.Height / 2 * centered.Width + 10) * 4] > 150, "The left side should be red.");
+
+        studio.FlipHorizontalCommand.Execute(null);
+        PixelBuffer flipped = studio.ProcessNow()!.Reference!;
+
+        Assert.True(flipped.Data[(flipped.Height / 2 * flipped.Width + 10) * 4] < 100, "The left side should be green after flipping.");
+    }
+
+    [AvaloniaFact]
     public void The_split_view_needs_the_placed_picture_and_the_result()
     {
         StudioViewModel studio = Loaded(TestImages.Rainbow());
         PaintPlan plan = studio.ProcessNow()!;
 
         Assert.NotNull(plan.Reference);
-        Assert.Equal((plan.Width, plan.Height), (plan.Reference!.Width, plan.Reference.Height));
+        Assert.True(Math.Max(plan.Reference!.Width, plan.Reference.Height) >= StudioPipeline.ReferenceDetail);
         Assert.False(studio.ShowSplit);
 
         studio.PreviewChoices.Select(PreviewMode.Split);

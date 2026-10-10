@@ -57,7 +57,7 @@ public sealed class PaintPlan
     /// <summary>Cells down.</summary>
     public int Height { get; }
 
-    /// <summary>The picture as placed and adjusted on the grid, before colors were matched. Null when not kept.</summary>
+    /// <summary>The picture as placed on the canvas but otherwise untouched (full detail, no adjustments), for comparing with the result. Null when not kept.</summary>
     public PixelBuffer? Reference { get; }
 
     /// <summary>The colors the cells refer to.</summary>

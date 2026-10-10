@@ -435,7 +435,7 @@ public sealed class StudioViewModel : ViewModelBase
     /// <summary>The result as it would be painted. In split view it fills the whole canvas, with the placed picture over its left half.</summary>
     public bool ShowResult => HasImage && PreviewChoices.Selected != PreviewMode.Original && Preview is not null;
 
-    /// <summary>Whether the left half of the canvas shows the placed picture, before colors are matched.</summary>
+    /// <summary>Whether the left of the divider shows the original picture, placed like the result.</summary>
     public bool ShowSplit => HasImage && PreviewChoices.Selected == PreviewMode.Split && Reference is not null;
 
     /// <summary>Where the divider of the split view is, from 0 (left edge) to 1 (right edge).</summary>
@@ -469,7 +469,7 @@ public sealed class StudioViewModel : ViewModelBase
 
     public bool HasPlan => Plan is not null;
 
-    /// <summary>The placed and adjusted picture drawn one pixel per cell, before colors are matched. Shown beside the result in split view.</summary>
+    /// <summary>The original picture placed on the canvas, with its full detail whatever the brush size. Shown beside the result in split view.</summary>
     public WriteableBitmap? Reference
     {
         get => _reference;
