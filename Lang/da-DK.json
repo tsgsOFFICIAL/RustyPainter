@@ -344,5 +344,18 @@
   "FramesMedium": "Mellem",
   "FramesFast": "Hurtig",
   "EngineFrameFailed": "Frame {0} på skiltet ville ikke åbne. Åbn det manuelt, og prøv igen.",
-  "GetReadyFrameSpeed": "Hastighed for frames over spillet"
+  "GetReadyFrameSpeed": "Hastighed for frames over spillet",
+  "NavAbout": "Om",
+  "AboutViewChangelog": "Se ændringslog",
+  "AboutInformationTitle": "Programoplysninger",
+  "AboutInformationSubtitle": "De oplysninger, der er værd at oplyse i en fejlrapport.",
+  "AboutBuildLabel": "Build",
+  "AboutOsLabel": "Operativsystem",
+  "AboutLicenseLabel": "Licens",
+  "AboutLicenseFree": "Gratis og open source",
+  "AboutLinksTitle": "Fællesskab og kildekode",
+  "AboutLinksSubtitle": "Stil et spørgsmål, meld et problem, læs koden eller støt projektet.",
+  "AboutNoChangelog": "Ændringsloggen kunne ikke læses.",
+  "ChangelogTitle": "Ændringslog",
+  "Close": "Luk"
 }

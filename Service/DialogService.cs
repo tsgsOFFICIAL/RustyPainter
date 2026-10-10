@@ -19,6 +19,15 @@ public sealed class DialogService : IDialogService
         await window.ShowDialog(owner);
     }
 
+    public async Task ShowChangelogAsync(string markdown)
+    {
+        if (GetOwner() is not { } owner)
+            return;
+
+        ChangelogWindow window = new(new ViewModels.ChangelogViewModel(markdown));
+        await window.ShowDialog(owner);
+    }
+
     private static Window? GetOwner()
         => Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop
             ? desktop.MainWindow

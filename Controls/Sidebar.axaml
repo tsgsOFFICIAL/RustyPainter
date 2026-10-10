@@ -63,6 +63,15 @@
                         <TextBlock Text="{loc:L NavSettings}" />
                     </StackPanel>
                 </Button>
+
+                <Button x:Name="NavAbout" Tag="About" Classes="navItem"
+                        Classes.active="{Binding #Root.ViewModel.ActivePage, Converter={x:Static converters:EnumEqualsConverter.Instance}, ConverterParameter=About}"
+                        Command="{Binding #Root.ViewModel.NavigateCommand}" CommandParameter="{Binding $self.Tag}">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <iconPacks:PackIconPhosphorIcons Kind="Info" Width="18" Height="18" />
+                        <TextBlock Text="{loc:L NavAbout}" />
+                    </StackPanel>
+                </Button>
             </StackPanel>
 
             <!-- Pinned to the bottom: the Rust running/detected indicator from the design mockup goes here once game detection exists. -->

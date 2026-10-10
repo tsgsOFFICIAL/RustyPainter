@@ -1,0 +1,18 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:loc="using:RustyPainter.Localization"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:RustyPainter.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="520" d:DesignHeight="500"
+             x:Class="RustyPainter.Views.ChangelogView"
+             x:DataType="vm:ChangelogViewModel">
+
+    <ScrollViewer>
+        <Grid Margin="24,20">
+            <ContentControl x:Name="ChangelogHost" IsVisible="{Binding HasMarkdown}"/>
+            <TextBlock Text="{loc:L AboutNoChangelog}" Classes="muted" TextWrapping="Wrap" IsVisible="{Binding !HasMarkdown}"/>
+        </Grid>
+    </ScrollViewer>
+
+</UserControl>

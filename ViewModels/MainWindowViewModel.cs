@@ -40,6 +40,7 @@ public sealed class MainWindowViewModel : ViewModelBase
     private HomeViewModel? _home;
     private StudioViewModel? _studio;
     private SettingsViewModel? _settingsPage;
+    private AboutViewModel? _about;
     private ComingSoonViewModel? _comingSoon;
     private GetReadyViewModel? _ready;
     private PaintingViewModel? _painting;
@@ -170,6 +171,7 @@ public sealed class MainWindowViewModel : ViewModelBase
             SidebarPage.Studio => GetStudio(),
             SidebarPage.Library => GetLibrary(),
             SidebarPage.Settings => _settingsPage ??= new SettingsViewModel(_settings, _updates, _dialogs, _projects.Root, theme: _theme),
+            SidebarPage.About => _about ??= new AboutViewModel(_updates, _dialogs),
             _ => ShowComingSoon(page)
         };
     }

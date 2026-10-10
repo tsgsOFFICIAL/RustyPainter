@@ -344,5 +344,18 @@
   "FramesMedium": "Medium",
   "FramesFast": "Fast",
   "EngineFrameFailed": "Frame {0} of the sign would not open. Open it by hand and try again.",
-  "GetReadyFrameSpeed": "Speed of the frames over the game"
+  "GetReadyFrameSpeed": "Speed of the frames over the game",
+  "NavAbout": "About",
+  "AboutViewChangelog": "View changelog",
+  "AboutInformationTitle": "Application information",
+  "AboutInformationSubtitle": "The details worth quoting in a bug report.",
+  "AboutBuildLabel": "Build",
+  "AboutOsLabel": "Operating system",
+  "AboutLicenseLabel": "License",
+  "AboutLicenseFree": "Free and open source",
+  "AboutLinksTitle": "Community and source",
+  "AboutLinksSubtitle": "Ask a question, report a problem, read the code or support the project.",
+  "AboutNoChangelog": "The changelog could not be read.",
+  "ChangelogTitle": "Changelog",
+  "Close": "Close"
 }

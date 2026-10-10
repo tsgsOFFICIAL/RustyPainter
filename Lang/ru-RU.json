@@ -344,5 +344,18 @@
   "FramesMedium": "Средне",
   "FramesFast": "Быстро",
   "EngineFrameFailed": "Кадр {0} вывески не открылся. Откройте его вручную и повторите.",
-  "GetReadyFrameSpeed": "Скорость смены кадров поверх игры"
+  "GetReadyFrameSpeed": "Скорость смены кадров поверх игры",
+  "NavAbout": "О программе",
+  "AboutViewChangelog": "Журнал изменений",
+  "AboutInformationTitle": "Сведения о приложении",
+  "AboutInformationSubtitle": "Сведения, которые стоит указать в сообщении об ошибке.",
+  "AboutBuildLabel": "Сборка",
+  "AboutOsLabel": "Операционная система",
+  "AboutLicenseLabel": "Лицензия",
+  "AboutLicenseFree": "Бесплатно, с открытым кодом",
+  "AboutLinksTitle": "Сообщество и исходный код",
+  "AboutLinksSubtitle": "Задайте вопрос, сообщите о проблеме, изучите код или поддержите проект.",
+  "AboutNoChangelog": "Не удалось прочитать журнал изменений.",
+  "ChangelogTitle": "Журнал изменений",
+  "Close": "Закрыть"
 }

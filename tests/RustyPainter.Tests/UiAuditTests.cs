@@ -144,6 +144,9 @@ public class UiAuditTests : IDisposable
         shell.Sidebar.NavigateTo(SidebarPage.Settings);
         Look("settings");
 
+        shell.Sidebar.NavigateTo(SidebarPage.About);
+        Look("about");
+
         // ---- Library ----
         shell.Sidebar.NavigateTo(SidebarPage.Library);
         Look("library");
@@ -274,6 +277,42 @@ public class UiAuditTests : IDisposable
         foreach (AppLanguage language in Enum.GetValues<AppLanguage>())
             foreach (string variant in new[] { "Dark", "Light" })
                 yield return [language, variant];
+    }
+
+    [AvaloniaTheory]
+    [MemberData(nameof(DialogCases))]
+    public void The_changelog_window_fits_its_window(AppLanguage language, string variant)
+    {
+        LocalizationService localization = new();
+        Loc.Install(localization);
+        localization.SetLanguage(language, save: false);
+
+        try
+        {
+            RustyPainter.Windows.ChangelogWindow window = new(new ChangelogViewModel(BundledChangelog.Load()))
+            {
+                Width = 420,
+                Height = 360,
+                RequestedThemeVariant = variant == "Light" ? ThemeVariant.Light : ThemeVariant.Dark
+            };
+
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+            window.UpdateLayout();
+
+            List<string> wrong = UiAudit.Inspect(window).Where(finding => finding.Kind != "text shortened with an ellipsis")
+                .Select(finding => $"{finding.Kind}: {finding.Detail}").ToList();
+
+            if (Environment.GetEnvironmentVariable("RUSTYPAINTER_SHOTS") is { Length: > 0 } folder)
+                window.CaptureRenderedFrame()?.Save(Path.Combine(folder, $"audit-changelog-{language}-{variant}.png"));
+
+            window.Close();
+            Assert.True(wrong.Count == 0, $"The changelog window has {wrong.Count} problems ({language}, {variant}):{Environment.NewLine}{string.Join(Environment.NewLine, wrong.Take(15))}");
+        }
+        finally
+        {
+            Loc.Install(new LocalizationService());
+        }
     }
 
     [AvaloniaTheory]

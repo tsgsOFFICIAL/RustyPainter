@@ -1,0 +1,32 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:loc="using:RustyPainter.Localization"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="using:RustyPainter.ViewModels"
+        xmlns:views="using:RustyPainter.Views"
+        xmlns:controls="using:RustyPainter.Controls"
+        mc:Ignorable="d" d:DesignWidth="560" d:DesignHeight="620"
+        x:Class="RustyPainter.Windows.ChangelogWindow"
+        x:DataType="vm:ChangelogViewModel"
+        Title="{loc:L ChangelogTitle}"
+        Icon="/Assets/App/logo.ico"
+        Width="560" Height="620"
+        MinWidth="420" MinHeight="360"
+        Background="{DynamicResource BgColor}"
+        WindowStartupLocation="CenterOwner">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        <controls:TitleBar Grid.Row="0" Title="{loc:L ChangelogTitle}" Author="tsgsOFFICIAL" ShowMaximizeButton="False">
+            <controls:TitleBar.Icon>
+                <Image Source="/Assets/App/logo.ico"/>
+            </controls:TitleBar.Icon>
+        </controls:TitleBar>
+
+        <views:ChangelogView Grid.Row="1"/>
+
+        <Border Grid.Row="2" Padding="16" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,1,0,0">
+            <Button Content="{loc:L Close}" Classes="accentButton" HorizontalAlignment="Right" Command="{Binding CloseCommand}"/>
+        </Border>
+    </Grid>
+</Window>

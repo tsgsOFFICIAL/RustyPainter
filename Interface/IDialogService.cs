@@ -13,4 +13,7 @@ public interface IDialogService
     /// rendered inline (pass an empty string if it couldn't be fetched). Completes when the user closes it.
     /// </summary>
     Task ShowUpdateAvailableAsync(IUpdateService updates, UpdateInfo update, string changelog);
+
+    /// <summary>Shows the changelog that ships with the app. Completes when the user closes it.</summary>
+    Task ShowChangelogAsync(string markdown);
 }

@@ -13,7 +13,8 @@ public enum SidebarPage
     Home,
     Studio,
     Library,
-    Settings
+    Settings,
+    About
 }
 
 /// <summary>
@@ -65,7 +66,7 @@ public partial class Sidebar : UserControl
             UpdateActiveIcon();
     }
 
-    private Button[] NavButtons => [NavHome, NavStudio, NavLibrary, NavSettings];
+    private Button[] NavButtons => [NavHome, NavStudio, NavLibrary, NavSettings, NavAbout];
 
     /// <summary>
     /// Switches every nav button's icon between its outline and filled variant to match whichever

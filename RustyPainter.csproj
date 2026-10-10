@@ -66,6 +66,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <AssemblyMetadata Include="BuildTimestamp" Value="$([System.DateTime]::UtcNow.ToString('yyyy-MM-dd HH:mm')) UTC" />
+    </ItemGroup>
+
+    <ItemGroup>
         <!-- The texts of the app, one file per language. Add a file and a language entry to add a language. -->
         <None Remove="Lang\*.json" />
         <EmbeddedResource Include="Lang\*.json" LogicalName="Lang.%(Filename).json" />
