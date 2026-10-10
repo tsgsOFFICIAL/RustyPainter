@@ -246,4 +246,101 @@ public class LivePumpkinTests
 
         Write("done");
     }
+
+    /// <summary>Drags a long line at each brush size, sideways and then up and down, and measures how thick the cut is in the middle of it.</summary>
+    [Fact]
+    public async Task Measure_the_pumpkin_lines()
+    {
+        Assert.SkipUnless(Mode == "lines", "Set RUSTYPAINTER_LIVE=lines to run this. It clears the carving and sends real input to the game.");
+
+        CancellationToken stop = TestContext.Current.CancellationToken;
+        GameWindowService game = new();
+        Win32PaintSensors sensors = new(game);
+        Win32ScreenCapture capture = new();
+
+        for (int i = 0; i < 90 && !sensors.IsGameInFront(); i++)
+            await Task.Delay(500, stop);
+
+        Assert.True(sensors.IsGameInFront(), "Rust did not come to the front in time.");
+        await Task.Delay(3000, stop);
+
+        GameWindow window = game.Find()!;
+        SurfaceService surfaces = new();
+        ResolvedLayout layout = surfaces.Resolve(surfaces.Catalog.Surfaces.Single(s => s.Id == "pumpkin"), window);
+        PaintLayout controls = layout.Swatches;
+        ScreenRect canvas = layout.Canvas;
+        ScreenRect region = new(canvas.X1 - 100, canvas.Y1 - 100, canvas.X2 + 100, canvas.Y2 + 100);
+        Rgb white = Rgb.Parse(controls.ColorGrid!.Colors[0]);
+
+        async Task Run(List<PaintStep> steps)
+        {
+            PaintEngine engine = new(new Win32PaintInput(), sensors);
+            engine.StateChanged += state =>
+            {
+                if (state == PaintState.Paused)
+                    engine.Abort();
+            };
+
+            await engine.RunAsync(new PaintScript(steps), cancellation: stop);
+            Assert.True(engine.State == PaintState.Finished, $"Painting stopped: {engine.State} {engine.PauseReason} {engine.FailureMessage}");
+        }
+
+        async Task<PixelBuffer> Look()
+        {
+            await Task.Delay(700, stop);
+            Assert.True(sensors.IsGameInFront(), "Rust is no longer in front, so nothing was copied.");
+            return capture.Capture(region) ?? throw new InvalidOperationException("The pumpkin could not be copied.");
+        }
+
+        await Run(
+        [
+            new ResetCameraStep(controls.ResetCamera.Center),
+            new ClickControlStep("Brush", controls.ToolBrush.Center),
+            new ClickControlStep("Clear", controls.Clear.Center),
+            new ClickControlStep("Brush shape", controls.BrushShapes[PaintOptions.CarvingShape].Center),
+            new SelectSwatchStep(0, white, controls.ColorGrid!.CellCenter(0))
+        ]);
+
+        double centerX = canvas.Center.X, centerY = canvas.Center.Y;
+        Stroke line = new(0, 0, 2, Vertical: false);
+
+        foreach (int size in new[] { 2, 4, 8, 16 })
+        {
+            foreach ((string name, bool sideways) in new[] { ("sideways", true), ("up and down", false) })
+            {
+                PixelBuffer before = await Look();
+                ScreenPoint from = sideways ? new(centerX - 90, centerY) : new(centerX, centerY - 70);
+                ScreenPoint to = sideways ? new(centerX + 90, centerY) : new(centerX, centerY + 70);
+                await Run([new SetBrushValueStep("Size", controls.Size!.Value.Center, size.ToString(CultureInfo.InvariantCulture)), new PaintStrokeStep(line, from, to)]);
+                PixelBuffer after = await Look();
+                bool[] changed = CanvasMeasure.Changed(before, after, 40);
+
+                // How many changed pixels there are across the line, counted along its middle half.
+                List<int> counts = [];
+                int width = before.Width, height = before.Height;
+                int fromX = (int)(centerX - region.X1), fromY = (int)(centerY - region.Y1);
+                for (int step = -(sideways ? 40 : 30); step <= (sideways ? 40 : 30); step += 4)
+                {
+                    int count = 0;
+                    for (int across = -60; across <= 60; across++)
+                    {
+                        int x = sideways ? fromX + step : fromX + across;
+                        int y = sideways ? fromY + across : fromY + step;
+                        if (x >= 0 && y >= 0 && x < width && y < height && changed[y * width + x])
+                            count++;
+                    }
+
+                    counts.Add(count);
+                }
+
+                counts.Sort();
+                int middle = counts[counts.Count / 2];
+                Write($"size {size}, line {name}: {middle} px thick, {N(middle / (double)size)} px per unit (counts {string.Join(" ", counts)})");
+
+                await Run([new ClickControlStep("Clear", controls.Clear.Center)]);
+            }
+        }
+
+        Write("done");
+    }
 }
