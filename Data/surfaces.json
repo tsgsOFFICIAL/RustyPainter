@@ -236,6 +236,44 @@
         }
       }
     }
+,
+    // The sculpting screen. The three palette entries are tools: carve, add, and one that is never clicked, for cells to leave alone.
+    "sculpting": {
+      "swatches": {
+        "clear": { "x1": 32, "y1": 32, "x2": 128, "y2": 128 },
+        // This screen has no button that puts the camera back. The painter does not click this rectangle.
+        "resetCamera": { "x1": 672, "y1": 32, "x2": 767, "y2": 127 },
+        "undo": { "x1": 287, "y1": 32, "x2": 383, "y2": 128 },
+        "redo": { "x1": 415, "y1": 32, "x2": 511, "y2": 128 },
+        "toolBrush": { "x1": 2084, "y1": 479, "x2": 2140, "y2": 535 },
+        "toolEraser": { "x1": 2148, "y1": 479, "x2": 2204, "y2": 535 },
+        "toolPicker": { "x1": 2212, "y1": 479, "x2": 2268, "y2": 535 },
+        "brushShapes": [
+          { "x1": 2084, "y1": 658, "x2": 2140, "y2": 714 },
+          { "x1": 2148, "y1": 658, "x2": 2204, "y2": 714 },
+          { "x1": 2212, "y1": 658, "x2": 2268, "y2": 714 },
+          { "x1": 2276, "y1": 658, "x2": 2332, "y2": 714 },
+          { "x1": 2340, "y1": 658, "x2": 2396, "y2": 714 },
+          { "x1": 2404, "y1": 658, "x2": 2460, "y2": 714 }
+        ],
+        "size": { "x1": 2448, "y1": 735, "x2": 2527, "y2": 775 },
+        "hardness": { "x1": 2448, "y1": 791, "x2": 2527, "y2": 831 },
+        // There is no color mode switch here. This only has to be a rectangle, and it is never clicked.
+        "colorModeToggle": { "x1": 2495, "y1": 692, "x2": 2529, "y2": 726 },
+        "saveChanges": { "x1": 2116, "y1": 1253, "x2": 2528, "y2": 1322 },
+        "cancel": { "x1": 2116, "y1": 1338, "x2": 2528, "y2": 1408 },
+        "colorGrid": {
+          "area": { "x1": 2084, "y1": 479, "x2": 2268, "y2": 535 },
+          "columns": 3,
+          "rows": 1,
+          "cellWidth": 56,
+          "cellHeight": 56,
+          "gapX": 8,
+          "gapY": 0,
+          "colors": ["#000000", "#FFFFFF", "#808080"]
+        }
+      }
+    }
   },
   "surfaces": [
     { "id": "sign-small", "name": "Small Wooden Sign", "layout": "standard", "texture": { "width": 256, "height": 128 }, "canvas": { "x1": 669, "y1": 537, "x2": 1317, "y2": 880 } },
@@ -254,7 +292,9 @@
     { "id": "animated-neon-large", "name": "Large Animated Neon Sign", "layout": "animated", "frames": 5, "brushPresets": [ { "width": 23, "height": 20 }, { "width": 34, "height": 32 }, { "width": 51, "height": 50 }, { "width": 79, "height": 78 } ], "canvas": { "x1": 544, "y1": 236, "x2": 1435, "y2": 1126 } },
     { "id": "animated-neon-medium", "name": "Medium Animated Neon Sign", "layout": "animated", "frames": 5, "brushPresets": [ { "width": 24, "height": 26 }, { "width": 34, "height": 39 }, { "width": 51, "height": 59 }, { "width": 79, "height": 90 } ], "canvas": { "x1": 545, "y1": 362, "x2": 1439, "y2": 881 } },
     { "id": "animated-neon-small", "name": "Small Animated Neon Sign", "layout": "animated", "frames": 5, "brushPresets": [ { "width": 26, "height": 26 }, { "width": 38, "height": 38 }, { "width": 58, "height": 59 }, { "width": 92, "height": 91 } ], "canvas": { "x1": 730, "y1": 360, "x2": 1252, "y2": 883 } },
-    { "id": "pumpkin", "name": "Carvable Pumpkin", "layout": "carving", "fixedPalette": true, "texture": { "width": 196, "height": 235 }, "canvas": { "x1": 841, "y1": 633, "x2": 1155, "y2": 868 } }
+    { "id": "pumpkin", "name": "Carvable Pumpkin", "layout": "carving", "fixedPalette": true, "texture": { "width": 196, "height": 235 }, "canvas": { "x1": 841, "y1": 633, "x2": 1155, "y2": 868 } },
+    { "id": "stone-sculpture", "name": "Stone Sculpture", "layout": "sculpting", "fixedPalette": true, "hasCameraReset": false, "brushShape": 1, "sizeScale": 0.1, "leaveIndex": 2, "texture": { "width": 135, "height": 162 }, "canvas": { "x1": 860, "y1": 360, "x2": 1470, "y2": 1090 } }
+
 
   ]
 }

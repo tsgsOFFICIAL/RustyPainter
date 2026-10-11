@@ -28,7 +28,7 @@ public class StudioViewModelTests
     {
         StudioViewModel studio = Create();
 
-        Assert.Equal(17, studio.AllSurfaces.Count);
+        Assert.Equal(18, studio.AllSurfaces.Count);
         Assert.Equal(studio.AllSurfaces[0], studio.SelectedSurface);
         Assert.Equal(studio.AllSurfaces.Count, studio.VisibleSurfaces.Count);
     }

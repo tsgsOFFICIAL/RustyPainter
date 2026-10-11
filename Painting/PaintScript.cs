@@ -66,6 +66,7 @@ public sealed record PaintOptions(
     bool ClearFirst = true,
     double Spacing = 0.1,
     double Opacity = 1,
+    double Hardness = 1,
     int? ShapeIndex = null,
     double NudgeX = 0,
     double NudgeY = 0)
@@ -112,7 +113,8 @@ public static class PaintScriptBuilder
         FrameControls? frames = surface.IsAnimated ? controls.Frames ?? throw new System.InvalidOperationException("The paint screen has no frame buttons.") : null;
         List<PaintStep> steps = [];
 
-        steps.Add(new ResetCameraStep(controls.ResetCamera.Center));
+        if (layout.Surface.HasCameraReset)
+            steps.Add(new ResetCameraStep(controls.ResetCamera.Center));
 
         if (surface.ScrollOut > 0)
             steps.Add(new ScrollOutStep(surface.ScrollOut));
@@ -161,13 +163,16 @@ public static class PaintScriptBuilder
 
             // Neon signs have fixed brush presets and no numbers to type. A paint screen can also have only some of the numbers.
             if (controls.Size is { } size)
-                steps.Add(new SetBrushValueStep("Size", size.Center, options.BlockSize.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+                steps.Add(new SetBrushValueStep("Size", size.Center, (options.BlockSize * layout.Surface.SizeScale).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)));
 
             if (controls.Spacing is { } spacing)
                 steps.Add(new SetBrushValueStep("Spacing", spacing.Center, options.Spacing.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)));
 
             if (controls.Opacity is { } opacity)
                 steps.Add(new SetBrushValueStep("Opacity", opacity.Center, options.Opacity.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)));
+
+            if (controls.Hardness is { } hardness)
+                steps.Add(new SetBrushValueStep("Hardness", hardness.Center, options.Hardness.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)));
 
             double cellWidth = canvas.Width / plan.Width;
             double cellHeight = canvas.Height / plan.Height;

@@ -12,6 +12,12 @@ All notable changes to Rusty Painter are documented here.
 - Painting opens each frame in turn, clears it and paints it. The frames after the last picture are cleared as well, so nothing old is left in them. If a frame will not open, painting stops and says so.
 - Saved projects keep all their frames.
 
+### Carving
+
+- The carvable pumpkin can be carved. The light parts of a picture are cut through so the candle shines out of them, and black leaves the shell as it is. The picture is turned to black and white and cut without dithering, so the cuts stay solid.
+- The stone sculpture can be worked with Carve and Add. The dark parts of a picture are carved into the stone, the light parts are built up and the mid-tones are left alone. A sculpture is a coarse relief, because even the smallest brushes are large on a block of stone.
+- Both are listed under a new Carving group in Studio, and neither has a choice of colors, since their grays and tools are what the painter works with.
+
 ### About
 
 - A new About page shows the version, the build time, the operating system and the license, so a bug report has what it needs.

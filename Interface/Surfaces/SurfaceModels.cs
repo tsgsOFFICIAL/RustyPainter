@@ -103,6 +103,7 @@ public sealed record FrameControls(ScreenRect[] Buttons, ScreenRect CopyPrevious
 /// <param name="Opacity">The brush opacity value. Absent on surfaces with fixed brush presets.</param>
 /// <param name="ColorGrid">The swatch grid, present in swatch mode only.</param>
 /// <param name="FreeColor">The free color controls, present in free color mode only.</param>
+/// <param name="Hardness">The brush hardness value, which can be clicked to type a number. Present on the sculpting screen only.</param>
 /// <param name="Frames">The frames panel, present on the paint screens of animated signs only.</param>
 public sealed record PaintLayout(
     ScreenRect Clear,
@@ -121,7 +122,8 @@ public sealed record PaintLayout(
     ScreenRect? Opacity = null,
     ColorGrid? ColorGrid = null,
     FreeColorControls? FreeColor = null,
-    FrameControls? Frames = null)
+    FrameControls? Frames = null,
+    ScreenRect? Hardness = null)
 {
     /// <summary>Every plain rectangle in the layout, for checks that apply to all of them.</summary>
     public ScreenRect[] AllRects()
@@ -140,6 +142,9 @@ public sealed record PaintLayout(
 
         if (Opacity is { } opacity)
             all.Add(opacity);
+
+        if (Hardness is { } hardness)
+            all.Add(hardness);
 
         if (ColorGrid is not null)
             all.Add(ColorGrid.Area);
@@ -168,7 +173,8 @@ public sealed record PaintLayout(
             Opacity is { } opacity ? Move(opacity) : null,
             ColorGrid?.Place(sx, sy, dx, dy),
             FreeColor?.Place(sx, sy, dx, dy),
-            Frames?.Place(sx, sy, dx, dy));
+            Frames?.Place(sx, sy, dx, dy),
+            Hardness is { } hardness ? Move(hardness) : null);
     }
 }
 
@@ -207,7 +213,12 @@ public sealed record BrushPreset(double Width, double Height);
 /// </param>
 /// <param name="Frames">How many frames the surface can show one after the other. One for everything that does not animate.</param>
 /// <param name="FixedPalette">Whether the paint screen only has its fixed set of colors, with no switch to any color. A carvable pumpkin is like that: its grays are how deep to cut.</param>
-public sealed record Surface(string Id, string Name, string Layout, ScreenRect Canvas, int ScrollOut = 0, TextureSize? Texture = null, BrushPreset[]? BrushPresets = null, int Frames = 1, bool FixedPalette = false)
+/// <param name="HasCameraReset">Whether the paint screen has a button that puts the camera back. A sculpture has none, so the painter leaves the view alone.</param>
+/// <param name="BrushShape">Which of the brush shapes to paint with, counted from the left. Without it the surface's own default is used.</param>
+/// <param name="SizeScale">What the whole numbers of the quality choices are multiplied by to get the brush size that is typed in. A sculpture takes sizes such as 0.4, so its choices count tenths.</param>
+/// <param name="LeaveIndex">The color of the palette that means "do nothing here", for surfaces whose colors are tools, such as a sculpture's carve and add.</param>
+public sealed record Surface(string Id, string Name, string Layout, ScreenRect Canvas, int ScrollOut = 0, TextureSize? Texture = null, BrushPreset[]? BrushPresets = null, int Frames = 1, bool FixedPalette = false,
+    bool HasCameraReset = true, int? BrushShape = null, double SizeScale = 1, int? LeaveIndex = null)
 {
     /// <summary>Whether the surface is an animated sign that shows several pictures one after the other.</summary>
     public bool IsAnimated => Frames > 1;

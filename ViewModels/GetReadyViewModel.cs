@@ -306,7 +306,7 @@ public sealed class GetReadyViewModel : ViewModelBase, IHotkeyTarget, IDisposabl
         _hologram.Hide();
 
         // Neon signs have no size to type. The number Studio hands over is which of their fixed brushes to use.
-        int? preset = StudioGeometry.HasPresets(Request.Surface) ? Request.BlockSize : Request.Surface.FixedPalette ? PaintOptions.CarvingShape : null;
+        int? preset = StudioGeometry.HasPresets(Request.Surface) ? Request.BlockSize : Request.Surface.BrushShape ?? (Request.Surface.FixedPalette ? PaintOptions.CarvingShape : null);
         PaintOptions options = new(Request.Mode, Request.BlockSize, ClearFirst, ShapeIndex: preset, NudgeX: NudgeX, NudgeY: NudgeY);
         StartRequested?.Invoke(new PaintSession(Request, options, PaintTiming.FromSpeed((int)Speed)));
     }

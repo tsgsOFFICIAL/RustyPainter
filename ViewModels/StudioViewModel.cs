@@ -233,6 +233,8 @@ public sealed partial class StudioViewModel : ViewModelBase
             OnPropertyChanged(nameof(IsSizeSurface));
             OnPropertyChanged(nameof(IsFixedPalette));
             OnPropertyChanged(nameof(HasChoosableColors));
+            OnPropertyChanged(nameof(IsRelief));
+            OnPropertyChanged(nameof(IsCarvingNote));
             OnPropertyChanged(nameof(IsFreeMode));
 
             StopPlaying();
@@ -406,6 +408,12 @@ public sealed partial class StudioViewModel : ViewModelBase
 
     /// <summary>Whether the open surface only has its fixed colors, as a carvable pumpkin does with its grays.</summary>
     public bool IsFixedPalette => SelectedSurface.Surface.FixedPalette;
+
+    /// <summary>Whether the colors of the open surface are tools, as the carve and add of a sculpture are, so the picture becomes a relief.</summary>
+    public bool IsRelief => SelectedSurface.Surface.LeaveIndex is not null;
+
+    /// <summary>Whether the note about carving depths is shown: the fixed palette is grays on a pumpkin.</summary>
+    public bool IsCarvingNote => IsFixedPalette && !IsRelief;
 
     /// <summary>Whether there is a choice between the palette and any color.</summary>
     public bool HasChoosableColors => !IsFixedPalette;
@@ -1081,7 +1089,8 @@ public sealed partial class StudioViewModel : ViewModelBase
             EffectiveMode,
             (int)MaxColors,
             EffectiveDithering,
-            FillBackground && Rgb.TryParse(BackgroundHex, out Rgb background) ? background : null);
+            FillBackground && Rgb.TryParse(BackgroundHex, out Rgb background) ? background : null,
+            SelectedSurface.Surface.LeaveIndex);
 
         List<Rgb> swatches = _surfaces.Catalog.Layouts[surface.Layout].Swatches.ColorGrid!.Colors.Select(Rgb.Parse).ToList();
 
@@ -1185,7 +1194,7 @@ public sealed partial class StudioViewModel : ViewModelBase
             "frame" => "Frames",
             "neon" => "Neon",
             "animated" => "Animated",
-            "pumpkin" => "Carving",
+            "pumpkin" or "stone" => "Carving",
             _ => "Other"
         };
     }

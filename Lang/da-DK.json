@@ -362,5 +362,7 @@
   "ImageFailed": "Billedet kunne ikke indlæses.",
   "Category_Carving": "Udskæring",
   "Surface_pumpkin": "Udskærbart græskar",
-  "StudioCarvingNote": "Gråtonerne er, hvor dybt græskarret skæres. Hvid skærer helt igennem og lader lyset skinne, sort lader skallen stå. Billedet gøres sort-hvidt og skæres uden dithering, så udskæringerne bliver ensartede."
+  "StudioCarvingNote": "Gråtonerne er, hvor dybt græskarret skæres. Hvid skærer helt igennem og lader lyset skinne, sort lader skallen stå. Billedet gøres sort-hvidt og skæres uden dithering, så udskæringerne bliver ensartede.",
+  "Surface_stone-sculpture": "Stenskulptur",
+  "StudioReliefNote": "Mørke dele af billedet skæres ind i stenen, lyse dele bygges op, og mellemtonerne lades være. Billedet gøres sort-hvidt."
 }

@@ -22,13 +22,15 @@ public enum ColorMode
 /// <param name="MaxColors">In free mode, how many colors the picture is reduced to.</param>
 /// <param name="Dithering">How color differences are spread around.</param>
 /// <param name="Background">A color painted under the whole picture, so no cell is left unpainted. Null leaves empty areas as they are.</param>
+/// <param name="LeaveIndex">A color of the palette whose cells are left alone, as the middle gray of a sculpture is.</param>
 public sealed record StudioSettings(
     PlacementSettings Placement,
     AdjustmentSettings Adjustments,
     ColorMode Mode = ColorMode.Swatches,
     int MaxColors = 16,
     Dithering Dithering = Dithering.Smooth,
-    Rgb? Background = null);
+    Rgb? Background = null,
+    int? LeaveIndex = null);
 
 /// <summary>How big the grid of cells is for a surface and a brush size.</summary>
 public static class StudioGeometry
@@ -107,6 +109,13 @@ public static class StudioPipeline
             palette = WithExact(palette, exact);
 
         int[] indices = Quantizer.Map(cells, palette, settings.Dithering);
+
+        if (settings.LeaveIndex is { } leave)
+        {
+            for (int i = 0; i < indices.Length; i++)
+                if (indices[i] == leave)
+                    indices[i] = Quantizer.Unpainted;
+        }
         PaintPlan plan = new(gridWidth, gridHeight, palette, indices, PlaceOriginal(oriented, settings.Placement, gridWidth, gridHeight, settings.Background));
 
         // Group the cells into strokes here, on the worker thread, so asking for the count later is instant.

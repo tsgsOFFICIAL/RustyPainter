@@ -362,5 +362,7 @@
   "ImageFailed": "The image could not be loaded.",
   "Category_Carving": "Carving",
   "Surface_pumpkin": "Carvable Pumpkin",
-  "StudioCarvingNote": "The grays are how deep the pumpkin is cut. White cuts all the way through and lets the candle shine, black leaves the shell as it is. The picture is turned to black and white and cut without dithering, so the cuts stay solid."
+  "StudioCarvingNote": "The grays are how deep the pumpkin is cut. White cuts all the way through and lets the candle shine, black leaves the shell as it is. The picture is turned to black and white and cut without dithering, so the cuts stay solid.",
+  "Surface_stone-sculpture": "Stone Sculpture",
+  "StudioReliefNote": "Dark parts of the picture are carved into the stone, light parts are built up, and the mid-tones are left alone. The picture is turned to black and white."
 }

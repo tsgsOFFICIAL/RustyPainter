@@ -230,7 +230,8 @@
                         <StackPanel Spacing="10">
                             <TextBlock Text="{loc:L StudioColorHeader}" Classes="eyebrow"/>
                             <ItemsControl Classes="chips" ItemsSource="{Binding ColorModeChoices.Choices}" IsVisible="{Binding HasChoosableColors}"/>
-                            <TextBlock Text="{loc:L StudioCarvingNote}" Classes="muted" FontSize="12" TextWrapping="Wrap" IsVisible="{Binding IsFixedPalette}"/>
+                            <TextBlock Text="{loc:L StudioCarvingNote}" Classes="muted" FontSize="12" TextWrapping="Wrap" IsVisible="{Binding IsCarvingNote}"/>
+                            <TextBlock Text="{loc:L StudioReliefNote}" Classes="muted" FontSize="12" TextWrapping="Wrap" IsVisible="{Binding IsRelief}"/>
 
                             <StackPanel Spacing="0" IsVisible="{Binding IsFreeMode}">
                                 <Grid ColumnDefinitions="*,Auto">

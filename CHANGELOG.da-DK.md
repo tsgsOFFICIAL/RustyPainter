@@ -12,6 +12,12 @@ Alle væsentlige ændringer i Rusty Painter er dokumenteret her.
 - Malingen åbner hvert frame efter tur, rydder det og maler det. Frames efter det sidste billede ryddes også, så der ikke er noget gammelt tilbage. Hvis et frame ikke vil åbne, stopper malingen og fortæller det.
 - Gemte projekter beholder alle deres frames.
 
+### Udskæring
+
+- Det udskærbare græskar kan skæres. De lyse dele af et billede skæres helt igennem, så lyset skinner ud af dem, og sort lader skallen stå. Billedet gøres sort-hvidt og skæres uden dithering, så udskæringerne bliver ensartede.
+- Stenskulpturen kan bearbejdes med Udskær og Tilføj. De mørke dele af et billede skæres ind i stenen, de lyse dele bygges op, og mellemtonerne lades være. En skulptur er et groft relief, fordi selv de mindste pensler er store på en blok sten.
+- Begge står i en ny gruppe, Udskæring, i Studio, og ingen af dem har et valg af farver, da deres gråtoner og værktøjer er det, maleren arbejder med.
+
 ### Om
 
 - En ny Om-side viser versionen, byggetidspunktet, operativsystemet og licensen, så en fejlrapport har det, den skal bruge.

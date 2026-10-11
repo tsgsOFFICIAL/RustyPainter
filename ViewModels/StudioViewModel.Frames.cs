@@ -282,7 +282,8 @@ public sealed partial class StudioViewModel
             EffectiveMode,
             (int)MaxColors,
             EffectiveDithering,
-            FillBackground && Rgb.TryParse(BackgroundHex, out Rgb background) ? background : null);
+            FillBackground && Rgb.TryParse(BackgroundHex, out Rgb background) ? background : null,
+            SelectedSurface.Surface.LeaveIndex);
 
         List<(byte[]? Picture, FrameSettings Settings, StudioSettings Studio)> jobs = work.Select(item => (item.Picture, item.Settings, Shared(item.Settings))).ToList();
 
