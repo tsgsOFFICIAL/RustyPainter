@@ -57,6 +57,7 @@ public sealed record StudioProject
     public double Brightness { get; init; }
     public double Contrast { get; init; }
     public double Saturation { get; init; }
+    public double FilterStrength { get; init; } = 100;
     public bool FillBackground { get; init; }
     public string BackgroundColor { get; init; } = "#000000";
 

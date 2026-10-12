@@ -278,7 +278,7 @@ public sealed partial class StudioViewModel
         List<(byte[]? Picture, FrameSettings Settings)> work = _frames.Select(slot => (slot.Picture, slot.Settings)).ToList();
         StudioSettings Shared(FrameSettings frame) => new(
             new PlacementSettings(Enum.TryParse(frame.Placement, out FitMode fit) ? fit : FitMode.Fill, frame.Zoom, frame.OffsetX / 100, frame.OffsetY / 100),
-            new AdjustmentSettings(Brightness / 100, Contrast / 100, Saturation / 100, EffectiveFilter),
+            new AdjustmentSettings(Brightness / 100, Contrast / 100, Saturation / 100, EffectiveFilter, EffectiveFilterStrength),
             EffectiveMode,
             (int)MaxColors,
             EffectiveDithering,

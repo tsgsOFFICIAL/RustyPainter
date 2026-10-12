@@ -310,6 +310,68 @@ public class AdjustmentTests
     }
 
     [Fact]
+    public void Oil_painting_sweeps_a_stray_pixel_into_its_surroundings()
+    {
+        PixelBuffer picture = PixelBuffer.Solid(9, 9, 200, 40, 40);
+        picture.Set(4, 4, 10, 10, 250);
+
+        PixelBuffer result = Adjustments.Apply(picture, new AdjustmentSettings(Filter: ImageFilter.OilPainting));
+
+        int o = result.OffsetOf(4, 4);
+        Assert.Equal((200, 40, 40), (result.Data[o], result.Data[o + 1], result.Data[o + 2]));
+    }
+
+    [Fact]
+    public void Oil_painting_keeps_a_flat_color_and_transparent_pixels()
+    {
+        PixelBuffer picture = PixelBuffer.Solid(6, 6, 90, 120, 30);
+        picture.Set(2, 2, 255, 255, 255, 0);
+
+        PixelBuffer result = Adjustments.Apply(picture, new AdjustmentSettings(Filter: ImageFilter.OilPainting));
+
+        Assert.Equal(0, result.Data[result.OffsetOf(2, 2) + 3]);
+        int o = result.OffsetOf(3, 3);
+        Assert.Equal((90, 120, 30, 255), (result.Data[o], result.Data[o + 1], result.Data[o + 2], result.Data[o + 3]));
+    }
+
+    [Fact]
+    public void Oil_painting_keeps_a_hard_edge()
+    {
+        PixelBuffer picture = new(10, 4);
+        for (int y = 0; y < 4; y++)
+            for (int x = 0; x < 10; x++)
+                picture.Set(x, y, x < 5 ? (byte)0 : (byte)255, 0, 0);
+
+        PixelBuffer result = Adjustments.Apply(picture, new AdjustmentSettings(Filter: ImageFilter.OilPainting));
+
+        Assert.Equal(0, result.Data[result.OffsetOf(1, 1)]);
+        Assert.Equal(255, result.Data[result.OffsetOf(8, 1)]);
+    }
+
+    [Fact]
+    public void Filter_strength_blends_between_the_picture_and_the_filter()
+    {
+        (int none, _, _) = Rgb(Adjustments.Apply(One(100, 100, 100), new AdjustmentSettings(Filter: ImageFilter.Invert, FilterStrength: 0)));
+        (int half, _, _) = Rgb(Adjustments.Apply(One(100, 100, 100), new AdjustmentSettings(Filter: ImageFilter.Invert, FilterStrength: 0.5)));
+        (int full, _, _) = Rgb(Adjustments.Apply(One(100, 100, 100), new AdjustmentSettings(Filter: ImageFilter.Invert, FilterStrength: 1)));
+
+        Assert.Equal(100, none);
+        Assert.InRange(half, 125, 130);
+        Assert.Equal(155, full);
+    }
+
+    [Fact]
+    public void A_weak_oil_painting_leaves_the_picture_alone()
+    {
+        PixelBuffer picture = PixelBuffer.Solid(9, 9, 200, 40, 40);
+        picture.Set(4, 4, 10, 10, 250);
+
+        PixelBuffer result = Adjustments.Apply(picture, new AdjustmentSettings(Filter: ImageFilter.OilPainting, FilterStrength: 0));
+
+        Assert.Equal(250, result.Data[result.OffsetOf(4, 4) + 2]);
+    }
+
+    [Fact]
     public void Posterize_leaves_only_four_levels()
     {
         int[] allowed = [0, 85, 170, 255];

@@ -99,6 +99,7 @@ public sealed partial class StudioViewModel
             Brightness = Brightness,
             Contrast = Contrast,
             Saturation = Saturation,
+            FilterStrength = FilterStrength,
             FillBackground = FillBackground,
             BackgroundColor = BackgroundHex,
             Quality = BlockSize,
@@ -264,6 +265,7 @@ public sealed partial class StudioViewModel
         Brightness = project.Brightness;
         Contrast = project.Contrast;
         Saturation = project.Saturation;
+        FilterStrength = project.FilterStrength;
         FillBackground = project.FillBackground;
         BackgroundHex = project.BackgroundColor;
 

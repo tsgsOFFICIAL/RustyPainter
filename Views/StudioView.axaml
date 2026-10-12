@@ -257,6 +257,14 @@
 
                             <StackPanel Spacing="0">
                                 <Grid ColumnDefinitions="*,Auto">
+                                    <TextBlock Text="{loc:L StudioFilterStrength}" Classes="fieldLabel"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding FilterStrengthText}" FontSize="11"/>
+                                </Grid>
+                                <Slider Minimum="0" Maximum="100" Value="{Binding FilterStrength}"/>
+                            </StackPanel>
+
+                            <StackPanel Spacing="0">
+                                <Grid ColumnDefinitions="*,Auto">
                                     <TextBlock Text="{loc:L StudioBrightness}" Classes="fieldLabel"/>
                                     <TextBlock Grid.Column="1" Text="{Binding BrightnessText}" FontSize="11"/>
                                 </Grid>
@@ -370,7 +378,7 @@
                 <Grid>
                     <Viewbox Stretch="Uniform" Margin="40">
                         <Border x:Name="Stage" Width="{Binding CanvasWidth}" Height="{Binding CanvasHeight}" ClipToBounds="True"
-                                Background="{DynamicResource BorderColor}" CornerRadius="4"
+                                Background="{Binding SelectedSurface.BackdropBrush}" CornerRadius="4"
                                 Cursor="SizeAll" IsHitTestVisible="{Binding HasImage}"
                                 PointerPressed="OnStagePressed" PointerMoved="OnStageMoved" PointerReleased="OnStageReleased"
                                 PointerCaptureLost="OnStageCaptureLost" PointerWheelChanged="OnStageWheel" DoubleTapped="OnStageDoubleTapped">
@@ -380,7 +388,7 @@
                                 <Image Source="{Binding Image}" Stretch="Uniform" IsVisible="{Binding ShowOriginal}"/>
 
                                 <!-- Split view: the placed picture over the left of the divider, so both sides line up. -->
-                                <Border Width="{Binding SplitWidth}" HorizontalAlignment="Left" ClipToBounds="True" Background="{DynamicResource BorderColor}"
+                                <Border Width="{Binding SplitWidth}" HorizontalAlignment="Left" ClipToBounds="True" Background="{Binding SelectedSurface.BackdropBrush}"
                                         IsVisible="{Binding ShowSplit}" IsHitTestVisible="False">
                                     <Image x:Name="ReferenceImage" Source="{Binding Reference}" Width="{Binding CanvasWidth}"
                                            HorizontalAlignment="Left" Stretch="Fill"/>

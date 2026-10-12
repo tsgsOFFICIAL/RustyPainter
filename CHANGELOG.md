@@ -2,6 +2,18 @@
 
 All notable changes to Rusty Painter are documented here.
 
+## 0.10.0
+
+### Filters
+
+- A new Oil painting filter turns a picture into flat daubs of color while keeping hard edges, so faces and outlines stay readable.
+- A Filter strength slider sets how much of any filter is used, from nothing to the full look. For Oil painting it also sets the size of the daubs. Reset puts it back to full, and saved projects remember it.
+- The pumpkin and the stone sculpture still turn the picture to black and white in full, whatever the slider says.
+
+### Surfaces
+
+- The preview now shows the surface under the picture instead of a flat gray: planks for the wooden signs, linen for the canvases and the picture frame, a dark panel for the neon signs, a ribbed skin for the pumpkin and speckled stone for the sculpture. It shows through wherever the picture leaves cells unpainted.
+
 ## 0.9.0
 
 ### Animated neon signs

@@ -217,8 +217,9 @@ public sealed record BrushPreset(double Width, double Height);
 /// <param name="BrushShape">Which of the brush shapes to paint with, counted from the left. Without it the surface's own default is used.</param>
 /// <param name="SizeScale">What the whole numbers of the quality choices are multiplied by to get the brush size that is typed in. A sculpture takes sizes such as 0.4, so its choices count tenths.</param>
 /// <param name="LeaveIndex">The color of the palette that means "do nothing here", for surfaces whose colors are tools, such as a sculpture's carve and add.</param>
+/// <param name="Backdrop">What the bare surface looks like under the picture in Studio: wood, canvas, frame, neon, pumpkin or stone. Without it a plain gray is shown.</param>
 public sealed record Surface(string Id, string Name, string Layout, ScreenRect Canvas, int ScrollOut = 0, TextureSize? Texture = null, BrushPreset[]? BrushPresets = null, int Frames = 1, bool FixedPalette = false,
-    bool HasCameraReset = true, int? BrushShape = null, double SizeScale = 1, int? LeaveIndex = null)
+    bool HasCameraReset = true, int? BrushShape = null, double SizeScale = 1, int? LeaveIndex = null, string? Backdrop = null)
 {
     /// <summary>Whether the surface is an animated sign that shows several pictures one after the other.</summary>
     public bool IsAnimated => Frames > 1;

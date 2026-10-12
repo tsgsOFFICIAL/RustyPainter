@@ -2,6 +2,18 @@
 
 Alle væsentlige ændringer i Rusty Painter er dokumenteret her.
 
+## 0.10.0
+
+### Filtre
+
+- Et nyt Oliemaleri-filter gør et billede til flade klatter af farve og bevarer de skarpe kanter, så ansigter og konturer stadig kan læses.
+- En skyder til Filterstyrke bestemmer, hvor meget af et filter der bruges, fra intet til det fulde udtryk. For Oliemaleri bestemmer den også størrelsen på klatterne. Nulstil sætter den tilbage til fuld styrke, og gemte projekter husker den.
+- Græskarret og stenskulpturen gøres stadig helt sort-hvide, uanset hvad skyderen siger.
+
+### Overflader
+
+- Forhåndsvisningen viser nu overfladen under billedet i stedet for en flad grå farve: planker til træskiltene, lærred til lærrederne og billedrammen, en mørk plade til neonskiltene, en ribbet skal til græskarret og spættet sten til skulpturen. Den vises overalt, hvor billedet lader celler være umalede.
+
 ## 0.9.0
 
 ### Animerede neonskilte

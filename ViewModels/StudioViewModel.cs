@@ -51,6 +51,20 @@ public sealed class SurfaceOption(Surface surface, string category) : ViewModelB
 
     /// <summary>The canvas size on a 1440p screen, as shown in the picker.</summary>
     public string SizeText => Loc.Format("SizePixels", Surface.Canvas.Width, Surface.Canvas.Height);
+
+    private IBrush? _backdropBrush;
+
+    /// <summary>What the bare surface looks like, drawn once on first use. It shows through wherever the picture leaves cells unpainted.</summary>
+    public IBrush BackdropBrush => _backdropBrush ??= MakeBackdrop();
+
+    private IBrush MakeBackdrop()
+    {
+        // Half the canvas size is plenty for a texture that is stretched over the preview, and keeps the big canvases quick.
+        int width = Math.Clamp((int)(Surface.Canvas.Width / 2), 64, 640);
+        int height = Math.Clamp((int)(Surface.Canvas.Height / 2), 64, 640);
+
+        return new ImageBrush(BitmapPixels.ToBitmap(SurfaceBackdrop.Create(Surface.Backdrop, width, height))) { Stretch = Stretch.Fill };
+    }
 }
 
 /// <summary>One category filter button of the surface picker.</summary>
@@ -107,7 +121,7 @@ public sealed partial class StudioViewModel : ViewModelBase
     private int _quarterTurns;
     private bool _flipX, _flipY;
     private double _zoom = 1, _offsetX, _offsetY;
-    private double _brightness, _contrast, _saturation;
+    private double _brightness, _contrast, _saturation, _filterStrength = 100;
     private double _maxColors = 16;
     private bool _fillBackground;
     private string _backgroundHex = "#000000";
@@ -157,7 +171,7 @@ public sealed partial class StudioViewModel : ViewModelBase
         FilterChoices = new(
         [
             ("None", ImageFilter.None), ("FilterBlackAndWhite", ImageFilter.BlackAndWhite), ("FilterSepia", ImageFilter.Sepia),
-            ("FilterInvert", ImageFilter.Invert), ("FilterBrighten", ImageFilter.Brighten), ("FilterPosterize", ImageFilter.Posterize)
+            ("FilterInvert", ImageFilter.Invert), ("FilterBrighten", ImageFilter.Brighten), ("FilterPosterize", ImageFilter.Posterize), ("FilterOilPainting", ImageFilter.OilPainting)
         ], ImageFilter.None);
         QualityChoices = new([("1", 1), ("2", 2), ("4", 4), ("8", 8), ("16", 16), ("32", 32)], 4);
         PresetChoices = new([("PresetFine", 0), ("PresetMedium", 1), ("PresetThick", 2), ("PresetHeavy", 3)], 1);
@@ -526,6 +540,25 @@ public sealed partial class StudioViewModel : ViewModelBase
     }
 
     public string SaturationText => $"{Saturation:+0;-0;0}";
+
+    /// <summary>How much of the chosen filter is applied, from 0 to 100 percent.</summary>
+    public double FilterStrength
+    {
+        get => _filterStrength;
+        set
+        {
+            if (SetProperty(ref _filterStrength, Math.Round(Math.Clamp(value, 0, 100))))
+            {
+                OnPropertyChanged(nameof(FilterStrengthText));
+                Changed();
+            }
+        }
+    }
+
+    public string FilterStrengthText => $"{FilterStrength:0}%";
+
+    /// <summary>The strength to use: the filter a carving surface adds by itself always runs in full.</summary>
+    private double EffectiveFilterStrength => EffectiveFilter == FilterChoices.Selected ? FilterStrength / 100 : 1;
 
     public RelayCommand ResetAdjustmentsCommand { get; }
 
@@ -1085,7 +1118,7 @@ public sealed partial class StudioViewModel : ViewModelBase
 
         StudioSettings settings = new(
             new PlacementSettings(PlacementChoices.Selected, Zoom, OffsetX / 100, OffsetY / 100),
-            new AdjustmentSettings(Brightness / 100, Contrast / 100, Saturation / 100, EffectiveFilter),
+            new AdjustmentSettings(Brightness / 100, Contrast / 100, Saturation / 100, EffectiveFilter, EffectiveFilterStrength),
             EffectiveMode,
             (int)MaxColors,
             EffectiveDithering,
@@ -1180,6 +1213,7 @@ public sealed partial class StudioViewModel : ViewModelBase
         Brightness = 0;
         Contrast = 0;
         Saturation = 0;
+        FilterStrength = 100;
         Changed();
     }
 
