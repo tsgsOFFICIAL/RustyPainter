@@ -64,7 +64,7 @@ public sealed record PaintOptions(
     ColorMode Mode,
     int BlockSize,
     bool ClearFirst = true,
-    double Spacing = 0.1,
+    double Spacing = 0.01,
     double Opacity = 1,
     double Hardness = 1,
     int? ShapeIndex = null,
