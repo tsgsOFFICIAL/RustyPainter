@@ -44,7 +44,7 @@ public sealed partial class StudioViewModel
     public RelayCommand SaveCommand { get; }
 
     /// <summary>Whether there is a picture to save and somewhere to save it.</summary>
-    public bool CanSave => _projects is not null && HasImage;
+    public bool CanSave => _projects is not null && HasAnyPicture;
 
     /// <summary>What to tell the user after saving, for a few seconds.</summary>
     public string SaveStatus
@@ -70,6 +70,16 @@ public sealed partial class StudioViewModel
         _projectCreated = null;
         SaveCommand.RaiseCanExecuteChanged();
         OnPropertyChanged(nameof(CanSave));
+    }
+
+    /// <summary>
+    /// A picture put in place of the only one makes a new painting. With layers it is one layer being changed, so the project stays
+    /// the one that is open and saving updates it.
+    /// </summary>
+    private void DetachProjectForNewPicture()
+    {
+        if (!HasMultipleLayers)
+            DetachProject();
     }
 
     /// <summary>Everything about the current setup, for saving.</summary>
@@ -125,27 +135,27 @@ public sealed partial class StudioViewModel
 
     private void SaveProject()
     {
-        if (!CanSave || _projects is null || Image is null)
+        if (!CanSave || _projects is null)
             return;
 
         try
         {
-            using MemoryStream picture = new();
-            Image.Save(picture);
+            // The first frame, with its layers, is what the project itself describes. A surface that does not animate has just the open one.
+            (List<FrameSettings> settings, List<byte[]> pictures, SavedFrame? firstFrame, List<List<byte[]>> layers) = CaptureFrames(IsAnimatedSurface && FrameCount > 1);
 
+            // The first frame can be blank while another one is open, and then the open picture stands in for it.
             StudioProject project = CaptureProject();
-            byte[] first = picture.ToArray();
-            List<byte[]>? more = null;
+            byte[]? first = firstFrame?.Picture ?? PictureBytes();
+            if (first is null)
+                return;
 
-            if (IsAnimatedSurface && FrameCount > 1)
-            {
-                (List<FrameSettings> settings, List<byte[]> pictures, FrameSettings firstFrame, byte[]? firstPicture) = CaptureFrames();
-                project = firstFrame.AsFirstFrameOf(project) with { MoreFrames = new FrameList(settings) };
-                first = firstPicture ?? first;
-                more = pictures;
-            }
+            if (firstFrame is not null)
+                project = firstFrame.Settings.AsFirstFrameOf(project);
 
-            StudioProject saved = _projects.Save(project, first, MakeThumbnail(), more);
+            project = project with { MoreFrames = new FrameList(settings) };
+            List<byte[]>? more = IsAnimatedSurface && FrameCount > 1 ? pictures : null;
+
+            StudioProject saved = _projects.Save(project, first, MakeThumbnail(), more, layers);
             CurrentProjectId = saved.Id;
             ProjectName = saved.Name;
             _projectCreated = saved.Created;
@@ -194,7 +204,7 @@ public sealed partial class StudioViewModel
 
         try
         {
-            ApplyProject(loaded.Project, loaded.Picture, _projects.LoadFramePictures(id));
+            ApplyProject(loaded.Project, loaded.Picture, _projects.LoadFramePictures(id), _projects.LoadLayerPictures(id));
             return true;
         }
         catch (Exception ex)
@@ -244,7 +254,7 @@ public sealed partial class StudioViewModel
     /// <summary>Puts a saved setup back, with its picture.</summary>
     /// <param name="project">The settings.</param>
     /// <param name="picture">The picture as a PNG file.</param>
-    public void ApplyProject(StudioProject project, byte[] picture, IReadOnlyList<byte[]?>? framePictures = null)
+    public void ApplyProject(StudioProject project, byte[] picture, IReadOnlyList<byte[]?>? framePictures = null, IReadOnlyList<IReadOnlyList<byte[]?>>? layerPictures = null)
     {
         // A surface that is no longer in the catalog leaves the current one, and says so.
         SurfaceOption? surface = AllSurfaces.FirstOrDefault(option => option.Surface.Id == project.SurfaceId);
@@ -274,7 +284,7 @@ public sealed partial class StudioViewModel
         else
             QualityChoices.Select(project.Quality);
 
-        LoadMoreFrames(project, framePictures);
+        LoadMoreFrames(project, framePictures, layerPictures);
 
         CurrentProjectId = project.Id.Length > 0 ? project.Id : null;
         ProjectName = project.Name;

@@ -183,7 +183,7 @@ public sealed partial class StudioViewModel : ViewModelBase
         FilterChoices.Changed += Changed;
         QualityChoices.Changed += Changed;
         PresetChoices.Changed += Changed;
-        PreviewChoices.Changed += () => { OnPropertyChanged(nameof(ShowOriginal)); OnPropertyChanged(nameof(ShowResult)); OnPropertyChanged(nameof(ShowSplit)); };
+        PreviewChoices.Changed += () => { OnPropertyChanged(nameof(ShowOriginal)); OnPropertyChanged(nameof(ShowResult)); OnPropertyChanged(nameof(ShowRender)); OnPropertyChanged(nameof(ShowSplit)); };
 
         ClearImageCommand = new RelayCommand(ClearImage, () => HasImage);
         PaintCommand = new RelayCommand(RequestPaint, () => CanPaint);
@@ -194,6 +194,7 @@ public sealed partial class StudioViewModel : ViewModelBase
         ResetAdjustmentsCommand = new RelayCommand(ResetAdjustments);
 
         InitializeFrames();
+        InitializeLayers();
     }
 
     // ---- surface picker ----
@@ -293,11 +294,14 @@ public sealed partial class StudioViewModel : ViewModelBase
                 return;
 
             OnPropertyChanged(nameof(HasImage));
-            OnPropertyChanged(nameof(CanSave));
-            SaveCommand.RaiseCanExecuteChanged();
+            RaiseAnyPicture();
+            OnPropertyChanged(nameof(LayerChips));
+            OnPropertyChanged(nameof(CanAddLayer));
+            AddLayerCommand.RaiseCanExecuteChanged();
             OnPropertyChanged(nameof(NoImage));
             OnPropertyChanged(nameof(ImageInfo));
             OnPropertyChanged(nameof(ShowResult));
+            OnPropertyChanged(nameof(ShowRender));
             OnPropertyChanged(nameof(ShowOriginal));
             ClearImageCommand.RaiseCanExecuteChanged();
         }
@@ -313,8 +317,11 @@ public sealed partial class StudioViewModel : ViewModelBase
         get => _imageName;
         private set
         {
-            if (SetProperty(ref _imageName, value))
-                OnPropertyChanged(nameof(ImageLabel));
+            if (!SetProperty(ref _imageName, value))
+                return;
+
+            OnPropertyChanged(nameof(ImageLabel));
+            OnPropertyChanged(nameof(LayerChips));
         }
     }
 
@@ -590,10 +597,10 @@ public sealed partial class StudioViewModel : ViewModelBase
     public bool ShowOriginal => HasImage && PreviewChoices.Selected == PreviewMode.Original;
 
     /// <summary>The result as it would be painted. In split view it fills the whole canvas, with the placed picture over its left half.</summary>
-    public bool ShowResult => IsPlaying || HasImage && PreviewChoices.Selected != PreviewMode.Original && Preview is not null;
+    public bool ShowResult => IsPlaying || HasAnyPicture && PreviewChoices.Selected != PreviewMode.Original && Preview is not null;
 
     /// <summary>Whether the left of the divider shows the original picture, placed like the result.</summary>
-    public bool ShowSplit => !IsPlaying && HasImage && PreviewChoices.Selected == PreviewMode.Split && Reference is not null;
+    public bool ShowSplit => !IsPlaying && HasAnyPicture && PreviewChoices.Selected == PreviewMode.Split && Reference is not null;
 
     /// <summary>Where the divider of the split view is, from 0 (left edge) to 1 (right edge).</summary>
     public double SplitPosition
@@ -650,6 +657,7 @@ public sealed partial class StudioViewModel : ViewModelBase
                 return;
 
             OnPropertyChanged(nameof(ShowResult));
+            OnPropertyChanged(nameof(ShowRender));
             OnPropertyChanged(nameof(ShownPreview));
         }
     }
@@ -680,7 +688,7 @@ public sealed partial class StudioViewModel : ViewModelBase
     public bool CanPaint => (Plan is { PaintedCells: > 0 } || OtherFramesHavePictures) && !IsBusy;
 
     private bool OtherFramesHavePictures
-        => IsAnimatedSurface && _frames.Where((_, index) => index != _frameIndex).Any(slot => slot.Picture is not null);
+        => IsAnimatedSurface && _frames.Where((_, index) => index != _frameIndex).Any(slot => slot.HasPicture);
 
     private void RequestPaint()
     {
@@ -771,7 +779,7 @@ public sealed partial class StudioViewModel : ViewModelBase
         {
             using FileStream stream = File.OpenRead(path);
             Show(new Bitmap(stream), name);
-            DetachProject();
+            DetachProjectForNewPicture();
             return true;
         }
         catch (Exception ex)
@@ -788,7 +796,7 @@ public sealed partial class StudioViewModel : ViewModelBase
         try
         {
             Show(bitmap, name);
-            DetachProject();
+            DetachProjectForNewPicture();
         }
         catch (Exception ex)
         {
@@ -870,7 +878,7 @@ public sealed partial class StudioViewModel : ViewModelBase
 
             using MemoryStream stream = new(data);
             Show(new Bitmap(stream), NameFromLink(address));
-            DetachProject();
+            DetachProjectForNewPicture();
             return true;
         }
         catch (PictureDownloadException ex)
@@ -1042,7 +1050,7 @@ public sealed partial class StudioViewModel : ViewModelBase
     {
         _pending?.Cancel();
 
-        if (_source is null)
+        if (!HasSource)
         {
             Plan = null;
             SetPreview(null);
@@ -1065,7 +1073,7 @@ public sealed partial class StudioViewModel : ViewModelBase
     {
         _pending?.Cancel();
 
-        if (_source is null)
+        if (!HasSource)
             return;
 
         CancellationTokenSource cts = new();
@@ -1109,13 +1117,6 @@ public sealed partial class StudioViewModel : ViewModelBase
         Surface surface = SelectedSurface.Surface;
         (int gridWidth, int gridHeight) = StudioGeometry.Grid(surface, BlockSize);
 
-        (int, bool, bool) key = (_quarterTurns, _flipX, _flipY);
-        if (_oriented is null || _orientedFor != key)
-        {
-            _oriented = PlacementEngine.Orient(_source!, _quarterTurns, _flipX, _flipY);
-            _orientedFor = key;
-        }
-
         StudioSettings settings = new(
             new PlacementSettings(PlacementChoices.Selected, Zoom, OffsetX / 100, OffsetY / 100),
             new AdjustmentSettings(Brightness / 100, Contrast / 100, Saturation / 100, EffectiveFilter, EffectiveFilterStrength),
@@ -1127,7 +1128,7 @@ public sealed partial class StudioViewModel : ViewModelBase
 
         List<Rgb> swatches = _surfaces.Catalog.Layouts[surface.Layout].Swatches.ColorGrid!.Colors.Select(Rgb.Parse).ToList();
 
-        return new Job(_oriented, settings, gridWidth, gridHeight, swatches);
+        return new Job(LayerInputs(), settings, gridWidth, gridHeight, swatches);
     }
 
     private void Apply(PaintPlan plan)
@@ -1146,9 +1147,9 @@ public sealed partial class StudioViewModel : ViewModelBase
         oldReference?.Dispose();
     }
 
-    private sealed record Job(PixelBuffer Oriented, StudioSettings Settings, int GridWidth, int GridHeight, IReadOnlyList<Rgb> Swatches)
+    private sealed record Job(IReadOnlyList<LayerInput> Layers, StudioSettings Settings, int GridWidth, int GridHeight, IReadOnlyList<Rgb> Swatches)
     {
-        public PaintPlan Run() => StudioPipeline.Run(Oriented, Settings, GridWidth, GridHeight, Swatches);
+        public PaintPlan Run() => StudioPipeline.Run([.. Layers.Select(layer => layer.Place())], Settings, GridWidth, GridHeight, Swatches);
     }
 
     // ---- housekeeping ----
@@ -1173,6 +1174,13 @@ public sealed partial class StudioViewModel : ViewModelBase
 
     private void ClearImage()
     {
+        // With layers, taking the picture away takes its layer away too, since an empty layer adds nothing.
+        if (HasMultipleLayers)
+        {
+            RemoveLayer();
+            return;
+        }
+
         DetachProject();
         ClearPicture();
     }

@@ -372,6 +372,27 @@ public class AdjustmentTests
     }
 
     [Fact]
+    public void The_oil_painting_strength_has_every_step_between_none_and_full()
+    {
+        // On a small grid the daubs are one pixel wide at most, so only blending can make the steps.
+        PixelBuffer Run(double strength)
+        {
+            PixelBuffer picture = PixelBuffer.Solid(9, 9, 200, 40, 40);
+            picture.Set(4, 4, 10, 10, 250);
+            return Adjustments.Apply(picture, new AdjustmentSettings(Filter: ImageFilter.OilPainting, FilterStrength: strength));
+        }
+
+        int Blue(double strength) { PixelBuffer p = Run(strength); return p.Data[p.OffsetOf(4, 4) + 2]; }
+
+        int[] blues = [Blue(0), Blue(0.25), Blue(0.5), Blue(0.75), Blue(1)];
+
+        Assert.Equal(250, blues[0]);
+        Assert.Equal(40, blues[4]);
+        for (int i = 1; i < blues.Length; i++)
+            Assert.True(blues[i] < blues[i - 1], $"Strength step {i} did not change the picture: {string.Join(", ", blues)}");
+    }
+
+    [Fact]
     public void Posterize_leaves_only_four_levels()
     {
         int[] allowed = [0, 85, 170, 255];

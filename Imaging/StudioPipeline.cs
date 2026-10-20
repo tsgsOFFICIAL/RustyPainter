@@ -77,6 +77,11 @@ public static class StudioGeometry
     }
 }
 
+/// <summary>One layer of a painting: a picture that has been rotated and flipped, and where it sits on the canvas.</summary>
+/// <param name="Oriented">The picture after rotating and flipping.</param>
+/// <param name="Placement">Where the picture sits on the canvas.</param>
+public sealed record PlacedPicture(PixelBuffer Oriented, PlacementSettings Placement);
+
 public static class StudioPipeline
 {
     /// <summary>How many pixels along its longer side the reference picture has at least, however coarse the grid is.</summary>
@@ -92,8 +97,16 @@ public static class StudioPipeline
     /// <param name="gridHeight">Cells down.</param>
     /// <param name="swatches">The colors the game offers in swatch mode for this surface.</param>
     public static PaintPlan Run(PixelBuffer oriented, StudioSettings settings, int gridWidth, int gridHeight, IReadOnlyList<Rgb> swatches)
+        => Run([new PlacedPicture(oriented, settings.Placement)], settings, gridWidth, gridHeight, swatches);
+
+    /// <summary>
+    /// The same for several layers laid over each other, the first one at the bottom. Every layer has its own place on the canvas,
+    /// so <see cref="StudioSettings.Placement"/> is not used. Everything after the layers is shared: adjustments, colors and background.
+    /// </summary>
+    /// <param name="layers">The pictures from bottom to top. At least one.</param>
+    public static PaintPlan Run(IReadOnlyList<PlacedPicture> layers, StudioSettings settings, int gridWidth, int gridHeight, IReadOnlyList<Rgb> swatches)
     {
-        PixelBuffer cells = PlacementEngine.Resample(oriented, settings.Placement, gridWidth, gridHeight);
+        PixelBuffer cells = Compose(layers, gridWidth, gridHeight);
         cells = Adjustments.Apply(cells, settings.Adjustments);
 
         // The background goes under the picture after the adjustments, so a filter never changes the color that was chosen.
@@ -116,11 +129,50 @@ public static class StudioPipeline
                 if (indices[i] == leave)
                     indices[i] = Quantizer.Unpainted;
         }
-        PaintPlan plan = new(gridWidth, gridHeight, palette, indices, PlaceOriginal(oriented, settings.Placement, gridWidth, gridHeight, settings.Background));
+        PaintPlan plan = new(gridWidth, gridHeight, palette, indices, PlaceOriginal(layers, gridWidth, gridHeight, settings.Background));
 
         // Group the cells into strokes here, on the worker thread, so asking for the count later is instant.
         _ = plan.Strokes;
         return plan;
+    }
+
+    /// <summary>Places every layer on a grid and lays them over each other, the first at the bottom. Where no layer reaches, the cell stays transparent.</summary>
+    public static PixelBuffer Compose(IReadOnlyList<PlacedPicture> layers, int width, int height)
+    {
+        PixelBuffer result = PlacementEngine.Resample(layers[0].Oriented, layers[0].Placement, width, height);
+
+        for (int i = 1; i < layers.Count; i++)
+            Overlay(result, PlacementEngine.Resample(layers[i].Oriented, layers[i].Placement, width, height));
+
+        return result;
+    }
+
+    /// <summary>Lays <paramref name="top"/> over <paramref name="bottom"/> in place, blending by transparency. Both have the same size.</summary>
+    public static void Overlay(PixelBuffer bottom, PixelBuffer top)
+    {
+        byte[] b = bottom.Data, t = top.Data;
+
+        for (int i = 0; i < b.Length; i += 4)
+        {
+            int topAlpha = t[i + 3];
+            if (topAlpha == 0)
+                continue;
+
+            if (topAlpha == 255)
+            {
+                Buffer.BlockCopy(t, i, b, i, 4);
+                continue;
+            }
+
+            // Straight (not premultiplied) alpha: the bottom shows through by what the top leaves open.
+            int bottomShare = b[i + 3] * (255 - topAlpha);
+            int outAlpha = topAlpha * 255 + bottomShare;
+
+            for (int c = 0; c < 3; c++)
+                b[i + c] = (byte)((t[i + c] * topAlpha * 255 + b[i + c] * bottomShare + outAlpha / 2) / outAlpha);
+
+            b[i + 3] = (byte)((outAlpha + 127) / 255);
+        }
     }
 
     /// <summary>Lays the picture over a solid color, so every pixel ends up fully opaque.</summary>
@@ -170,13 +222,13 @@ public static class StudioPipeline
     /// colors matched and not reduced to the grid, so the brush size does not change how it looks. It has the same
     /// shape as the grid, so it lines up with the plan when both are stretched over the canvas.
     /// </summary>
-    private static PixelBuffer PlaceOriginal(PixelBuffer oriented, PlacementSettings placement, int gridWidth, int gridHeight, Rgb? background)
+    private static PixelBuffer PlaceOriginal(IReadOnlyList<PlacedPicture> layers, int gridWidth, int gridHeight, Rgb? background)
     {
         double scale = Math.Max(1, ReferenceDetail / (double)Math.Max(gridWidth, gridHeight));
         int width = Math.Max(1, (int)Math.Round(gridWidth * scale));
         int height = Math.Max(1, (int)Math.Round(gridHeight * scale));
 
-        PixelBuffer placed = PlacementEngine.Resample(oriented, placement, width, height);
+        PixelBuffer placed = Compose(layers, width, height);
 
         // With a background chosen the picture sits on it, as it will on the canvas.
         return background is { } color ? Underlay(placed, color) : placed;

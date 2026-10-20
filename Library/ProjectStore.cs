@@ -28,10 +28,14 @@ public interface IProjectStore
     /// <param name="thumbnail">A small picture of the result as a PNG file, or <see langword="null"/>.</param>
     /// <returns>The project as saved, with its id and its time of change.</returns>
     /// <param name="framePictures">The pictures of the second frame onward of an animated sign, as PNG files, in order.</param>
-    StudioProject Save(StudioProject project, byte[] picture, byte[]? thumbnail, IReadOnlyList<byte[]>? framePictures = null);
+    /// <param name="layerPictures">The pictures of the layers over the first one, as PNG files: for every frame, first frame included, its layers bottom to top.</param>
+    StudioProject Save(StudioProject project, byte[] picture, byte[]? thumbnail, IReadOnlyList<byte[]>? framePictures = null, IReadOnlyList<IReadOnlyList<byte[]>>? layerPictures = null);
 
     /// <summary>The pictures of the second frame onward of an animated sign. A frame whose picture is missing is <see langword="null"/>.</summary>
     IReadOnlyList<byte[]?> LoadFramePictures(string id);
+
+    /// <summary>The pictures of the layers over the first one, for every frame, first frame included. A layer whose picture is missing is <see langword="null"/>.</summary>
+    IReadOnlyList<IReadOnlyList<byte[]?>> LoadLayerPictures(string id);
 
     /// <summary>Changes the name of a project.</summary>
     void Rename(string id, string name);
@@ -51,6 +55,8 @@ public sealed class ProjectStore : IProjectStore
     private const string ThumbnailFile = "thumbnail.png";
 
     private static string FrameFile(int number) => $"frame-{number}.png";
+
+    private static string LayerFile(int frame, int number) => $"layer-{frame}-{number}.png";
 
     private static readonly JsonSerializerOptions Options = new()
     {
@@ -115,10 +121,22 @@ public sealed class ProjectStore : IProjectStore
         }
     }
 
-    public StudioProject Save(StudioProject project, byte[] picture, byte[]? thumbnail, IReadOnlyList<byte[]>? framePictures = null)
+    public StudioProject Save(StudioProject project, byte[] picture, byte[]? thumbnail, IReadOnlyList<byte[]>? framePictures = null, IReadOnlyList<IReadOnlyList<byte[]>>? layerPictures = null)
     {
         string id = IsSafeId(project.Id) ? project.Id : NewId();
-        StudioProject saved = project with { Id = id, Name = CleanName(project.Name), Modified = DateTimeOffset.UtcNow, MoreFrames = new FrameList(project.MoreFrames.Take(framePictures?.Count ?? 0)) };
+        layerPictures ??= [];
+
+        // Only the layers that have a picture to go with them are kept, so what is listed is always what can be brought back.
+        FrameList LayersOf(FrameList layers, int frame) => new(layers.Take(frame < layerPictures.Count ? layerPictures[frame].Count : 0));
+
+        StudioProject saved = project with
+        {
+            Id = id,
+            Name = CleanName(project.Name),
+            Modified = DateTimeOffset.UtcNow,
+            MoreFrames = new FrameList(project.MoreFrames.Take(framePictures?.Count ?? 0).Select((frame, index) => frame with { MoreLayers = LayersOf(frame.MoreLayers, index + 1) })),
+            MoreLayers = LayersOf(project.MoreLayers, 0)
+        };
         string folder = Folder(id);
         Directory.CreateDirectory(folder);
 
@@ -132,6 +150,22 @@ public sealed class ProjectStore : IProjectStore
 
         foreach (string old in Directory.EnumerateFiles(folder, "frame-*.png"))
             if (!Enumerable.Range(2, frames).Any(number => Path.GetFileName(old) == FrameFile(number)))
+                File.Delete(old);
+
+        // The layers over the first one, named by frame and place in the stack, and any left over from before are removed.
+        HashSet<string> layerFiles = [];
+        for (int frame = 0; frame < layerPictures.Count; frame++)
+        {
+            for (int layer = 0; layer < layerPictures[frame].Count; layer++)
+            {
+                string name = LayerFile(frame + 1, layer + 2);
+                layerFiles.Add(name);
+                WriteAtomically(Path.Combine(folder, name), layerPictures[frame][layer]);
+            }
+        }
+
+        foreach (string old in Directory.EnumerateFiles(folder, "layer-*.png"))
+            if (!layerFiles.Contains(Path.GetFileName(old)))
                 File.Delete(old);
 
         string thumbnailPath = Path.Combine(folder, ThumbnailFile);
@@ -164,6 +198,28 @@ public sealed class ProjectStore : IProjectStore
         }
     }
 
+    public IReadOnlyList<IReadOnlyList<byte[]?>> LoadLayerPictures(string id)
+    {
+        try
+        {
+            if (!IsSafeId(id) || ReadSettings(id) is not { } project)
+                return [];
+
+            IEnumerable<int> counts = [project.MoreLayers.Count, .. project.MoreFrames.Select(frame => frame.MoreLayers.Count)];
+
+            return [.. counts.Select((count, frame) => (IReadOnlyList<byte[]?>)[.. Enumerable.Range(2, count).Select(number =>
+            {
+                string path = Path.Combine(Folder(id), LayerFile(frame + 1, number));
+                return File.Exists(path) ? File.ReadAllBytes(path) : null;
+            })])];
+        }
+        catch (Exception ex)
+        {
+            AppLog.Warn("ProjectStore", $"Could not load the layers of the project '{id}'.", ex);
+            return [];
+        }
+    }
+
     public void Rename(string id, string name)
     {
         if (!IsSafeId(id) || ReadSettings(id) is not { } project)
@@ -183,7 +239,8 @@ public sealed class ProjectStore : IProjectStore
         byte[]? thumbnailBytes = File.Exists(thumbnail) ? File.ReadAllBytes(thumbnail) : null;
 
         List<byte[]> frames = [.. LoadFramePictures(id).OfType<byte[]>()];
-        return Save(loaded.Project with { Id = "", Name = name, Created = DateTimeOffset.UtcNow }, loaded.Picture, thumbnailBytes, frames);
+        List<IReadOnlyList<byte[]>> layers = [.. LoadLayerPictures(id).Select(frame => (IReadOnlyList<byte[]>)[.. frame.OfType<byte[]>()])];
+        return Save(loaded.Project with { Id = "", Name = name, Created = DateTimeOffset.UtcNow }, loaded.Picture, thumbnailBytes, frames, layers);
     }
 
     public void Delete(string id)

@@ -76,6 +76,45 @@
             <ScrollViewer>
                 <StackPanel Margin="14" Spacing="12">
 
+                    <!-- Layers -->
+                    <Border Classes="card" IsVisible="{Binding HasAnyPicture}">
+                        <StackPanel Spacing="10">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Text="{loc:L StudioLayersHeader}" Classes="eyebrow" VerticalAlignment="Center"/>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6">
+                                    <Button Classes="secondaryButton small" Command="{Binding AddLayerCommand}" ToolTip.Tip="{loc:L LayerAdd}">
+                                        <iconPacks:PackIconPhosphorIcons Kind="Plus" Width="14" Height="14"/>
+                                    </Button>
+                                    <Button Classes="secondaryButton small" Command="{Binding MoveLayerUpCommand}" ToolTip.Tip="{loc:L LayerMoveUp}">
+                                        <iconPacks:PackIconPhosphorIcons Kind="ArrowUp" Width="14" Height="14"/>
+                                    </Button>
+                                    <Button Classes="secondaryButton small" Command="{Binding MoveLayerDownCommand}" ToolTip.Tip="{loc:L LayerMoveDown}">
+                                        <iconPacks:PackIconPhosphorIcons Kind="ArrowDown" Width="14" Height="14"/>
+                                    </Button>
+                                    <Button Classes="secondaryButton small" Command="{Binding RemoveLayerCommand}" ToolTip.Tip="{loc:L LayerRemove}">
+                                        <iconPacks:PackIconPhosphorIcons Kind="Trash" Width="14" Height="14"/>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+
+                            <ItemsControl ItemsSource="{Binding LayerChips}" IsVisible="{Binding HasMultipleLayers}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:LayerChip">
+                                        <Button Classes="chip" Classes.active="{Binding IsSelected}" Command="{Binding SelectCommand}"
+                                                HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Margin="0,0,0,6">
+                                            <Grid ColumnDefinitions="22,*">
+                                                <TextBlock Text="{Binding Number}"/>
+                                                <TextBlock Grid.Column="1" Text="{Binding Label}" TextTrimming="CharacterEllipsis"/>
+                                            </Grid>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <TextBlock Text="{loc:L StudioLayersNote}" Classes="muted" FontSize="11" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
+
                     <!-- Source -->
                     <Border Classes="card">
                         <StackPanel Spacing="12">
@@ -226,7 +265,7 @@
                     </Border>
 
                     <!-- Color -->
-                    <Border Classes="card" IsVisible="{Binding HasImage}">
+                    <Border Classes="card" IsVisible="{Binding HasAnyPicture}">
                         <StackPanel Spacing="10">
                             <TextBlock Text="{loc:L StudioColorHeader}" Classes="eyebrow"/>
                             <ItemsControl Classes="chips" ItemsSource="{Binding ColorModeChoices.Choices}" IsVisible="{Binding HasChoosableColors}"/>
@@ -295,7 +334,7 @@
                     </Border>
 
                     <!-- Quality -->
-                    <Border Classes="card" IsVisible="{Binding HasImage}">
+                    <Border Classes="card" IsVisible="{Binding HasAnyPicture}">
                         <StackPanel Spacing="10">
                             <TextBlock Text="{loc:L StudioQualityHeader}" Classes="eyebrow"/>
                             <TextBlock Text="{loc:L StudioQualitySizeNote}"
@@ -324,7 +363,7 @@
                         <TextBlock Text="{Binding ScrollHint}" IsVisible="{Binding HasScrollHint}"
                                    Foreground="{DynamicResource AccentColor}" FontSize="12" TextWrapping="Wrap"/>
                     </StackPanel>
-                    <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center" IsVisible="{Binding HasImage}">
+                    <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center" IsVisible="{Binding HasAnyPicture}">
                         <Button Classes="secondaryButton" Command="{Binding SaveCommand}" VerticalAlignment="Center" Padding="12,7"
                                 ToolTip.Tip="{loc:L StudioSaveTooltip}">
                             <StackPanel Orientation="Horizontal" Spacing="8">
@@ -339,7 +378,7 @@
                             </StackPanel>
                         </Button>
                     </StackPanel>
-                    <WrapPanel Grid.Row="2" Grid.ColumnSpan="2" ItemSpacing="12" LineSpacing="4" Margin="0,10,0,0" IsVisible="{Binding HasImage}">
+                    <WrapPanel Grid.Row="2" Grid.ColumnSpan="2" ItemSpacing="12" LineSpacing="4" Margin="0,10,0,0" IsVisible="{Binding HasAnyPicture}">
                         <ItemsControl Classes="chips" ItemsSource="{Binding PreviewChoices.Choices}" VerticalAlignment="Center"/>
                         <TextBlock Text="{Binding SaveStatus}" IsVisible="{Binding HasSaveStatus}" Classes="muted" FontSize="12"
                                    VerticalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="220"/>
@@ -383,7 +422,14 @@
                                 PointerPressed="OnStagePressed" PointerMoved="OnStageMoved" PointerReleased="OnStageReleased"
                                 PointerCaptureLost="OnStageCaptureLost" PointerWheelChanged="OnStageWheel" DoubleTapped="OnStageDoubleTapped">
                             <Grid>
-                                <Image x:Name="PreviewImage" Source="{Binding ShownPreview}" Stretch="Fill" IsVisible="{Binding ShowResult}"
+                                <Image x:Name="PreviewImage" Source="{Binding ShownPreview}" Stretch="Fill" IsVisible="{Binding ShowRender}"
+                                       RenderOptions.BitmapInterpolationMode="None"/>
+
+                                <!-- Dragging a layer of several: the layers under it, itself and the layers over it, so only it moves. -->
+                                <Image Source="{Binding DragUnder}" Stretch="Fill" IsVisible="{Binding IsLayerDrag}" IsHitTestVisible="False"
+                                       RenderOptions.BitmapInterpolationMode="None"/>
+                                <Image x:Name="DragLayerImage" Source="{Binding DragLayer}" Stretch="Fill" IsVisible="{Binding IsLayerDrag}" IsHitTestVisible="False"/>
+                                <Image Source="{Binding DragOver}" Stretch="Fill" IsVisible="{Binding IsLayerDrag}" IsHitTestVisible="False"
                                        RenderOptions.BitmapInterpolationMode="None"/>
                                 <Image Source="{Binding Image}" Stretch="Uniform" IsVisible="{Binding ShowOriginal}"/>
 
@@ -428,7 +474,7 @@
                     <TextBlock Text="{loc:L StudioCanvasHint}" Classes="muted" FontSize="11"
                                IsVisible="{Binding HasImage}" HorizontalAlignment="Center" VerticalAlignment="Bottom" TextWrapping="Wrap" TextAlignment="Center"
                                Margin="16,0,16,10" IsHitTestVisible="False"/>
-                    <TextBlock Text="{loc:L StudioNoPicture}" IsVisible="{Binding NoImage}"
+                    <TextBlock Text="{loc:L StudioNoPicture}" IsVisible="{Binding !HasAnyPicture}"
                                Classes="muted" FontSize="14" TextAlignment="Center"
                                HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"/>
                     <Border IsVisible="{Binding IsBusy}" IsHitTestVisible="False" Background="{DynamicResource OverlayColor}"

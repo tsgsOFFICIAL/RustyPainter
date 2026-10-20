@@ -74,12 +74,15 @@ public sealed record StudioProject
     /// <summary>The second frame onward of an animated sign. The first frame is what the fields above describe.</summary>
     public FrameList MoreFrames { get; init; } = [];
 
+    /// <summary>The layers over the first one in the first frame, bottom to top. Every other frame lists its own in <see cref="FrameSettings.MoreLayers"/>.</summary>
+    public FrameList MoreLayers { get; init; } = [];
+
     /// <summary>What the fields above say about the picture of the first frame.</summary>
     public FrameSettings FirstFrame() => new()
     {
         Source = Source, SourceName = SourceName, Placement = Placement, Zoom = Zoom, OffsetX = OffsetX, OffsetY = OffsetY,
         QuarterTurns = QuarterTurns, FlipX = FlipX, FlipY = FlipY, Text = Text, TextColor = TextColor, TextBold = TextBold,
-        TextSolidBackground = TextSolidBackground, TextBackgroundColor = TextBackgroundColor
+        TextSolidBackground = TextSolidBackground, TextBackgroundColor = TextBackgroundColor, MoreLayers = MoreLayers
     };
 }
 
@@ -127,12 +130,18 @@ public sealed record FrameSettings
     public bool TextSolidBackground { get; init; }
     public string TextBackgroundColor { get; init; } = "#000000";
 
+    /// <summary>
+    /// The layers laid over this picture, bottom to top. The settings above are the bottom layer. Layers of layers are not a thing,
+    /// so the entries of this list have no layers of their own.
+    /// </summary>
+    public FrameList MoreLayers { get; init; } = [];
+
     /// <summary>Puts these settings in place of the picture fields of a project, which describe its first frame.</summary>
     public StudioProject AsFirstFrameOf(StudioProject project) => project with
     {
         Source = Source, SourceName = SourceName, Placement = Placement, Zoom = Zoom, OffsetX = OffsetX, OffsetY = OffsetY,
         QuarterTurns = QuarterTurns, FlipX = FlipX, FlipY = FlipY, Text = Text, TextColor = TextColor, TextBold = TextBold,
-        TextSolidBackground = TextSolidBackground, TextBackgroundColor = TextBackgroundColor
+        TextSolidBackground = TextSolidBackground, TextBackgroundColor = TextBackgroundColor, MoreLayers = MoreLayers
     };
 }
 

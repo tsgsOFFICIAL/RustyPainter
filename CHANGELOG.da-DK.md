@@ -4,6 +4,13 @@ Alle væsentlige ændringer i Rusty Painter er dokumenteret her.
 
 ## 0.10.0
 
+### Lag
+
+- Et maleri kan bestå af flere lag, så et billede og en tekst kan være i det samme maleri. Den nye boks Lag i Studio tilføjer et lag oven på det åbne, fjerner et lag og flytter det op eller ned.
+- Hvert lag har sit eget billede, link eller tekst og sin egen tilpasning, zoom, forskydning, drejning og spejling. Hvis man trækker i eller zoomer forhåndsvisningen, flyttes kun det åbne lag. Det øverste lag er forrest, og gennemsigtige dele af det lader lagene under skinne igennem.
+- Farver, filtre, pensel og baggrund er fælles, så lagene sættes først sammen og males derefter som ét billede.
+- Gemte projekter husker deres lag, og hvert frame på et animeret skilt har sine egne lag.
+
 ### Filtre
 
 - Et nyt Oliemaleri-filter gør et billede til flade klatter af farve og bevarer de skarpe kanter, så ansigter og konturer stadig kan læses.

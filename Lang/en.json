@@ -366,5 +366,12 @@
   "Surface_pumpkin": "Carvable Pumpkin",
   "StudioCarvingNote": "The grays are how deep the pumpkin is cut. White cuts all the way through and lets the candle shine, black leaves the shell as it is. The picture is turned to black and white and cut without dithering, so the cuts stay solid.",
   "Surface_stone-sculpture": "Stone Sculpture",
-  "StudioReliefNote": "Dark parts of the picture are carved into the stone, light parts are built up, and the mid-tones are left alone. The picture is turned to black and white."
+  "StudioReliefNote": "Dark parts of the picture are carved into the stone, light parts are built up, and the mid-tones are left alone. The picture is turned to black and white.",
+  "StudioLayersHeader": "LAYERS",
+  "StudioLayersNote": "Layers are laid over each other, the top one in front. Add one to put a picture, a link or some text on top of the open one. Every layer has its own place on the canvas; colors and brush are shared.",
+  "LayerAdd": "Add a layer on top",
+  "LayerRemove": "Remove this layer",
+  "LayerMoveUp": "Move this layer up",
+  "LayerMoveDown": "Move this layer down",
+  "LayerEmpty": "Empty layer"
 }

@@ -32,10 +32,13 @@ public sealed partial class StudioViewModel
 {
     private sealed class FrameSlot
     {
-        /// <summary>The picture as a PNG file, or <see langword="null"/> for a frame with nothing in it, which stays blank.</summary>
-        public byte[]? Picture { get; set; }
+        /// <summary>The layers of the frame, bottom to top. A frame with nothing in it has one layer with no picture, and stays blank.</summary>
+        public List<LayerSlot> Layers { get; set; } = [new()];
 
-        public FrameSettings Settings { get; set; } = new();
+        /// <summary>Which of the layers was open when the frame was left.</summary>
+        public int OpenLayer { get; set; }
+
+        public bool HasPicture => Layers.Any(layer => layer.Picture is not null);
     }
 
     private readonly List<FrameSlot> _frames = [new()];
@@ -86,6 +89,7 @@ public sealed partial class StudioViewModel
             OnPropertyChanged(nameof(PlayText));
             OnPropertyChanged(nameof(ShowSplit));
             OnPropertyChanged(nameof(ShowResult));
+            OnPropertyChanged(nameof(ShowRender));
         }
     }
 
@@ -147,7 +151,7 @@ public sealed partial class StudioViewModel
         StoreOpenFrame();
 
         FrameSlot open = _frames[_frameIndex];
-        _frames.Add(new FrameSlot { Picture = open.Picture, Settings = open.Settings });
+        _frames.Add(new FrameSlot { Layers = [.. open.Layers], OpenLayer = open.OpenLayer });
         _frameIndex = _frames.Count - 1;
         RaiseFrames();
     }
@@ -165,24 +169,25 @@ public sealed partial class StudioViewModel
         RaiseFrames();
     }
 
-    /// <summary>Keeps what is shown as the picture of the open frame.</summary>
+    /// <summary>Keeps what is shown as the layers of the open frame.</summary>
     private void StoreOpenFrame()
     {
+        StoreOpenLayer();
+
         FrameSlot slot = _frames[_frameIndex];
-        slot.Settings = CaptureFrame();
-        slot.Picture = PictureBytes();
+        slot.Layers = [.. _layers];
+        slot.OpenLayer = _layerIndex;
     }
 
-    /// <summary>Brings the picture of the open frame into the fields of Studio, or empties them for a blank frame.</summary>
+    /// <summary>Brings the layers of the open frame into Studio, with the picture of the open layer in its fields, or empties them for a blank frame.</summary>
     private void LoadOpenFrame()
     {
         FrameSlot slot = _frames[_frameIndex];
+        _layers = [.. slot.Layers];
+        _layerIndex = Math.Clamp(slot.OpenLayer, 0, _layers.Count - 1);
 
-        if (slot.Picture is null)
-            ClearPicture();
-        else
-            ApplyFrame(slot.Settings, slot.Picture);
-
+        LoadOpenLayer();
+        RaiseLayers();
         Changed();
     }
 
@@ -221,46 +226,84 @@ public sealed partial class StudioViewModel
         };
     }
 
-    /// <summary>The frames beyond the first as they are saved: their settings and their pictures. The open frame is brought up to date first.</summary>
-    private (List<FrameSettings> Settings, List<byte[]> Pictures, FrameSettings First, byte[]? FirstPicture) CaptureFrames()
+    /// <summary>What is saved of a frame: the settings and picture of its bottom layer, with the settings of the layers over it, and their pictures.</summary>
+    private sealed record SavedFrame(FrameSettings Settings, byte[] Picture, List<byte[]> LayerPictures);
+
+    /// <summary>A frame as it is saved, or <see langword="null"/> for one with no picture at all. A layer with no picture is not saved.</summary>
+    private static SavedFrame? Saved(FrameSlot slot)
+    {
+        List<LayerSlot> filled = [.. slot.Layers.Where(layer => layer.Picture is not null)];
+        if (filled.Count == 0)
+            return null;
+
+        FrameSettings settings = filled[0].Settings with { MoreLayers = new FrameList(filled.Skip(1).Select(layer => layer.Settings with { MoreLayers = [] })) };
+        return new SavedFrame(settings, filled[0].Picture!, [.. filled.Skip(1).Select(layer => layer.Picture!)]);
+    }
+
+    /// <summary>
+    /// The frames as they are saved. The first one comes apart from the rest, since a project describes it itself. The open frame is brought
+    /// up to date first.
+    /// </summary>
+    /// <param name="all">Whether to save every frame, or only the open one, as a surface that does not animate does.</param>
+    private (List<FrameSettings> Settings, List<byte[]> Pictures, SavedFrame? First, List<List<byte[]>> LayerPictures) CaptureFrames(bool all)
     {
         StoreOpenFrame();
 
+        List<FrameSlot> slots = all ? _frames : [_frames[_frameIndex]];
+        SavedFrame? first = Saved(slots[0]);
+
         List<FrameSettings> settings = [];
         List<byte[]> pictures = [];
+        List<List<byte[]>> layers = [first?.LayerPictures ?? []];
 
         // A blank frame is saved as a frame with no picture of its own, which is the one thing that brings it back blank.
-        foreach (FrameSlot slot in _frames.Skip(1))
+        foreach (FrameSlot slot in slots.Skip(1))
         {
-            if (slot.Picture is null)
+            if (Saved(slot) is not { } frame)
                 continue;
 
-            settings.Add(slot.Settings);
-            pictures.Add(slot.Picture);
+            settings.Add(frame.Settings);
+            pictures.Add(frame.Picture);
+            layers.Add(frame.LayerPictures);
         }
 
-        return (settings, pictures, _frames[0].Settings, _frames[0].Picture);
+        return (settings, pictures, first, layers);
     }
 
     /// <summary>Puts the frames of a saved project back. The first frame is open already, since it is what the project's own fields describe.</summary>
-    private void LoadMoreFrames(StudioProject project, IReadOnlyList<byte[]?>? framePictures)
+    private void LoadMoreFrames(StudioProject project, IReadOnlyList<byte[]?>? framePictures, IReadOnlyList<IReadOnlyList<byte[]?>>? layerPictures)
     {
         StopPlaying();
         _frames.Clear();
         _frames.Add(new FrameSlot());
         _frameIndex = 0;
 
+        // The bottom layer of the first frame is the open one, already in the fields. The layers over it follow.
+        _layers = [new(), .. LayersFrom(project.MoreLayers, LayerPicturesOf(layerPictures, 0))];
+        _layerIndex = 0;
+
         if (SelectedSurface.Surface.IsAnimated)
         {
             for (int i = 0; i < project.MoreFrames.Count && _frames.Count < MaxFrames; i++)
             {
                 byte[]? picture = framePictures is not null && i < framePictures.Count ? framePictures[i] : null;
-                _frames.Add(new FrameSlot { Settings = project.MoreFrames[i], Picture = picture });
+                FrameSettings frame = project.MoreFrames[i];
+                _frames.Add(new FrameSlot { Layers = [new LayerSlot(picture, frame), .. LayersFrom(frame.MoreLayers, LayerPicturesOf(layerPictures, i + 1))] });
             }
         }
 
         RaiseFrames();
+        RaiseLayers();
     }
+
+    private static IReadOnlyList<byte[]?> LayerPicturesOf(IReadOnlyList<IReadOnlyList<byte[]?>>? layerPictures, int frame)
+        => layerPictures is not null && frame < layerPictures.Count ? layerPictures[frame] : [];
+
+    /// <summary>The layers over a bottom one, as they were saved. One whose picture is gone is left out.</summary>
+    private static IEnumerable<LayerSlot> LayersFrom(FrameList settings, IReadOnlyList<byte[]?> pictures)
+        => settings.Select((layer, index) => (layer, picture: index < pictures.Count ? pictures[index] : null))
+            .Where(item => item.picture is not null)
+            .Select(item => new LayerSlot(item.picture, item.layer));
 
     // ---- the plans of all frames ----
 
@@ -274,10 +317,10 @@ public sealed partial class StudioViewModel
         List<Rgb> swatches = _surfaces.Catalog.Layouts[surface.Layout].Swatches.ColorGrid!.Colors.Select(Rgb.Parse).ToList();
         PaintPlan blank = new(gridWidth, gridHeight, swatches, new int[gridWidth * gridHeight].Select(_ => Quantizer.Unpainted).ToArray());
 
-        // The settings of the colors are the open ones; the picture and its place are each frame's own.
-        List<(byte[]? Picture, FrameSettings Settings)> work = _frames.Select(slot => (slot.Picture, slot.Settings)).ToList();
-        StudioSettings Shared(FrameSettings frame) => new(
-            new PlacementSettings(Enum.TryParse(frame.Placement, out FitMode fit) ? fit : FitMode.Fill, frame.Zoom, frame.OffsetX / 100, frame.OffsetY / 100),
+        // The settings of the colors are the open ones; the pictures and their places are each frame's own.
+        List<List<LayerSlot>> work = _frames.Select(slot => slot.Layers.Where(layer => layer.Picture is not null).ToList()).ToList();
+        StudioSettings shared = new(
+            new PlacementSettings(),
             new AdjustmentSettings(Brightness / 100, Contrast / 100, Saturation / 100, EffectiveFilter, EffectiveFilterStrength),
             EffectiveMode,
             (int)MaxColors,
@@ -285,23 +328,19 @@ public sealed partial class StudioViewModel
             FillBackground && Rgb.TryParse(BackgroundHex, out Rgb background) ? background : null,
             SelectedSurface.Surface.LeaveIndex);
 
-        List<(byte[]? Picture, FrameSettings Settings, StudioSettings Studio)> jobs = work.Select(item => (item.Picture, item.Settings, Shared(item.Settings))).ToList();
-
         return await Task.Run(() =>
         {
             List<PaintPlan> plans = [];
-            foreach ((byte[]? picture, FrameSettings frame, StudioSettings studio) in jobs)
+            foreach (List<LayerSlot> layers in work)
             {
-                if (picture is null)
+                if (layers.Count == 0)
                 {
                     plans.Add(blank);
                     continue;
                 }
 
-                using MemoryStream stream = new(picture);
-                using Bitmap bitmap = new(stream);
-                PixelBuffer oriented = PlacementEngine.Orient(BitmapPixels.FromBitmap(bitmap), Math.Clamp(frame.QuarterTurns, 0, 3), frame.FlipX, frame.FlipY);
-                plans.Add(StudioPipeline.Run(oriented, studio, gridWidth, gridHeight, swatches));
+                List<PlacedPicture> placed = [.. layers.Select(PlaceLayer)];
+                plans.Add(StudioPipeline.Run(placed, shared, gridWidth, gridHeight, swatches));
             }
 
             return (IReadOnlyList<PaintPlan>)plans;

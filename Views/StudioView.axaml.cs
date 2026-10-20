@@ -90,7 +90,7 @@ public partial class StudioView : UserControl
 
     private void WireGesture()
     {
-        foreach (Image image in new[] { PreviewImage, ReferenceImage })
+        foreach (Image image in new[] { PreviewImage, ReferenceImage, DragLayerImage })
         {
             image.RenderTransform = _gestureTransform;
             image.RenderTransformOrigin = RelativePoint.TopLeft;
@@ -138,6 +138,7 @@ public partial class StudioView : UserControl
     private void EndGesture()
     {
         _gesture.Reset();
+        ViewModel?.EndLayerDrag();
         _gestureTransform.Matrix = Matrix.Identity;
     }
 
@@ -148,7 +149,13 @@ public partial class StudioView : UserControl
     }
 
     private void BeginGesture(StudioViewModel viewModel)
-        => _gesture.Begin(viewModel.CanvasWidth, viewModel.CanvasHeight, viewModel.Zoom, viewModel.OffsetX, viewModel.OffsetY);
+    {
+        // With several layers the render holds all of them, so the open layer is shown on its own to be moved.
+        if (!_gesture.IsActive)
+            viewModel.BeginLayerDrag();
+
+        _gesture.Begin(viewModel.CanvasWidth, viewModel.CanvasHeight, viewModel.Zoom, viewModel.OffsetX, viewModel.OffsetY);
+    }
 
     /// <summary>Hands what the gesture changed to the settings. They render once and the moved picture is replaced.</summary>
     private void CommitGesture()
@@ -193,7 +200,7 @@ public partial class StudioView : UserControl
     {
         _dragFrom = null;
         e.Pointer.Capture(null);
-        CommitGesture();
+        FinishGesture();
     }
 
     private void OnStageCaptureLost(object? sender, PointerCaptureLostEventArgs e)
@@ -201,8 +208,18 @@ public partial class StudioView : UserControl
         if (_dragFrom is not null)
         {
             _dragFrom = null;
-            CommitGesture();
+            FinishGesture();
         }
+    }
+
+    /// <summary>The mouse let go. Whatever moved is handed on, and what is on screen stays until the render that replaces it is there.</summary>
+    private void FinishGesture()
+    {
+        CommitGesture();
+
+        // A drag that moved nothing renders nothing, so there is nothing to wait for.
+        if (ViewModel is { IsBusy: false })
+            EndGesture();
     }
 
     private void OnStageWheel(object? sender, PointerWheelEventArgs e)

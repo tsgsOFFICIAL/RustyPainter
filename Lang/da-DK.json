@@ -366,5 +366,12 @@
   "Surface_pumpkin": "Udskærbart græskar",
   "StudioCarvingNote": "Gråtonerne er, hvor dybt græskarret skæres. Hvid skærer helt igennem og lader lyset skinne, sort lader skallen stå. Billedet gøres sort-hvidt og skæres uden dithering, så udskæringerne bliver ensartede.",
   "Surface_stone-sculpture": "Stenskulptur",
-  "StudioReliefNote": "Mørke dele af billedet skæres ind i stenen, lyse dele bygges op, og mellemtonerne lades være. Billedet gøres sort-hvidt."
+  "StudioReliefNote": "Mørke dele af billedet skæres ind i stenen, lyse dele bygges op, og mellemtonerne lades være. Billedet gøres sort-hvidt.",
+  "StudioLayersHeader": "LAG",
+  "StudioLayersNote": "Lagene lægges oven på hinanden, og det øverste er forrest. Tilføj et lag for at lægge et billede, et link eller en tekst ovenpå det åbne. Hvert lag har sin egen plads på lærredet; farver og pensel er fælles.",
+  "LayerAdd": "Tilføj et lag ovenpå",
+  "LayerRemove": "Fjern dette lag",
+  "LayerMoveUp": "Flyt dette lag op",
+  "LayerMoveDown": "Flyt dette lag ned",
+  "LayerEmpty": "Tomt lag"
 }

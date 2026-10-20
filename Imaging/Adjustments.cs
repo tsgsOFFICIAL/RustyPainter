@@ -37,8 +37,10 @@ public static class Adjustments
         double strength = Math.Clamp(settings.FilterStrength, 0, 1);
 
         // Oil painting looks at the neighbours of every pixel, so it is done on the whole picture before the per-pixel steps.
+        // The oiled picture is then blended in by the strength below, like any other filter, so the slider has every step in between.
+        PixelBuffer? oiled = null;
         if (settings.Filter == ImageFilter.OilPainting)
-            source = OilPaint(source, strength);
+            oiled = OilPaint(source, strength);
 
         PixelBuffer result = new(source.Width, source.Height);
         double saturation = 1 + Math.Clamp(settings.Saturation, -1, 1);
@@ -54,7 +56,9 @@ public static class Adjustments
 
             double r = source.Data[i] / 255.0, g = source.Data[i + 1] / 255.0, b = source.Data[i + 2] / 255.0;
 
-            (double fr, double fg, double fb) = ApplyFilter(settings.Filter, r, g, b);
+            (double fr, double fg, double fb) = oiled is null
+                ? ApplyFilter(settings.Filter, r, g, b)
+                : (oiled.Data[i] / 255.0, oiled.Data[i + 1] / 255.0, oiled.Data[i + 2] / 255.0);
             r += (fr - r) * strength;
             g += (fg - g) * strength;
             b += (fb - b) * strength;
@@ -86,8 +90,11 @@ public static class Adjustments
     /// </summary>
     public static PixelBuffer OilPaint(PixelBuffer source, double strength = 1)
     {
-        // The daubs grow with the strength: a weak oil painting only smooths the finest detail.
+        // The daubs grow with the strength, but never vanish: how faint the effect is comes from blending, not from the size.
         int radius = (int)Math.Round(Math.Clamp(Math.Max(source.Width, source.Height) / 200.0, 1, 3) * Math.Clamp(strength, 0, 1));
+        if (strength > 0)
+            radius = Math.Max(1, radius);
+
         if (radius == 0)
             return source;
 

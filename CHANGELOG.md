@@ -4,6 +4,13 @@ All notable changes to Rusty Painter are documented here.
 
 ## 0.10.0
 
+### Layers
+
+- A painting can be made of several layers, so a picture and some text can share the same painting. The new Layers box in Studio adds a layer over the open one, removes a layer and moves it up or down.
+- Every layer has its own picture, link or text, and its own fit, zoom, shift, rotation and flips. Dragging or zooming the preview moves only the open layer. The top layer is in front, and clear parts of it show the layers under it.
+- Colors, filters, brush and background are shared, so the layers are put together first and then painted as one picture.
+- Saved projects keep their layers, and every frame of an animated sign has layers of its own.
+
 ### Filters
 
 - A new Oil painting filter turns a picture into flat daubs of color while keeping hard edges, so faces and outlines stay readable.
