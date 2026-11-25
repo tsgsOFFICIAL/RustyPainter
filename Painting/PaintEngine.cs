@@ -437,6 +437,20 @@ public sealed class PaintEngine
 
         if (step.From != step.To)
         {
+            // Walk the drag in short hops. A single jump from end to end lets the game skip cells when a frame is slow.
+            double dx = step.To.X - step.From.X, dy = step.To.Y - step.From.Y;
+            double distance = Math.Max(Math.Abs(dx), Math.Abs(dy));
+            int hops = _timing.DragStep > 0 ? (int)Math.Ceiling(distance / _timing.DragStep) : 1;
+
+            for (int hop = 1; hop < hops; hop++)
+            {
+                await CheckpointAsync(token, inStep: true);
+                ScreenPoint waypoint = new(step.From.X + dx * hop / hops, step.From.Y + dy * hop / hops);
+                _input.MoveTo(waypoint);
+                _expectedCursor = waypoint;
+                await WaitAsync(1, token);
+            }
+
             await MoveAsync(step.To, token);
             await WaitAsync(_timing.Hold, token);
         }

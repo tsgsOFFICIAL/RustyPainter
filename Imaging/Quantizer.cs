@@ -99,8 +99,13 @@ public static class Quantizer
 
             for (int y = 0; y < h; y++)
             {
-                for (int x = 0; x < w; x++)
+                // Every other row is walked right to left, so the error does not pile up on one side and form diagonal worms.
+                bool backwards = (y & 1) == 1;
+                int dir = backwards ? -1 : 1;
+
+                for (int step = 0; step < w; step++)
                 {
+                    int x = backwards ? w - 1 - step : step;
                     int p = y * w + x;
                     if (!Painted(p))
                     {
@@ -115,10 +120,10 @@ public static class Quantizer
                     Rgb chosen = palette[index];
                     float er = r - chosen.R, eg = g - chosen.G, eb = b - chosen.B;
 
-                    Spread(x + 1, y, er, eg, eb, 7f / 16);
-                    Spread(x - 1, y + 1, er, eg, eb, 3f / 16);
+                    Spread(x + dir, y, er, eg, eb, 7f / 16);
+                    Spread(x - dir, y + 1, er, eg, eb, 3f / 16);
                     Spread(x, y + 1, er, eg, eb, 5f / 16);
-                    Spread(x + 1, y + 1, er, eg, eb, 1f / 16);
+                    Spread(x + dir, y + 1, er, eg, eb, 1f / 16);
                 }
             }
 

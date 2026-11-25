@@ -13,6 +13,7 @@ namespace RustyPainter.Painting;
 /// <param name="AfterStroke">After a stroke, before the next one.</param>
 /// <param name="ScrollGap">Between two turns of the mouse wheel.</param>
 /// <param name="CameraReset">After the camera reset button, while the view moves back.</param>
+/// <param name="DragStep">The most screen pixels the cursor jumps in one move while the button is held. Longer drags are walked in steps of this size, so the game gets to see every cell on the way instead of one jump that can leave gaps. 0 jumps straight to the end.</param>
 public sealed record PaintTiming(
     int Settle = 12,
     int Hold = 16,
@@ -22,7 +23,8 @@ public sealed record PaintTiming(
     int AfterField = 120,
     int AfterStroke = 6,
     int ScrollGap = 80,
-    int CameraReset = 1200)
+    int CameraReset = 1200,
+    int DragStep = 40)
 {
     /// <summary>A pace that is slow enough to be reliable on most machines.</summary>
     public static PaintTiming Default { get; } = new();
